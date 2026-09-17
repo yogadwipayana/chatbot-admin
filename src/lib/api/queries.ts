@@ -7,6 +7,7 @@ import {
   useQuery,
   useQueryClient,
 } from "@tanstack/react-query"
+import { useMemo } from "react"
 
 import { api, unwrap, type Schemas } from "./client"
 
@@ -96,6 +97,79 @@ export function useDeleteDocument() {
   })
 }
 
+// --- Tanya jawab ---------------------------------------------------------------
+
+export type FaqFilters = { include_inactive: boolean; limit: number; offset: number }
+
+export function useFaq(filters: FaqFilters) {
+  return useQuery({
+    queryKey: ["faq", filters],
+    queryFn: ({ signal }) =>
+      unwrap(api.GET("/api/admin/faq", { params: { query: filters }, signal })),
+    placeholderData: keepPreviousData,
+  })
+}
+
+export function useCreateFaq() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (body: Schemas["FaqEntryCreate"]) =>
+      unwrap(api.POST("/api/admin/faq", { body })),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["faq"] }),
+  })
+}
+
+export function useUpdateFaq() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, body }: { id: string; body: Schemas["FaqEntryUpdate"] }) =>
+      unwrap(api.PATCH("/api/admin/faq/{entry_id}", { params: { path: { entry_id: id } }, body })),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["faq"] }),
+  })
+}
+
+export function useDeleteFaq() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (id: string) =>
+      unwrap(api.DELETE("/api/admin/faq/{entry_id}", { params: { path: { entry_id: id } } })),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["faq"] }),
+  })
+}
+
+// --- Saran nama unit -----------------------------------------------------------
+
+/**
+ * Nama unit yang sudah dipakai, untuk isian unit di seluruh dashboard.
+ *
+ * Diambil dari dokumen DAN entri tanya jawab: unit adalah dasar pembatasan
+ * akses staf/dosen, jadi "Biro Akademik" dan "Biro Administrasi Akademik" yang
+ * terlanjur menjadi dua unit berbeda berarti ada isi yang tidak terlihat oleh
+ * pemiliknya. Menyarankan ejaan yang sudah ada jauh lebih murah daripada
+ * membetulkannya belakangan.
+ */
+export function useUnits(): string[] {
+  const dokumen = useDocuments({
+    include_inactive: true,
+    only_stale: false,
+    limit: 200,
+    offset: 0,
+  })
+  const faq = useFaq({ include_inactive: true, limit: 200, offset: 0 })
+  const dariDokumen = dokumen.data?.items
+  const dariFaq = faq.data?.items
+  return useMemo(
+    () =>
+      [
+        ...new Set([
+          ...(dariDokumen ?? []).map((d) => d.unit),
+          ...(dariFaq ?? []).map((f) => f.unit),
+        ]),
+      ].sort((a, b) => a.localeCompare(b, "id")),
+    [dariDokumen, dariFaq]
+  )
+}
+
 // --- Pertanyaan tak terjawab (AD-4) --------------------------------------------
 
 export type UnansweredFilters = { resolved?: boolean; sejak?: string }
@@ -131,6 +205,24 @@ export function useSetResolved() {
       )
     },
     onSettled: () => queryClient.invalidateQueries({ queryKey: ["unanswered"] }),
+  })
+}
+
+// --- Umpan balik mahasiswa (FE-5) ----------------------------------------------
+
+export type FeedbackFilters = {
+  helpful?: boolean
+  sejak?: string
+  limit: number
+  offset: number
+}
+
+export function useFeedback(filters: FeedbackFilters) {
+  return useQuery({
+    queryKey: ["feedback", filters],
+    queryFn: ({ signal }) =>
+      unwrap(api.GET("/api/admin/feedback", { params: { query: filters }, signal })),
+    placeholderData: keepPreviousData,
   })
 }
 
@@ -258,5 +350,31 @@ export function useDeleteUser() {
     mutationFn: (id: string) =>
       unwrap(api.DELETE("/api/admin/users/{user_id}", { params: { path: { user_id: id } } })),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["users"] }),
+  })
+}
+
+// --- Konfigurasi runtime (superadmin) -------------------------------------------
+
+export function useRuntimeConfig() {
+  return useQuery({
+    queryKey: ["config"],
+    queryFn: ({ signal }) => unwrap(api.GET("/api/admin/config", { signal })),
+  })
+}
+
+export function useUpdateRuntimeConfig() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (body: Schemas["RuntimeConfigUpdate"]) =>
+      unwrap(api.PATCH("/api/admin/config", { body })),
+    onSuccess: (config) => queryClient.setQueryData(["config"], config),
+  })
+}
+
+export function useResetRuntimeConfig() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: () => unwrap(api.DELETE("/api/admin/config")),
+    onSuccess: (config) => queryClient.setQueryData(["config"], config),
   })
 }

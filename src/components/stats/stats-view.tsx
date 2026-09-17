@@ -5,12 +5,11 @@ import Link from "next/link"
 import { useState } from "react"
 
 import { EmptyState, PageHeader, QueryError } from "@/components/common"
+import { DateRangeField } from "@/components/date-field"
 import { DailyVolumeChart, DailyVolumeTable } from "@/components/stats/daily-volume-chart"
 import { StatusLabel } from "@/components/status"
 import { Button } from "@/components/ui/button"
 import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useNow } from "@/hooks/use-now"
@@ -30,6 +29,11 @@ import { cn } from "@/lib/utils"
 
 type Stats = Schemas["Stats"]
 type Preset = "7" | "30" | "90" | "kustom"
+
+/** Batas bawah pemilih tanggal: dua tahun. Log percakapan tidak pernah lebih tua
+dari umur layanan ini, dan tanpa batas apa pun dropdown tahunnya mengundang salah
+klik ke tahun yang sudah pasti kosong. */
+const HARI_TERJAUH = 730
 
 const TARGET_FEEDBACK = 0.75
 const TARGET_TAK_TERJAWAB = 0.15
@@ -70,32 +74,13 @@ export function StatsView() {
           </TabsList>
         </Tabs>
         {preset === "kustom" ? (
-          <div className="flex flex-wrap items-end gap-2">
-            <div className="space-y-1">
-              <Label htmlFor="sejak" className="text-xs">
-                Dari
-              </Label>
-              <Input
-                id="sejak"
-                type="date"
-                max={hariIni}
-                value={kustom.sejak}
-                onChange={(e) => setKustom((k) => ({ ...k, sejak: e.target.value }))}
-              />
-            </div>
-            <div className="space-y-1">
-              <Label htmlFor="sampai" className="text-xs">
-                Sampai
-              </Label>
-              <Input
-                id="sampai"
-                type="date"
-                max={hariIni}
-                value={kustom.sampai}
-                onChange={(e) => setKustom((k) => ({ ...k, sampai: e.target.value }))}
-              />
-            </div>
-          </div>
+          <DateRangeField
+            id="rentang"
+            min={toDateInput(addDays(new Date(now), -HARI_TERJAUH))}
+            max={hariIni}
+            value={kustom}
+            onChange={setKustom}
+          />
         ) : null}
       </div>
 

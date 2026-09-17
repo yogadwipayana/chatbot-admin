@@ -17,6 +17,7 @@ import { useState, type FormEvent } from "react"
 import { toast } from "sonner"
 
 import { EmptyState, PageHeader, QueryError } from "@/components/common"
+import { DateField } from "@/components/date-field"
 import { DeleteDocumentDialog } from "@/components/documents/delete-document-dialog"
 import { DocumentStatus } from "@/components/documents/document-status"
 import { useToggleActive } from "@/components/documents/use-toggle-active"
@@ -27,13 +28,23 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
 import { Skeleton } from "@/components/ui/skeleton"
+import { UnitField } from "@/components/unit-field"
 import { useNow } from "@/hooks/use-now"
 import { ApiError, type Schemas } from "@/lib/api/client"
-import { useChunks, useDocument, useMe, useUpdateDocument } from "@/lib/api/queries"
+import { useChunks, useDocument, useMe, useUnits, useUpdateDocument } from "@/lib/api/queries"
 import { documentFileUrl, isServed, staleReason, type Doc } from "@/lib/documents"
-import { formatDateTime, formatNumber } from "@/lib/format"
+import { formatDateTime, formatNumber, toDateInput } from "@/lib/format"
 
-export function DocumentDetailView({ id, isNew }: { id: string; isNew: boolean }) {
+export function DocumentDetailView({
+  id,
+  isNew,
+  teksTipis = false,
+}: {
+  id: string
+  isNew: boolean
+  /** Ekstraksi hanya menemukan sedikit teks -- isinya diduga berupa gambar. */
+  teksTipis?: boolean
+}) {
   const now = useNow()
   const router = useRouter()
   const query = useDocument(id)
@@ -158,6 +169,17 @@ export function DocumentDetailView({ id, isNew }: { id: string; isNew: boolean }
             </AlertDescription>
           </Alert>
         ) : null}
+        {teksTipis ? (
+          <Alert>
+            <TriangleAlertIcon className="text-status-warning" />
+            <AlertTitle>Teks dokumen sangat sedikit</AlertTitle>
+            <AlertDescription>
+              Chatbot hanya membaca teks, bukan gambar. Bila langkah-langkahnya ada di dalam
+              tangkapan layar, jawaban chatbot akan ikut tipis. Periksa pratinjau potongan di bawah,
+              lalu pertimbangkan menambahkan keterangan teks pada tiap langkah.
+            </AlertDescription>
+          </Alert>
+        ) : null}
         {alasanUsang ? (
           <Alert>
             <TriangleAlertIcon className="text-status-warning" />
@@ -186,6 +208,8 @@ function MetadataCard({ doc }: { doc: Doc }) {
   const update = useUpdateDocument()
   // Staf/dosen tidak dapat memindahkan dokumen ke unit lain.
   const unitTerkunci = useMe().data?.role === "staf"
+  const hariIni = toDateInput(new Date(useNow()))
+  const units = useUnits()
   const [judul, setJudul] = useState(doc.judul)
   const [unit, setUnit] = useState(doc.unit)
   const [tahun, setTahun] = useState(doc.tahun_berlaku?.toString() ?? "")
@@ -242,14 +266,13 @@ function MetadataCard({ doc }: { doc: Doc }) {
           </div>
           <div className="space-y-2">
             <Label htmlFor="unit">Unit penerbit</Label>
-            <Input
+            <UnitField
               id="unit"
               required
-              minLength={2}
-              maxLength={200}
+              units={units}
               value={unit}
               readOnly={unitTerkunci}
-              onChange={(e) => setUnit(e.target.value)}
+              onChange={setUnit}
             />
             {unitTerkunci ? (
               <p className="text-xs text-muted-foreground">
@@ -278,11 +301,13 @@ function MetadataCard({ doc }: { doc: Doc }) {
                 </Button>
               ) : null}
             </div>
-            <Input
+            <DateField
               id="valid-until"
-              type="date"
+              min={hariIni}
+              spanFrom={hariIni}
               value={validUntil}
-              onChange={(e) => setValidUntil(e.target.value)}
+              onChange={setValidUntil}
+              placeholder="Tanpa batas"
             />
             <p className="text-xs text-muted-foreground">
               {validUntil

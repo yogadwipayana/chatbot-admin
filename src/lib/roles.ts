@@ -23,17 +23,22 @@ export const ROLE_LABELS: Record<Role, string> = {
 
 export const ROLE_RIGHTS: Record<Role, string[]> = {
   staf: [
-    "Kelola dokumen unitnya sendiri",
+    "Kelola dokumen dan tanya jawab unitnya sendiri",
     "Uji coba jawaban",
     "Lihat pertanyaan tak terjawab",
   ],
   admin: [
     "Semua hak Staf/Dosen",
-    "Kelola dokumen semua unit",
+    "Kelola dokumen dan tanya jawab semua unit",
     "Tandai pertanyaan selesai",
     "Statistik",
   ],
-  superadmin: ["Semua hak Admin", "Layanan chat (kill switch)", "Kelola akun di menu Admin"],
+  superadmin: [
+    "Semua hak Admin",
+    "Layanan chat (kill switch)",
+    "Konfigurasi pencarian dan pemecahan dokumen",
+    "Kelola akun di menu Admin",
+  ],
 }
 
 export function atLeast(me: Pick<Me, "role"> | null | undefined, minimum: Role): boolean {

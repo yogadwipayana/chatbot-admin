@@ -6,6 +6,6 @@ export const metadata: Metadata = { title: "Detail dokumen" }
 
 export default async function DocumentDetailPage({ params, searchParams }: PageProps<"/dokumen/[id]">) {
   const { id } = await params
-  const { baru } = await searchParams
-  return <DocumentDetailView id={id} isNew={baru === "1"} />
+  const { baru, tipis } = await searchParams
+  return <DocumentDetailView id={id} isNew={baru === "1"} teksTipis={tipis === "1"} />
 }

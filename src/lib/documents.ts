@@ -16,7 +16,8 @@ export function isServed(doc: Pick<Doc, "is_active" | "valid_until">, nowMs: num
   return doc.is_active && !isExpired(doc, nowMs)
 }
 
-export function staleReason(doc: Doc, nowMs: number): string | null {
+/** Dipakai dokumen dan entri tanya jawab: keduanya baris `documents` yang sama. */
+export function staleReason(doc: Pick<Doc, "stale" | "valid_until">, nowMs: number): string | null {
   if (!doc.stale) return null
   if (isExpired(doc, nowMs)) return "Masa berlaku sudah habis, sehingga tidak lagi dipakai chatbot."
   return "Lebih dari 6 bulan tidak diperbarui. Pastikan isinya masih sesuai aturan terbaru."

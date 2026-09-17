@@ -3,7 +3,14 @@ import { EyeOffIcon } from "lucide-react"
 import { StatusLabel } from "@/components/status"
 import { isExpired, type Doc } from "@/lib/documents"
 
-export function DocumentStatus({ doc, now }: { doc: Doc; now: number }) {
+/** Dipakai juga oleh entri tanya jawab: statusnya ditentukan oleh kolom yang sama. */
+export function DocumentStatus({
+  doc,
+  now,
+}: {
+  doc: Pick<Doc, "is_active" | "valid_until" | "stale">
+  now: number
+}) {
   const expired = isExpired(doc, now)
   return (
     <div className="flex flex-wrap items-center gap-x-3 gap-y-1">

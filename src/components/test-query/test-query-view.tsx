@@ -328,7 +328,12 @@ function RetrievedCard({ hasil }: { hasil: Result }) {
                             )}
                             <span>
                               <span className="font-medium">{chunk.judul}</span>
-                              <span className="text-muted-foreground"> · hal. {chunk.halaman}</span>
+                              {/* Entri tanya jawab tidak berhalaman; "hal. 1" hanya menyesatkan. */}
+                              <span className="text-muted-foreground">
+                                {chunk.jenis === "tanya_jawab"
+                                  ? " · Tanya jawab"
+                                  : ` · hal. ${chunk.halaman}`}
+                              </span>
                             </span>
                           </button>
                         </TableCell>

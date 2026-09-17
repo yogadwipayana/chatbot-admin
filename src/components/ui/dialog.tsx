@@ -51,15 +51,47 @@ function DialogContent({
   className,
   children,
   showCloseButton = true,
+  onEscapeKeyDown,
+  onPointerDownOutside,
+  onInteractOutside,
   ...props
 }: React.ComponentProps<typeof DialogPrimitive.Content> & {
   showCloseButton?: boolean
 }) {
+  /** Popup combobox berada di portalnya sendiri; menekannya bukan berarti
+   * pengguna meninggalkan dialog ini. */
+  const diDalamCombobox = (target: EventTarget | null) =>
+    target instanceof Element && !!target.closest("[data-slot=combobox-content]")
+
   return (
     <DialogPortal>
       <DialogOverlay />
       <DialogPrimitive.Content
         data-slot="dialog-content"
+        onEscapeKeyDown={(event) => {
+          // Popup combobox (Base UI) hidup di portalnya sendiri, di luar pohon
+          // dialog ini, sehingga Radix tidak tahu ada lapisan lain yang lebih
+          // atas. Tanpa penjagaan ini, Escape untuk menutup daftar saran ikut
+          // menutup dialognya -- dan seluruh isian yang sudah diketik hilang.
+          if (document.querySelector("[data-slot=combobox-content]")) {
+            event.preventDefault()
+          }
+          onEscapeKeyDown?.(event)
+        }}
+        onPointerDownOutside={(event) => {
+          if (diDalamCombobox(event.target)) {
+            event.preventDefault()
+            return
+          }
+          onPointerDownOutside?.(event)
+        }}
+        onInteractOutside={(event) => {
+          if (diDalamCombobox(event.target)) {
+            event.preventDefault()
+            return
+          }
+          onInteractOutside?.(event)
+        }}
         className={cn(
           "fixed top-1/2 left-1/2 z-50 grid w-full max-w-[calc(100%-2rem)] -translate-x-1/2 -translate-y-1/2 gap-4 rounded-xl bg-popover p-4 text-sm text-popover-foreground ring-1 ring-foreground/10 duration-100 outline-none sm:max-w-sm data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95",
           className

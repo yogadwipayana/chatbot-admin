@@ -100,6 +100,20 @@ export function formatBytes(bytes: number): string {
   return `${new Intl.NumberFormat(LOCALE, { maximumFractionDigits: 1 }).format(bytes / (1024 * 1024))} MB`
 }
 
+/**
+ * Panjang sebuah rentang dalam kata: "12 hari", "3 bulan", "1 tahun 2 bulan".
+ *
+ * Dibulatkan, karena gunanya memberi rasa lama -- bukan menghitung hari.
+ */
+export function formatLama(hari: number): string {
+  if (hari < 31) return `${formatNumber(hari)} hari`
+  const bulan = Math.round(hari / 30.44)
+  if (bulan < 12) return `${bulan} bulan`
+  const tahun = Math.floor(bulan / 12)
+  const sisa = bulan % 12
+  return sisa ? `${tahun} tahun ${sisa} bulan` : `${tahun} tahun`
+}
+
 export function truncate(text: string, max: number): string {
   return text.length <= max ? text : `${text.slice(0, max - 1).trimEnd()}…`
 }

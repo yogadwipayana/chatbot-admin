@@ -10,9 +10,12 @@ import {
   KeyRoundIcon,
   LogOutIcon,
   MessageCircleQuestionMarkIcon,
+  MessageSquareHeartIcon,
+  MessagesSquareIcon,
   MonitorIcon,
   MoonIcon,
   PowerIcon,
+  SlidersHorizontalIcon,
   SunIcon,
   UsersRoundIcon,
   type LucideIcon,
@@ -76,6 +79,7 @@ const NAV: { label: string; items: NavItem[] }[] = [
     label: "Konten",
     items: [
       { href: "/dokumen", label: "Dokumen", icon: FileTextIcon, min: "staf", badge: "stale" },
+      { href: "/tanya-jawab", label: "Tanya jawab", icon: MessagesSquareIcon, min: "staf" },
       { href: "/uji-coba", label: "Uji coba jawaban", icon: FlaskConicalIcon, min: "staf" },
     ],
   },
@@ -94,7 +98,24 @@ const NAV: { label: string; items: NavItem[] }[] = [
   },
   {
     label: "Pengaturan",
-    items: [{ href: "/admin", label: "Admin", icon: UsersRoundIcon, min: "superadmin" }],
+    items: [
+      { href: "/admin", label: "Admin", icon: UsersRoundIcon, min: "superadmin" },
+      // Isi percakapan, jadi levelnya sama dengan statistik: admin ke atas.
+      {
+        href: "/umpan-balik",
+        label: "Umpan balik",
+        icon: MessageSquareHeartIcon,
+        min: "admin",
+      },
+      // Setelan ambang dan chunking berlaku untuk setiap pertanyaan mahasiswa,
+      // jadi setara kill switch: superadmin saja.
+      {
+        href: "/konfigurasi",
+        label: "Konfigurasi",
+        icon: SlidersHorizontalIcon,
+        min: "superadmin",
+      },
+    ],
   },
 ]
 

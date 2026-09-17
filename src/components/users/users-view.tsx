@@ -12,11 +12,12 @@ import {
   UserPlusIcon,
   UsersRoundIcon,
 } from "lucide-react"
-import { useId, useState, type FormEvent } from "react"
+import { useState, type FormEvent } from "react"
 import { toast } from "sonner"
 
 import { EmptyState, PageHeader, QueryError } from "@/components/common"
 import { StatusLabel } from "@/components/status"
+import { UnitField } from "@/components/unit-field"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import {
   AlertDialog,
@@ -68,9 +69,9 @@ import type { Schemas } from "@/lib/api/client"
 import {
   useCreateUser,
   useDeleteUser,
-  useDocuments,
   useMe,
   useResetPassword,
+  useUnits,
   useUpdateUser,
   useUsers,
 } from "@/lib/api/queries"
@@ -302,9 +303,7 @@ function UserFormDialog({
   const editing = state.mode === "ubah" ? state.user : null
   const create = useCreateUser()
   const update = useUpdateUser()
-  const unitListId = useId()
-  const dokumen = useDocuments({ include_inactive: true, only_stale: false, limit: 200, offset: 0 })
-  const units = [...new Set(dokumen.data?.items.map((d) => d.unit) ?? [])].sort()
+  const units = useUnits()
 
   const [email, setEmail] = useState(editing?.email ?? "")
   const [nama, setNama] = useState(editing?.nama ?? "")
@@ -429,20 +428,14 @@ function UserFormDialog({
                 <span className="font-normal text-muted-foreground">(opsional)</span>
               )}
             </Label>
-            <Input
+            <UnitField
               id="akun-unit"
               required={role === "staf"}
-              maxLength={200}
-              list={unitListId}
-              placeholder="Biro Keuangan"
+              units={units}
               value={unit}
-              onChange={(e) => setUnit(e.target.value)}
+              onChange={setUnit}
+              placeholder="Biro Keuangan"
             />
-            <datalist id={unitListId}>
-              {units.map((u) => (
-                <option key={u} value={u} />
-              ))}
-            </datalist>
             <p className="text-xs text-pretty text-muted-foreground">
               {role === "staf"
                 ? "Staf/dosen hanya dapat melihat dan mengelola dokumen dengan unit ini. Pilih dari saran supaya ejaannya sama persis dengan dokumen yang ada."

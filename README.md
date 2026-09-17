@@ -57,9 +57,12 @@ terdampak -- bukan sebagai layar kosong saat dipakai.
 | `/dokumen` | AD-2 | Daftar dokumen, badge "perlu ditinjau" | unitnya | semua unit | ✓ |
 | `/dokumen/unggah` | AD-3 | Drag & drop, form metadata, progres unggah dan pemrosesan | unitnya (terkunci) | semua unit | ✓ |
 | `/dokumen/[id]` | AD-3 | Ubah metadata, aktif/nonaktif, hapus, pratinjau potongan | unitnya | semua unit | ✓ |
+| `/tanya-jawab` | AD-3 | Pasangan pertanyaan-jawaban tanpa PDF; dipakai chatbot seperti dokumen | unitnya (terkunci) | semua unit | ✓ |
 | `/uji-coba` | AD-6 | Kotak uji: jawaban, keputusan ambang, potongan beserta skor mentah | ✓ | ✓ | ✓ |
 | `/statistik` | AD-5 | Target PRD §3, volume harian, jenis balasan, topik berisiko, biaya | – | ✓ | ✓ |
+| `/umpan-balik` | FE-5 | Penilaian 👍/👎 mahasiswa beserta pertanyaan dan jawaban yang dinilai | – | ✓ | ✓ |
 | `/layanan` | FR-9 | Kill switch dengan alasan wajib dan konfirmasi | – | – | ✓ |
+| `/konfigurasi` | FR-1..FR-3 | Setelan pencarian, ambang menjawab, dan pemecahan dokumen; berlaku tanpa restart | – | – | ✓ |
 | `/admin` | – | Kelola akun: level, unit, aktif/nonaktif, atur ulang kata sandi | – | – | ✓ |
 
 `/` membuka `/dokumen` untuk staf/dosen dan `/pertanyaan` untuk level lain.
@@ -85,6 +88,13 @@ mana pun menghapus token dan mengembalikan ke `/masuk`.
 **Bahasa antarmuka non-teknis** (PRD §9): "potongan", bukan "chunk"; "sedang
 diproses", bukan "embedding in progress". Pesan galat dari API sudah ditulis
 untuk admin dan ditampilkan apa adanya.
+
+**Konfigurasi menimpa `.env`, bukan menggantikannya.** `/konfigurasi` hanya
+menyimpan parameter yang benar-benar diubah; sisanya mengikuti `.env` server.
+Karena itu setiap isian menampilkan nilai servernya dan dapat dikembalikan satu
+per satu, dan tombol "Kembalikan semua" menghapus seluruh penimpaan. Batas
+atas-bawah tiap isian di `config-view.tsx` hanya pagar agar salah ketik
+ketahuan sebelum dikirim -- yang menegakkan tetap API.
 
 **Aksi destruktif butuh konfirmasi** (PRD §9). Hapus dokumen dan mematikan
 layanan memakai dialog; aksi yang dapat dibatalkan (nonaktifkan, tandai

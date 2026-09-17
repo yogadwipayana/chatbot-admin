@@ -4,19 +4,22 @@ import { useQueryClient } from "@tanstack/react-query"
 import { ArrowLeftIcon, FileTextIcon, LoaderCircleIcon, UploadIcon, XIcon } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { useEffect, useId, useRef, useState, type DragEvent, type FormEvent } from "react"
+import { useEffect, useRef, useState, type DragEvent, type FormEvent } from "react"
 import { toast } from "sonner"
 
 import { PageHeader } from "@/components/common"
+import { DateField } from "@/components/date-field"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Progress } from "@/components/ui/progress"
-import { useDocuments, useMe } from "@/lib/api/queries"
+import { UnitField } from "@/components/unit-field"
+import { useMe, useUnits } from "@/lib/api/queries"
 import { uploadDocument } from "@/lib/api/upload"
-import { formatBytes, formatPercent } from "@/lib/format"
+import { useNow } from "@/hooks/use-now"
+import { formatBytes, formatPercent, toDateInput } from "@/lib/format"
 import { cn } from "@/lib/utils"
 
 type Tahap =
@@ -33,7 +36,7 @@ export function UploadView() {
   const router = useRouter()
   const queryClient = useQueryClient()
   const inputRef = useRef<HTMLInputElement>(null)
-  const unitListId = useId()
+  const hariIni = toDateInput(new Date(useNow()))
 
   const [file, setFile] = useState<File | null>(null)
   const [judul, setJudul] = useState("")
@@ -48,10 +51,7 @@ export function UploadView() {
   const [tahap, setTahap] = useState<Tahap>({ status: "diam" })
   const [menyeret, setMenyeret] = useState(false)
 
-  // Saran nama unit dari dokumen yang sudah ada, supaya "Biro Akademik" dan
-  // "Biro Administrasi Akademik" tidak menjadi dua unit berbeda.
-  const semua = useDocuments({ include_inactive: true, only_stale: false, limit: 200, offset: 0 })
-  const units = [...new Set(semua.data?.items.map((d) => d.unit) ?? [])].sort()
+  const units = useUnits()
 
   const sibuk = tahap.status === "mengunggah" || tahap.status === "memproses"
 
@@ -104,7 +104,15 @@ export function UploadView() {
       toast.success("Dokumen terpasang", {
         description: `${hasil.jumlah_halaman} halaman menjadi ${hasil.jumlah_chunk} potongan dan langsung dipakai chatbot.`,
       })
-      router.push(`/dokumen/${hasil.document_id}?baru=1`)
+      // Kalimat lengkapnya dari server, ditampilkan selagi responsnya masih ada;
+      // halaman detail hanya menerima penandanya (lihat `tipis` di URL).
+      const peringatan = hasil.peringatan ?? []
+      for (const pesan of peringatan)
+        toast.warning("Teks dokumen sangat sedikit", {
+          description: pesan,
+          duration: 12000,
+        })
+      router.push(`/dokumen/${hasil.document_id}?baru=1${peringatan.length ? "&tipis=1" : ""}`)
     } catch (error) {
       setTahap({
         status: "gagal",
@@ -217,23 +225,15 @@ export function UploadView() {
               </div>
               <div className="space-y-2 sm:col-span-2">
                 <Label htmlFor="unit">Unit penerbit</Label>
-                <Input
+                <UnitField
                   id="unit"
                   required
-                  minLength={2}
-                  maxLength={200}
-                  list={unitListId}
-                  placeholder="Biro Administrasi Akademik"
+                  units={units}
                   value={unitDipakai}
                   readOnly={unitTerkunci !== null}
                   disabled={sibuk}
-                  onChange={(e) => setUnit(e.target.value)}
+                  onChange={setUnit}
                 />
-                <datalist id={unitListId}>
-                  {units.map((u) => (
-                    <option key={u} value={u} />
-                  ))}
-                </datalist>
                 {unitTerkunci !== null ? (
                   <p className="text-xs text-muted-foreground">
                     Akun Staf/Dosen hanya dapat mengunggah dokumen untuk unitnya sendiri.
@@ -260,12 +260,15 @@ export function UploadView() {
                 <Label htmlFor="valid-until">
                   Berlaku sampai <span className="font-normal text-muted-foreground">(opsional)</span>
                 </Label>
-                <Input
+                <DateField
                   id="valid-until"
-                  type="date"
+                  min={hariIni}
+                  spanFrom={hariIni}
                   value={validUntil}
                   disabled={sibuk}
-                  onChange={(e) => setValidUntil(e.target.value)}
+                  onChange={setValidUntil}
+                  placeholder="Tanpa batas"
+                  clearLabel="Jadikan tanpa batas"
                 />
               </div>
               <p className="text-xs text-pretty text-muted-foreground sm:col-span-2">
