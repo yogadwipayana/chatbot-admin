@@ -893,6 +893,8 @@ export interface components {
             /** @description false berarti kill switch aktif; proses tetap sehat. */
             chat_enabled: boolean;
             kill_switch_reason?: string | null;
+            /** @description Apakah trace FR-8 benar-benar terkirim ke LangSmith. Tracing yang mati tidak menjatuhkan satu pun permintaan, sehingga tanpa baris ini ia hanya ketahuan saat ada jawaban buruk yang jejaknya ternyata tidak pernah ada. */
+            tracing_enabled?: boolean;
         };
         LoginRequest: {
             /** Format: email */
@@ -1177,7 +1179,7 @@ export interface components {
             contacts: components["schemas"]["ContactOut"][];
             escalated: boolean;
             latency_ms: number;
-            /** @description Penghubung ke trace LangSmith. Selalu null sampai tracing dipasang. */
+            /** @description Akar trace LangSmith untuk uji coba ini -- mencakup penulisan ulang query, retrieval, dan penyusunan jawaban sekaligus. Null bila tracing mati (LANGSMITH_TRACING=false atau LANGSMITH_API_KEY kosong). */
             langsmith_run_id?: string | null;
         };
         DailyVolume: {
