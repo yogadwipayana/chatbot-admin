@@ -12,6 +12,7 @@ import { useState } from "react"
 import { toast } from "sonner"
 
 import { PageHeader, QueryError } from "@/components/common"
+import { KillSwitchView } from "@/components/kill-switch/kill-switch-view"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import {
   AlertDialog,
@@ -211,12 +212,13 @@ export function ConfigView() {
         }
       />
 
-      {config.error ? (
-        <QueryError error={config.error} onRetry={() => config.refetch()} />
-      ) : !data ? (
-        <Skeleton className="h-96 w-full max-w-3xl rounded-xl" />
-      ) : (
-        <div className="grid max-w-3xl gap-6">
+      <div className="grid max-w-3xl gap-6">
+        {config.error ? (
+          <QueryError error={config.error} onRetry={() => config.refetch()} />
+        ) : !data ? (
+          <Skeleton className="h-96 w-full rounded-xl" />
+        ) : (
+          <>
           {data.peringatan ? (
             <Alert variant="destructive">
               <TriangleAlertIcon />
@@ -292,8 +294,12 @@ export function ConfigView() {
               Semua setelan masih mengikuti nilai yang tertulis di server.
             </p>
           )}
-        </div>
-      )}
+
+          </>
+        )}
+
+        <KillSwitchView embedded />
+      </div>
 
       <AlertDialog open={konfirmasi} onOpenChange={(open) => !open && !sibuk && setKonfirmasi(false)}>
         <AlertDialogContent>

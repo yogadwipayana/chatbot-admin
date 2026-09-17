@@ -362,6 +362,16 @@ export function useRuntimeConfig() {
   })
 }
 
+export function useCosts(range: StatsRange | null) {
+  return useQuery({
+    queryKey: ["costs", range],
+    queryFn: ({ signal }) =>
+      unwrap(api.GET("/api/admin/costs", { params: { query: range ?? {} }, signal })),
+    enabled: range !== null,
+    placeholderData: keepPreviousData,
+  })
+}
+
 export function useUpdateRuntimeConfig() {
   const queryClient = useQueryClient()
   return useMutation({

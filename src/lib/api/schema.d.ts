@@ -51,10 +51,23 @@ export interface paths {
          *     | Event | Kapan | Data |
          *     |---|---|---|
          *     | `status` | Segera, sebelum retrieval | `{"stage": "mencari dokumen"}` |
+         *     | `status` | Setelah retrieval, sebelum token pertama | `{"stage": "menyusun jawaban"}` |
+         *     | `token` | Berkali-kali, selagi LLM menulis | `{"text": "<potongan jawaban>"}` |
          *     | `message` | Setelah pipeline selesai | Objek `ChatResponse` utuh |
          *     | `done` | Terakhir | `{}` |
          *
          *     Event `status` yang mengisi indikator "mencari dokumen..." di FE-1.
+         *     Tahap kedua menyusul begitu dokumen didapat, supaya indikatornya tidak
+         *     tertinggal di kalimat yang sudah tidak benar selama LLM menyusun
+         *     jawaban.
+         *
+         *     `token` membawa potongan mentah jawaban, bukan jawaban yang bertambah
+         *     panjang: klien merangkainya sendiri. Potongan hanya untuk ditampilkan
+         *     selagi berjalan -- teks final yang sah adalah `text` pada `message`,
+         *     yang juga satu-satunya sumber sitasi dan `message_id`. Jalur yang tidak
+         *     memanggil LLM (penolakan FR-3, pertanyaan sensitif FR-7, sapaan) tidak
+         *     mengirim `token` sama sekali dan langsung sampai ke `message`.
+         *
          *     Klien harus menangani putusnya koneksi di tengah jalan: bila `done`
          *     tidak pernah tiba, perlakukan jawaban sebagai tidak lengkap dan jangan
          *     tampilkan sitasinya.
@@ -537,6 +550,26 @@ export interface paths {
          *     `TIMEZONE` server, bukan UTC. Rentang paling panjang 366 hari.
          */
         get: operations["admin_stats"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/costs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Rincian biaya dan token
+         * @description Menghitung penggunaan token dan estimasi biaya dari kolom `messages.meta`.
+         */
+        get: operations["admin_costs"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1209,6 +1242,50 @@ export interface components {
              */
             latency_p95_ms: number | null;
         };
+        CostByModel: {
+            /** @enum {string} */
+            jenis: "llm_chat" | "embedding_chat" | "embedding_ingestion";
+            model: string;
+            jumlah_panggilan: number;
+            input_tokens: number;
+            output_tokens: number;
+            tokens: number;
+            biaya_usd: number;
+        };
+        DailyCost: {
+            /** Format: date */
+            tanggal: string;
+            jumlah_panggilan: number;
+            llm_tokens: number;
+            embed_tokens: number;
+            biaya_llm_usd: number;
+            biaya_embedding_usd: number;
+            biaya_ingestion_usd: number;
+            biaya_usd: number;
+        };
+        Costs: {
+            /** Format: date */
+            sejak: string;
+            /** Format: date */
+            sampai: string;
+            jumlah_panggilan_llm: number;
+            input_tokens: number;
+            output_tokens: number;
+            total_tokens: number;
+            biaya_usd: number;
+            biaya_llm_usd: number;
+            embed_chat_tokens: number;
+            biaya_embed_chat_usd: number;
+            jumlah_embed_chat: number;
+            usage_log_tokens: number;
+            biaya_usage_log_usd: number;
+            jumlah_usage_log: number;
+            llm_tanpa_biaya: number;
+            embed_chat_tanpa_biaya: number;
+            usage_log_tanpa_biaya: number;
+            rincian_model: components["schemas"]["CostByModel"][];
+            biaya_harian: components["schemas"]["DailyCost"][];
+        };
         KillSwitchRequest: {
             engaged: boolean;
             /** @description Wajib diisi (bukan spasi saja) saat `engaged` true. Diabaikan saat false. */
@@ -1523,6 +1600,15 @@ export interface operations {
                     /**
                      * @example event: status
                      *     data: {"stage": "mencari dokumen"}
+                     *
+                     *     event: status
+                     *     data: {"stage": "menyusun jawaban"}
+                     *
+                     *     event: token
+                     *     data: {"text": "Pengisian KRS dibuka"}
+                     *
+                     *     event: token
+                     *     data: {"text": " 1-7 Agustus 2025"}
                      *
                      *     event: message
                      *     data: {"kind": "answer", "text": "Pengisian KRS dibuka 1-7 Agustus 2025 [Panduan Akademik 2025, hal. 12].", "citations": [{"judul": "Panduan Akademik 2025", "halaman": 12, "document_id": "3f1a...", "file_path": "storage/documents/3f1a....pdf"}], "contacts": [], "escalated": false, "top_score": 0.82}
@@ -2200,6 +2286,40 @@ export interface operations {
             401: components["responses"]["TidakBerwenang"];
             403: components["responses"]["Terlarang"];
             /** @description Rentang tanggal tidak sah (terbalik atau terlalu panjang) */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    admin_costs: {
+        parameters: {
+            query?: {
+                sejak?: string;
+                sampai?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Rincian biaya */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Costs"];
+                };
+            };
+            401: components["responses"]["TidakBerwenang"];
+            403: components["responses"]["Terlarang"];
+            /** @description Rentang tanggal tidak sah */
             422: {
                 headers: {
                     [name: string]: unknown;

@@ -25,9 +25,9 @@ export function KillSwitchBanner() {
             Mahasiswa melihat pesan penutupan{data.reason ? ` · Alasan: ${data.reason}` : ""}
           </span>
         </p>
-        {pathname !== "/layanan" && atLeast(me, "superadmin") ? (
+        {pathname !== "/konfigurasi" && atLeast(me, "superadmin") ? (
           <Button asChild size="sm" variant="outline">
-            <Link href="/layanan">Kelola</Link>
+            <Link href="/konfigurasi">Kelola</Link>
           </Button>
         ) : null}
       </div>

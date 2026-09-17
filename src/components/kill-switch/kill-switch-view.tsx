@@ -27,7 +27,7 @@ import { CLOSED_MESSAGE } from "@/lib/labels"
 
 type Konfirmasi = "matikan" | "nyalakan" | null
 
-export function KillSwitchView() {
+export function KillSwitchView({ embedded = false }: { embedded?: boolean }) {
   const now = useNow()
   const state = useKillSwitch()
   const set = useSetKillSwitch()
@@ -81,10 +81,12 @@ export function KillSwitchView() {
 
   return (
     <>
-      <PageHeader
-        title="Layanan chat"
-        description="Matikan chatbot mahasiswa dengan cepat saat insiden, tanpa menunggu pengelola teknis. Dashboard admin tetap dapat dipakai selama layanan dimatikan."
-      />
+      {!embedded ? (
+        <PageHeader
+          title="Layanan chat"
+          description="Matikan chatbot mahasiswa dengan cepat saat insiden, tanpa menunggu pengelola teknis. Dashboard admin tetap dapat dipakai selama layanan dimatikan."
+        />
+      ) : null}
 
       {state.error ? (
         <QueryError error={state.error} onRetry={() => state.refetch()} />
@@ -92,6 +94,15 @@ export function KillSwitchView() {
         <Skeleton className="h-64 w-full max-w-2xl rounded-xl" />
       ) : (
         <div className="grid max-w-2xl gap-6">
+          {embedded ? (
+            <div>
+              <h2 className="text-lg font-semibold">Layanan chat</h2>
+              <p className="text-sm text-muted-foreground">
+                Matikan chatbot mahasiswa dengan cepat saat insiden. Dashboard admin tetap dapat
+                dipakai selama layanan dimatikan.
+              </p>
+            </div>
+          ) : null}
           <Card>
             <CardHeader>
               <CardTitle>Status saat ini</CardTitle>

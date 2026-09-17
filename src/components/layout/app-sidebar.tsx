@@ -3,6 +3,7 @@
 import { useQueryClient } from "@tanstack/react-query"
 import {
   BotIcon,
+  CircleDollarSignIcon,
   ChartColumnIcon,
   ChevronsUpDownIcon,
   FileTextIcon,
@@ -14,7 +15,6 @@ import {
   MessagesSquareIcon,
   MonitorIcon,
   MoonIcon,
-  PowerIcon,
   SlidersHorizontalIcon,
   SunIcon,
   UsersRoundIcon,
@@ -87,13 +87,7 @@ const NAV: { label: string; items: NavItem[] }[] = [
     label: "Operasional",
     items: [
       { href: "/statistik", label: "Statistik", icon: ChartColumnIcon, min: "admin" },
-      {
-        href: "/layanan",
-        label: "Layanan chat",
-        icon: PowerIcon,
-        min: "superadmin",
-        badge: "killswitch",
-      },
+      { href: "/biaya", label: "Biaya", icon: CircleDollarSignIcon, min: "admin" },
     ],
   },
   {
@@ -114,6 +108,7 @@ const NAV: { label: string; items: NavItem[] }[] = [
         label: "Konfigurasi",
         icon: SlidersHorizontalIcon,
         min: "superadmin",
+        badge: "killswitch",
       },
     ],
   },
