@@ -14,7 +14,7 @@ import {
 import { Button } from "@/components/ui/button"
 import { useDeleteDocument, useUpdateDocument } from "@/lib/api/queries"
 import type { Doc } from "@/lib/documents"
-import { formatNumber } from "@/lib/format"
+import { useFormat, useT } from "@/lib/i18n"
 
 /**
  * Konfirmasi hapus permanen (PRD §9: semua aksi destruktif butuh konfirmasi).
@@ -29,6 +29,8 @@ export function DeleteDocumentDialog({
   onClose: () => void
   onDeleted?: () => void
 }) {
+  const t = useT()
+  const f = useFormat()
   const remove = useDeleteDocument()
   const update = useUpdateDocument()
   const sibuk = remove.isPending || update.isPending
@@ -37,11 +39,11 @@ export function DeleteDocumentDialog({
     if (!doc) return
     remove.mutate(doc.id, {
       onSuccess: () => {
-        toast.success("Dokumen dihapus", { description: doc.judul })
+        toast.success(t.deleteDocument.deleted, { description: doc.judul })
         onClose()
         onDeleted?.()
       },
-      onError: (error) => toast.error("Gagal menghapus", { description: error.message }),
+      onError: (error) => toast.error(t.common.deleteFailed, { description: error.message }),
     })
   }
 
@@ -51,12 +53,12 @@ export function DeleteDocumentDialog({
       { id: doc.id, body: { is_active: false } },
       {
         onSuccess: () => {
-          toast.success("Dokumen dinonaktifkan", {
-            description: "Chatbot berhenti memakainya. Dokumen dapat diaktifkan kembali kapan saja.",
+          toast.success(t.deleteDocument.deactivated, {
+            description: t.deleteDocument.deactivatedBody,
           })
           onClose()
         },
-        onError: (error) => toast.error("Gagal menyimpan", { description: error.message }),
+        onError: (error) => toast.error(t.common.saveFailed, { description: error.message }),
       }
     )
   }
@@ -65,25 +67,21 @@ export function DeleteDocumentDialog({
     <AlertDialog open={doc !== null} onOpenChange={(open) => !open && !sibuk && onClose()}>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Hapus dokumen secara permanen?</AlertDialogTitle>
+          <AlertDialogTitle>{t.deleteDocument.title}</AlertDialogTitle>
           <AlertDialogDescription>
-            “{doc?.judul}” beserta {formatNumber(doc?.jumlah_chunk ?? 0)} potongannya akan dihapus
-            dan tidak dapat dikembalikan. Kartu sitasi pada percakapan lama yang menunjuk
-            dokumen ini tidak akan bisa dibuka lagi.
-            {doc?.is_active
-              ? " Bila hanya ingin menghentikan pemakaiannya, pilih Nonaktifkan saja."
-              : null}
+            {t.deleteDocument.body(doc?.judul ?? "", f.number(doc?.jumlah_chunk ?? 0))}
+            {doc?.is_active ? t.deleteDocument.suggestDeactivate : null}
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel disabled={sibuk}>Batal</AlertDialogCancel>
+          <AlertDialogCancel disabled={sibuk}>{t.common.cancel}</AlertDialogCancel>
           {doc?.is_active ? (
             <Button variant="outline" disabled={sibuk} onClick={nonaktifkan}>
-              Nonaktifkan saja
+              {t.deleteDocument.deactivateInstead}
             </Button>
           ) : null}
           <Button variant="destructive" disabled={sibuk} onClick={hapus}>
-            {remove.isPending ? "Menghapus…" : "Hapus permanen"}
+            {remove.isPending ? t.deleteDocument.deleting : t.documents.deletePermanently}
           </Button>
         </AlertDialogFooter>
       </AlertDialogContent>

@@ -11,14 +11,20 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useToken } from "@/hooks/use-token"
 import { useLogin } from "@/lib/api/queries"
+import { useT } from "@/lib/i18n"
 import { isTokenUsable, setToken } from "@/lib/auth/token"
 
 export function LoginForm({ redirectTo }: { redirectTo: string }) {
+  const t = useT()
   const router = useRouter()
   const token = useToken()
   const login = useLogin()
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
+
+  useEffect(() => {
+    document.title = `${t.auth.pageTitle} · ${t.app.name}`
+  }, [t])
 
   // Sudah punya sesi yang masih berlaku: tidak perlu masuk lagi.
   useEffect(() => {
@@ -44,10 +50,8 @@ export function LoginForm({ redirectTo }: { redirectTo: string }) {
         <div className="mb-2 flex size-10 items-center justify-center rounded-lg bg-primary text-primary-foreground">
           <BotIcon className="size-5" aria-hidden />
         </div>
-        <CardTitle className="text-xl">Dashboard Admin Chatbot</CardTitle>
-        <CardDescription>
-          Masuk untuk mengelola dokumen sumber dan memantau pertanyaan mahasiswa.
-        </CardDescription>
+        <CardTitle className="text-xl">{t.app.name}</CardTitle>
+        <CardDescription>{t.auth.intro}</CardDescription>
       </CardHeader>
       <form onSubmit={onSubmit}>
         <CardContent className="space-y-4">
@@ -57,7 +61,7 @@ export function LoginForm({ redirectTo }: { redirectTo: string }) {
             </Alert>
           ) : null}
           <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
+            <Label htmlFor="email">{t.auth.email}</Label>
             <Input
               id="email"
               type="email"
@@ -69,7 +73,7 @@ export function LoginForm({ redirectTo }: { redirectTo: string }) {
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="password">Kata sandi</Label>
+            <Label htmlFor="password">{t.auth.password}</Label>
             <Input
               id="password"
               type="password"
@@ -82,11 +86,9 @@ export function LoginForm({ redirectTo }: { redirectTo: string }) {
         </CardContent>
         <CardFooter className="mt-6 flex-col items-stretch gap-3">
           <Button type="submit" size="lg" disabled={login.isPending}>
-            {login.isPending ? "Memeriksa…" : "Masuk"}
+            {login.isPending ? t.auth.checking : t.auth.submit}
           </Button>
-          <p className="text-center text-xs text-muted-foreground">
-            Akun admin dibuat oleh pengelola teknis. Lupa kata sandi? Hubungi pengelola teknis.
-          </p>
+          <p className="text-center text-xs text-muted-foreground">{t.auth.help}</p>
         </CardFooter>
       </form>
     </Card>

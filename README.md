@@ -11,7 +11,7 @@ Dashboard untuk admin konten dan pemilik sistem (PRD §9, AD-1..AD-6). Next.js
 cd ../api && uvicorn app.main:app --reload
 
 # 2. Buat akun admin -- kata sandi dibangkitkan dan ditampilkan sekali
-python -m scripts.create_admin admin@kampus.ac.id
+python -m scripts.create_admin admin@instiki.ac.id
 
 # 3. Dashboard
 cd ../admin

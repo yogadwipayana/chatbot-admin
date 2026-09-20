@@ -67,7 +67,8 @@ import {
   useUpdateFaq,
 } from "@/lib/api/queries"
 import { isExpired, staleReason } from "@/lib/documents"
-import { formatDate, formatNumber, formatRelative, toDateInput, truncate } from "@/lib/format"
+import { toDateInput, truncate } from "@/lib/format"
+import { useFormat, useT } from "@/lib/i18n"
 import { cn } from "@/lib/utils"
 
 type Faq = Schemas["FaqEntry"]
@@ -77,6 +78,8 @@ const PAGE_SIZE = 20
 const MAKS_JAWABAN = 5000
 
 export function FaqView() {
+  const t = useT()
+  const f = useFormat()
   const now = useNow()
   const me = useMe().data
   const [includeInactive, setIncludeInactive] = useState(false)
@@ -101,18 +104,18 @@ export function FaqView() {
       { id: entry.id, body: { is_active: aktifkan } },
       {
         onSuccess: () =>
-          toast.success(aktifkan ? "Diaktifkan kembali" : "Dinonaktifkan", {
+          toast.success(aktifkan ? t.faq.activated : t.faq.deactivated, {
             description: aktifkan
               ? isExpired(entry, now)
-                ? "Masa berlakunya sudah habis, jadi chatbot belum memakainya sampai tanggal berlaku diperbarui."
-                : "Chatbot kembali memakainya mulai pertanyaan berikutnya."
-              : "Chatbot berhenti memakainya mulai pertanyaan berikutnya. Isinya tidak dihapus.",
+                ? t.faq.activatedExpired
+                : t.faq.activatedDetail
+              : t.faq.deactivatedDetail,
             action: {
-              label: "Batalkan",
+              label: t.common.undo,
               onClick: () => update.mutate({ id: entry.id, body: { is_active: !aktifkan } }),
             },
           }),
-        onError: (error) => toast.error("Gagal menyimpan", { description: error.message }),
+        onError: (error) => toast.error(t.common.saveFailed, { description: error.message }),
       }
     )
   }
@@ -120,16 +123,14 @@ export function FaqView() {
   return (
     <>
       <PageHeader
-        title="Tanya jawab"
+        title={t.faq.title}
         description={
-          me?.role === "staf"
-            ? `Jawaban siap pakai untuk unit ${me.unit}, tanpa perlu dokumen PDF. Chatbot memakainya persis seperti dokumen resmi, lengkap dengan kartu sumber.`
-            : "Jawaban siap pakai yang Anda tulis sendiri, tanpa perlu dokumen PDF. Chatbot memakainya persis seperti dokumen resmi, lengkap dengan kartu sumber."
+          me?.role === "staf" ? t.faq.descriptionStaff(me.unit ?? "") : t.faq.description
         }
         actions={
           <Button onClick={() => setForm({ mode: "buat" })}>
             <PlusIcon data-icon="inline-start" />
-            Tambah tanya jawab
+            {t.faq.add}
           </Button>
         }
       />
@@ -143,7 +144,7 @@ export function FaqView() {
             setPage(0)
           }}
         />
-        <Label htmlFor="nonaktif">Tampilkan yang nonaktif</Label>
+        <Label htmlFor="nonaktif">{t.documents.showInactive}</Label>
       </div>
 
       {query.error ? (
@@ -153,9 +154,9 @@ export function FaqView() {
       ) : !data || data.items.length === 0 ? (
         <EmptyState
           icon={MessagesSquareIcon}
-          title="Belum ada tanya jawab"
-          description="Tulis pertanyaan yang sering masuk beserta jawabannya. Begitu tersimpan, chatbot langsung memakainya — tidak perlu menunggu dokumen resmi terbit."
-          action={<Button onClick={() => setForm({ mode: "buat" })}>Tambah yang pertama</Button>}
+          title={t.faq.empty}
+          description={t.faq.emptyBody}
+          action={<Button onClick={() => setForm({ mode: "buat" })}>{t.faq.emptyAction}</Button>}
         />
       ) : (
         <div className={cn("transition-opacity", query.isPlaceholderData && "opacity-60")}>
@@ -163,13 +164,13 @@ export function FaqView() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="min-w-80 pl-4">Pertanyaan dan jawaban</TableHead>
-                  <TableHead className="min-w-32">Unit</TableHead>
-                  <TableHead className="min-w-44">Status</TableHead>
-                  <TableHead>Berlaku sampai</TableHead>
-                  <TableHead>Diperbarui</TableHead>
+                  <TableHead className="min-w-80 pl-4">{t.faq.columns.entry}</TableHead>
+                  <TableHead className="min-w-32">{t.faq.columns.unit}</TableHead>
+                  <TableHead className="min-w-44">{t.documents.columns.status}</TableHead>
+                  <TableHead>{t.documents.columns.validUntil}</TableHead>
+                  <TableHead>{t.documents.columns.updated}</TableHead>
                   <TableHead className="w-12 pr-4">
-                    <span className="sr-only">Aksi</span>
+                    <span className="sr-only">{t.documents.columns.actions}</span>
                   </TableHead>
                 </TableRow>
               </TableHeader>
@@ -197,14 +198,16 @@ export function FaqView() {
                       <TableCell className="whitespace-normal">
                         <DocumentStatus doc={entry} now={now} />
                         {entry.is_active && alasan ? (
-                          <p className="mt-1 max-w-56 text-xs text-muted-foreground">{alasan}</p>
+                          <p className="mt-1 max-w-56 text-xs text-muted-foreground">
+                            {t.docStatus.stale[alasan]}
+                          </p>
                         ) : null}
                       </TableCell>
                       <TableCell>
-                        {entry.valid_until ? formatDate(entry.valid_until) : "Tanpa batas"}
+                        {entry.valid_until ? f.date(entry.valid_until) : t.documents.noExpiry}
                       </TableCell>
-                      <TableCell title={formatDate(entry.updated_at)}>
-                        {formatRelative(entry.updated_at, now)}
+                      <TableCell title={f.date(entry.updated_at)}>
+                        {f.relative(entry.updated_at, now)}
                       </TableCell>
                       <TableCell className="pr-4">
                         <DropdownMenu>
@@ -213,29 +216,29 @@ export function FaqView() {
                               variant="ghost"
                               size="icon-sm"
                               disabled={update.isPending && update.variables?.id === entry.id}
-                              aria-label={`Aksi untuk ${truncate(entry.pertanyaan, 50)}`}
+                              aria-label={t.faq.rowActions(truncate(entry.pertanyaan, 50))}
                             >
                               <EllipsisIcon />
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
                             <DropdownMenuItem onSelect={() => setForm({ mode: "ubah", entry })}>
-                              <PencilIcon /> Ubah
+                              <PencilIcon /> {t.faq.edit}
                             </DropdownMenuItem>
                             <DropdownMenuItem onSelect={() => alihAktif(entry)}>
                               {entry.is_active ? (
                                 <>
-                                  <EyeOffIcon /> Nonaktifkan
+                                  <EyeOffIcon /> {t.documents.deactivate}
                                 </>
                               ) : (
                                 <>
-                                  <EyeIcon /> Aktifkan
+                                  <EyeIcon /> {t.documents.activate}
                                 </>
                               )}
                             </DropdownMenuItem>
                             <DropdownMenuSeparator />
                             <DropdownMenuItem variant="destructive" onSelect={() => setHapus(entry)}>
-                              <Trash2Icon /> Hapus permanen
+                              <Trash2Icon /> {t.documents.deletePermanently}
                             </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
@@ -250,8 +253,11 @@ export function FaqView() {
           {total > PAGE_SIZE ? (
             <div className="mt-4 flex items-center justify-between gap-4 text-sm text-muted-foreground">
               <span>
-                {formatNumber(page * PAGE_SIZE + 1)}–
-                {formatNumber(Math.min((page + 1) * PAGE_SIZE, total))} dari {formatNumber(total)}
+                {t.documents.range(
+                  f.number(page * PAGE_SIZE + 1),
+                  f.number(Math.min((page + 1) * PAGE_SIZE, total)),
+                  f.number(total)
+                )}
               </span>
               <div className="flex gap-2">
                 <Button
@@ -261,7 +267,7 @@ export function FaqView() {
                   onClick={() => setPage((p) => p - 1)}
                 >
                   <ChevronLeftIcon data-icon="inline-start" />
-                  Sebelumnya
+                  {t.documents.previous}
                 </Button>
                 <Button
                   variant="outline"
@@ -269,7 +275,7 @@ export function FaqView() {
                   disabled={page >= halamanTerakhir}
                   onClick={() => setPage((p) => p + 1)}
                 >
-                  Berikutnya
+                  {t.documents.next}
                   <ChevronRightIcon data-icon="inline-end" />
                 </Button>
               </div>
@@ -291,6 +297,8 @@ export function FaqView() {
 }
 
 function FaqFormDialog({ state, onClose }: { state: FormState; onClose: () => void }) {
+  const t = useT()
+  const f = useFormat()
   const editing = state.mode === "ubah" ? state.entry : null
   const hariIni = toDateInput(new Date(useNow()))
   const create = useCreateFaq()
@@ -326,11 +334,11 @@ function FaqFormDialog({ state, onClose }: { state: FormState; onClose: () => vo
         },
         {
           onSuccess: (entry) => {
-            toast.success("Tanya jawab ditambahkan", {
+            toast.success(t.faq.form.added, {
               description:
                 entry.jumlah_chunk > 1
-                  ? `Jawaban dipecah menjadi ${entry.jumlah_chunk} potongan dan langsung dipakai chatbot.`
-                  : "Chatbot langsung memakainya untuk pertanyaan berikutnya.",
+                  ? t.faq.form.addedChunks(entry.jumlah_chunk)
+                  : t.faq.form.addedSingle,
             })
             onClose()
           },
@@ -353,11 +361,9 @@ function FaqFormDialog({ state, onClose }: { state: FormState; onClose: () => vo
       { id: editing.id, body },
       {
         onSuccess: () => {
-          toast.success("Tersimpan", {
+          toast.success(t.faq.form.saved, {
             description:
-              body.pertanyaan || body.jawaban
-                ? "Isinya diindeks ulang, jadi chatbot memakai versi baru mulai pertanyaan berikutnya."
-                : undefined,
+              body.pertanyaan || body.jawaban ? t.faq.form.savedReindexed : undefined,
           })
           onClose()
         },
@@ -371,11 +377,8 @@ function FaqFormDialog({ state, onClose }: { state: FormState; onClose: () => vo
       <DialogContent className="sm:max-w-2xl">
         <form onSubmit={simpan} className="grid gap-4">
           <DialogHeader>
-            <DialogTitle>{editing ? "Ubah tanya jawab" : "Tambah tanya jawab"}</DialogTitle>
-            <DialogDescription>
-              Pertanyaannya ikut tampil sebagai judul sumber pada jawaban yang dibaca mahasiswa,
-              jadi tulis seperti mereka menanyakannya.
-            </DialogDescription>
+            <DialogTitle>{editing ? t.faq.form.editTitle : t.faq.form.addTitle}</DialogTitle>
+            <DialogDescription>{t.faq.form.description}</DialogDescription>
           </DialogHeader>
 
           {galat ? (
@@ -385,7 +388,7 @@ function FaqFormDialog({ state, onClose }: { state: FormState; onClose: () => vo
           ) : null}
 
           <div className="space-y-2">
-            <Label htmlFor="faq-pertanyaan">Pertanyaan</Label>
+            <Label htmlFor="faq-pertanyaan">{t.faq.form.question}</Label>
             <Textarea
               id="faq-pertanyaan"
               required
@@ -393,7 +396,7 @@ function FaqFormDialog({ state, onClose }: { state: FormState; onClose: () => vo
               rows={2}
               minLength={5}
               maxLength={500}
-              placeholder="Bagaimana cara mengurus KTM yang hilang?"
+              placeholder={t.faq.form.questionPlaceholder}
               value={pertanyaan}
               disabled={sibuk}
               onChange={(e) => setPertanyaan(e.target.value)}
@@ -401,32 +404,29 @@ function FaqFormDialog({ state, onClose }: { state: FormState; onClose: () => vo
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="faq-jawaban">Jawaban</Label>
+            <Label htmlFor="faq-jawaban">{t.faq.form.answer}</Label>
             <Textarea
               id="faq-jawaban"
               required
               rows={7}
               minLength={10}
               maxLength={MAKS_JAWABAN}
-              placeholder="Laporkan kehilangan ke kepolisian, lalu bawa surat kehilangan beserta fotokopi KTP ke loket 3."
+              placeholder={t.faq.form.answerPlaceholder}
               value={jawaban}
               disabled={sibuk}
               onChange={(e) => setJawaban(e.target.value)}
             />
             <p className="flex justify-between gap-4 text-xs text-muted-foreground">
-              <span className="text-pretty">
-                Tulis lengkap dalam kalimat utuh. Chatbot hanya boleh menjawab dari yang tertulis di
-                sini, dan tidak akan menyimpulkan sendiri.
-              </span>
+              <span className="text-pretty">{t.faq.form.answerHint}</span>
               <span className="shrink-0 tabular-nums">
-                {formatNumber(jawaban.length)}/{formatNumber(MAKS_JAWABAN)}
+                {f.number(jawaban.length)}/{f.number(MAKS_JAWABAN)}
               </span>
             </p>
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
-              <Label htmlFor="faq-unit">Unit</Label>
+              <Label htmlFor="faq-unit">{t.faq.columns.unit}</Label>
               <UnitField
                 id="faq-unit"
                 required
@@ -437,14 +437,13 @@ function FaqFormDialog({ state, onClose }: { state: FormState; onClose: () => vo
                 onChange={setUnit}
               />
               <p className="text-xs text-pretty text-muted-foreground">
-                {unitTerkunci !== null
-                  ? "Akun Staf/Dosen hanya dapat mengelola isi unitnya sendiri."
-                  : "Unit yang bertanggung jawab atas jawaban ini."}
+                {unitTerkunci !== null ? t.faq.form.unitLocked : t.faq.form.unitHint}
               </p>
             </div>
             <div className="space-y-2">
               <Label htmlFor="faq-valid-until">
-                Berlaku sampai <span className="font-normal text-muted-foreground">(opsional)</span>
+                {t.upload.validUntil}{" "}
+                <span className="font-normal text-muted-foreground">{t.upload.optional}</span>
               </Label>
               <DateField
                 id="faq-valid-until"
@@ -453,22 +452,19 @@ function FaqFormDialog({ state, onClose }: { state: FormState; onClose: () => vo
                 value={validUntil}
                 disabled={sibuk}
                 onChange={setValidUntil}
-                placeholder="Tanpa batas"
-                clearLabel="Jadikan tanpa batas"
+                placeholder={t.upload.noExpiry}
+                clearLabel={t.upload.clearExpiry}
               />
-              <p className="text-xs text-pretty text-muted-foreground">
-                Setelah tanggal ini chatbot otomatis berhenti memakainya. Kosongkan bila berlaku
-                tanpa batas.
-              </p>
+              <p className="text-xs text-pretty text-muted-foreground">{t.faq.form.expiryHint}</p>
             </div>
           </div>
 
           <DialogFooter>
             <Button type="button" variant="outline" onClick={onClose} disabled={sibuk}>
-              Batal
+              {t.common.cancel}
             </Button>
             <Button type="submit" disabled={sibuk}>
-              {sibuk ? "Menyimpan…" : editing ? "Simpan" : "Tambah"}
+              {sibuk ? t.common.saving : editing ? t.common.save : t.faq.form.submitAdd}
             </Button>
           </DialogFooter>
         </form>
@@ -478,16 +474,19 @@ function FaqFormDialog({ state, onClose }: { state: FormState; onClose: () => vo
 }
 
 function DeleteFaqDialog({ entry, onClose }: { entry: Faq | null; onClose: () => void }) {
+  const t = useT()
   const remove = useDeleteFaq()
 
   function hapus() {
     if (!entry) return
     remove.mutate(entry.id, {
       onSuccess: () => {
-        toast.success("Tanya jawab dihapus", { description: `“${truncate(entry.pertanyaan, 70)}”` })
+        toast.success(t.faq.remove.deleted, {
+          description: `“${truncate(entry.pertanyaan, 70)}”`,
+        })
         onClose()
       },
-      onError: (error) => toast.error("Gagal menghapus", { description: error.message }),
+      onError: (error) => toast.error(t.common.deleteFailed, { description: error.message }),
     })
   }
 
@@ -498,17 +497,15 @@ function DeleteFaqDialog({ entry, onClose }: { entry: Faq | null; onClose: () =>
     >
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Hapus tanya jawab ini?</AlertDialogTitle>
+          <AlertDialogTitle>{t.faq.remove.title}</AlertDialogTitle>
           <AlertDialogDescription>
-            “{entry ? truncate(entry.pertanyaan, 100) : ""}” dihapus permanen beserta indeksnya dan
-            tidak dapat dikembalikan. Untuk sekadar menghentikan pemakaiannya, pilih Nonaktifkan
-            saja.
+            {t.faq.remove.body(entry ? truncate(entry.pertanyaan, 100) : "")}
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel disabled={remove.isPending}>Batal</AlertDialogCancel>
+          <AlertDialogCancel disabled={remove.isPending}>{t.common.cancel}</AlertDialogCancel>
           <Button variant="destructive" onClick={hapus} disabled={remove.isPending}>
-            {remove.isPending ? "Menghapus…" : "Hapus"}
+            {remove.isPending ? t.faq.remove.deleting : t.faq.remove.confirm}
           </Button>
         </AlertDialogFooter>
       </AlertDialogContent>

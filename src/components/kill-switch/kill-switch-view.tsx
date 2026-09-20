@@ -22,12 +22,13 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { Textarea } from "@/components/ui/textarea"
 import { useNow } from "@/hooks/use-now"
 import { useKillSwitch, useSetKillSwitch } from "@/lib/api/queries"
-import { formatDateTime, formatRelative } from "@/lib/format"
-import { CLOSED_MESSAGE } from "@/lib/labels"
+import { useFormat, useT } from "@/lib/i18n"
 
 type Konfirmasi = "matikan" | "nyalakan" | null
 
 export function KillSwitchView({ embedded = false }: { embedded?: boolean }) {
+  const t = useT()
+  const f = useFormat()
   const now = useNow()
   const state = useKillSwitch()
   const set = useSetKillSwitch()
@@ -43,11 +44,10 @@ export function KillSwitchView({ embedded = false }: { embedded?: boolean }) {
         onSuccess: () => {
           setKonfirmasi(null)
           setAlasan("")
-          toast.success("Layanan chat dimatikan", {
-            description: "Mahasiswa kini melihat pesan penutupan.",
-          })
+          toast.success(t.killSwitch.turnedOff, { description: t.killSwitch.turnedOffBody })
         },
-        onError: (error) => toast.error("Gagal mematikan layanan", { description: error.message }),
+        onError: (error) =>
+          toast.error(t.killSwitch.failedOff, { description: error.message }),
       }
     )
   }
@@ -58,9 +58,10 @@ export function KillSwitchView({ embedded = false }: { embedded?: boolean }) {
       {
         onSuccess: () => {
           setKonfirmasi(null)
-          toast.success("Layanan chat aktif kembali")
+          toast.success(t.killSwitch.turnedOn)
         },
-        onError: (error) => toast.error("Gagal menyalakan layanan", { description: error.message }),
+        onError: (error) =>
+          toast.error(t.killSwitch.failedOn, { description: error.message }),
       }
     )
   }
@@ -72,9 +73,9 @@ export function KillSwitchView({ embedded = false }: { embedded?: boolean }) {
       {
         onSuccess: () => {
           setAlasan("")
-          toast.success("Catatan insiden diperbarui")
+          toast.success(t.killSwitch.noteSaved)
         },
-        onError: (error) => toast.error("Gagal menyimpan", { description: error.message }),
+        onError: (error) => toast.error(t.common.saveFailed, { description: error.message }),
       }
     )
   }
@@ -83,8 +84,8 @@ export function KillSwitchView({ embedded = false }: { embedded?: boolean }) {
     <>
       {!embedded ? (
         <PageHeader
-          title="Layanan chat"
-          description="Matikan chatbot mahasiswa dengan cepat saat insiden, tanpa menunggu pengelola teknis. Dashboard admin tetap dapat dipakai selama layanan dimatikan."
+          title={t.killSwitch.title}
+          description={t.killSwitch.description}
         />
       ) : null}
 
@@ -96,50 +97,51 @@ export function KillSwitchView({ embedded = false }: { embedded?: boolean }) {
         <div className="grid max-w-2xl gap-6">
           {embedded ? (
             <div>
-              <h2 className="text-lg font-semibold">Layanan chat</h2>
+              <h2 className="text-lg font-semibold">{t.killSwitch.title}</h2>
               <p className="text-sm text-muted-foreground">
-                Matikan chatbot mahasiswa dengan cepat saat insiden. Dashboard admin tetap dapat
-                dipakai selama layanan dimatikan.
+                {t.killSwitch.embeddedDescription}
               </p>
             </div>
           ) : null}
           <Card>
             <CardHeader>
-              <CardTitle>Status saat ini</CardTitle>
+              <CardTitle>{t.killSwitch.statusTitle}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               {data.engaged ? (
                 <>
                   <StatusLabel level="critical" className="text-base font-medium">
-                    Layanan chat dimatikan
+                    {t.killSwitch.off}
                   </StatusLabel>
                   <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 text-sm">
                     {data.engaged_at ? (
                       <>
-                        <dt className="text-muted-foreground">Sejak</dt>
+                        <dt className="text-muted-foreground">{t.killSwitch.since}</dt>
                         <dd>
-                          {formatDateTime(data.engaged_at)}{" "}
+                          {f.dateTime(data.engaged_at)}{" "}
                           <span className="text-muted-foreground">
-                            ({formatRelative(data.engaged_at, now)})
+                            ({f.relative(data.engaged_at, now)})
                           </span>
                         </dd>
                       </>
                     ) : null}
-                    <dt className="text-muted-foreground">Oleh</dt>
-                    <dd className="min-w-0 break-words">{data.engaged_by ?? "Tidak tercatat"}</dd>
-                    <dt className="text-muted-foreground">Alasan</dt>
+                    <dt className="text-muted-foreground">{t.killSwitch.by}</dt>
+                    <dd className="min-w-0 break-words">
+                      {data.engaged_by ?? t.killSwitch.notRecorded}
+                    </dd>
+                    <dt className="text-muted-foreground">{t.killSwitch.reason}</dt>
                     <dd className="min-w-0 break-words">{data.reason}</dd>
                   </dl>
                   <div className="rounded-lg bg-muted/60 p-3 text-sm">
                     <p className="mb-1 text-xs font-medium text-muted-foreground">
-                      Yang dilihat mahasiswa
+                      {t.killSwitch.studentSees}
                     </p>
-                    <p>“{CLOSED_MESSAGE}”</p>
+                    <p>“{t.labels.closedMessage}”</p>
                   </div>
                 </>
               ) : (
                 <StatusLabel level="good" className="text-base font-medium">
-                  Layanan chat aktif: mahasiswa dapat bertanya seperti biasa
+                  {t.killSwitch.on}
                 </StatusLabel>
               )}
             </CardContent>
@@ -147,7 +149,7 @@ export function KillSwitchView({ embedded = false }: { embedded?: boolean }) {
               <CardFooter>
                 <Button onClick={() => setKonfirmasi("nyalakan")} disabled={set.isPending}>
                   <PowerIcon data-icon="inline-start" />
-                  Nyalakan kembali layanan chat
+                  {t.killSwitch.turnOn}
                 </Button>
               </CardFooter>
             ) : null}
@@ -156,15 +158,13 @@ export function KillSwitchView({ embedded = false }: { embedded?: boolean }) {
           {data.engaged ? (
             <Card>
               <CardHeader>
-                <CardTitle>Perbarui catatan insiden</CardTitle>
-                <CardDescription>
-                  Lengkapi alasan bila penyebabnya sudah lebih jelas. Waktu mulai insiden tidak berubah.
-                </CardDescription>
+                <CardTitle>{t.killSwitch.updateTitle}</CardTitle>
+                <CardDescription>{t.killSwitch.updateDescription}</CardDescription>
               </CardHeader>
               <form onSubmit={perbaruiAlasan}>
                 <CardContent>
                   <Label htmlFor="alasan-baru" className="sr-only">
-                    Alasan baru
+                    {t.killSwitch.newReason}
                   </Label>
                   <Textarea
                     id="alasan-baru"
@@ -176,7 +176,7 @@ export function KillSwitchView({ embedded = false }: { embedded?: boolean }) {
                 </CardContent>
                 <CardFooter className="mt-4 justify-end">
                   <Button type="submit" variant="outline" disabled={!alasan.trim() || set.isPending}>
-                    Simpan catatan
+                    {t.killSwitch.saveNote}
                   </Button>
                 </CardFooter>
               </form>
@@ -184,11 +184,8 @@ export function KillSwitchView({ embedded = false }: { embedded?: boolean }) {
           ) : (
             <Card>
               <CardHeader>
-                <CardTitle>Matikan layanan chat</CardTitle>
-                <CardDescription>
-                  Gunakan bila chatbot memberi jawaban keliru pada informasi penting, disalahgunakan,
-                  atau biaya API melonjak.
-                </CardDescription>
+                <CardTitle>{t.killSwitch.turnOffTitle}</CardTitle>
+                <CardDescription>{t.killSwitch.turnOffDescription}</CardDescription>
               </CardHeader>
               <form
                 onSubmit={(e) => {
@@ -197,13 +194,13 @@ export function KillSwitchView({ embedded = false }: { embedded?: boolean }) {
                 }}
               >
                 <CardContent className="space-y-2">
-                  <Label htmlFor="alasan">Alasan (wajib, untuk catatan insiden)</Label>
+                  <Label htmlFor="alasan">{t.killSwitch.reasonLabel}</Label>
                   <Textarea
                     id="alasan"
                     required
                     maxLength={500}
                     rows={3}
-                    placeholder="Contoh: chatbot menyebut batas pembayaran UKT yang salah"
+                    placeholder={t.killSwitch.reasonPlaceholder}
                     value={alasan}
                     onChange={(e) => setAlasan(e.target.value)}
                   />
@@ -211,7 +208,7 @@ export function KillSwitchView({ embedded = false }: { embedded?: boolean }) {
                 <CardFooter className="mt-4 justify-end">
                   <Button type="submit" variant="destructive" disabled={!alasan.trim() || set.isPending}>
                     <PowerOffIcon data-icon="inline-start" />
-                    Matikan layanan chat
+                    {t.killSwitch.turnOffTitle}
                   </Button>
                 </CardFooter>
               </form>
@@ -220,17 +217,15 @@ export function KillSwitchView({ embedded = false }: { embedded?: boolean }) {
 
           <Card>
             <CardHeader>
-              <CardTitle>Catatan</CardTitle>
+              <CardTitle>{t.killSwitch.notesTitle}</CardTitle>
             </CardHeader>
             <CardContent>
               <ul className="list-disc space-y-2 pl-4 text-sm text-pretty text-muted-foreground">
+                <li>{t.killSwitch.notes.test}</li>
                 <li>
-                  Kill switch wajib diuji sebelum rilis (PRD §14): matikan layanan, buka chatbot
-                  mahasiswa dan pastikan pesan penutupan muncul, lalu nyalakan kembali.
-                </li>
-                <li>
-                  Status ini tersimpan di memori server. Bila server dijalankan ulang, status kembali
-                  mengikuti pengaturan <code className="text-foreground">KILL_SWITCH_ENABLED</code>.
+                  {t.killSwitch.notes.memoryLead}
+                  <code className="text-foreground">KILL_SWITCH_ENABLED</code>
+                  {t.killSwitch.notes.memoryTail}
                 </li>
               </ul>
             </CardContent>
@@ -245,23 +240,25 @@ export function KillSwitchView({ embedded = false }: { embedded?: boolean }) {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>
-              {konfirmasi === "matikan" ? "Matikan layanan chat sekarang?" : "Nyalakan kembali layanan chat?"}
+              {konfirmasi === "matikan"
+                ? t.killSwitch.confirmOffTitle
+                : t.killSwitch.confirmOnTitle}
             </AlertDialogTitle>
             <AlertDialogDescription>
               {konfirmasi === "matikan"
-                ? `Semua mahasiswa langsung berhenti mendapat jawaban dan melihat: “${CLOSED_MESSAGE}”`
-                : "Pastikan penyebab insiden sudah ditangani. Mahasiswa langsung dapat bertanya lagi."}
+                ? t.killSwitch.confirmOffBody(t.labels.closedMessage)
+                : t.killSwitch.confirmOnBody}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={set.isPending}>Batal</AlertDialogCancel>
+            <AlertDialogCancel disabled={set.isPending}>{t.common.cancel}</AlertDialogCancel>
             {konfirmasi === "matikan" ? (
               <Button variant="destructive" disabled={set.isPending} onClick={matikan}>
-                {set.isPending ? "Mematikan…" : "Ya, matikan"}
+                {set.isPending ? t.killSwitch.turningOff : t.killSwitch.confirmOff}
               </Button>
             ) : (
               <Button disabled={set.isPending} onClick={nyalakan}>
-                {set.isPending ? "Menyalakan…" : "Ya, nyalakan"}
+                {set.isPending ? t.killSwitch.turningOn : t.killSwitch.confirmOn}
               </Button>
             )}
           </AlertDialogFooter>

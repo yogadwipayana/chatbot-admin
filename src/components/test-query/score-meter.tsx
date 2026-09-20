@@ -1,5 +1,7 @@
+"use client"
+
 import { StatusLabel } from "@/components/status"
-import { formatScore } from "@/lib/format"
+import { useFormat, useT } from "@/lib/i18n"
 
 /**
  * Skor mentah terhadap ambang penolakan (FR-3).
@@ -20,6 +22,8 @@ export function ScoreMeter({
   threshold: number
   max: number
 }) {
+  const t = useT()
+  const f = useFormat()
   const skala = max > 0 ? max : 1
   const isi = score == null ? 0 : Math.min(score / skala, 1) * 100
   const posisiAmbang = Math.min(threshold / skala, 1) * 100
@@ -33,8 +37,10 @@ export function ScoreMeter({
           <p className="text-xs text-muted-foreground">{hint}</p>
         </div>
         <p className="text-sm tabular-nums">
-          <span className="font-semibold">{score == null ? "—" : formatScore(score)}</span>
-          <span className="text-muted-foreground"> / ambang {formatScore(threshold)}</span>
+          <span className="font-semibold">{score == null ? "—" : f.score(score)}</span>
+          <span className="text-muted-foreground">
+            {t.scoreMeter.versusThreshold(f.score(threshold))}
+          </span>
         </p>
       </div>
       <div className="relative h-2.5" aria-hidden>
@@ -47,11 +53,7 @@ export function ScoreMeter({
         />
       </div>
       <StatusLabel level={lolos ? "good" : "serious"} className="text-xs">
-        {score == null
-          ? "Tidak ada potongan dari sumber ini"
-          : lolos
-            ? "Mencapai ambang"
-            : "Di bawah ambang"}
+        {score == null ? t.scoreMeter.none : lolos ? t.scoreMeter.passed : t.scoreMeter.below}
       </StatusLabel>
     </div>
   )

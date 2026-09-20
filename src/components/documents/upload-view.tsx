@@ -19,7 +19,8 @@ import { UnitField } from "@/components/unit-field"
 import { useMe, useUnits } from "@/lib/api/queries"
 import { uploadDocument } from "@/lib/api/upload"
 import { useNow } from "@/hooks/use-now"
-import { formatBytes, formatPercent, toDateInput } from "@/lib/format"
+import { useFormat, useT } from "@/lib/i18n"
+import { toDateInput } from "@/lib/format"
 import { cn } from "@/lib/utils"
 
 type Tahap =
@@ -33,6 +34,8 @@ function pdf(file: File) {
 }
 
 export function UploadView() {
+  const t = useT()
+  const f = useFormat()
   const router = useRouter()
   const queryClient = useQueryClient()
   const inputRef = useRef<HTMLInputElement>(null)
@@ -65,10 +68,7 @@ export function UploadView() {
   function pilih(berkas: File | undefined) {
     if (!berkas) return
     if (!pdf(berkas)) {
-      setTahap({
-        status: "gagal",
-        pesan: `'${berkas.name}' bukan berkas PDF. Unggah dokumen dalam format PDF.`,
-      })
+      setTahap({ status: "gagal", pesan: t.upload.notPdf(berkas.name) })
       return
     }
     setFile(berkas)
@@ -101,14 +101,14 @@ export function UploadView() {
         }
       )
       await queryClient.invalidateQueries({ queryKey: ["documents"] })
-      toast.success("Dokumen terpasang", {
-        description: `${hasil.jumlah_halaman} halaman menjadi ${hasil.jumlah_chunk} potongan dan langsung dipakai chatbot.`,
+      toast.success(t.upload.installed, {
+        description: t.upload.installedBody(hasil.jumlah_halaman, hasil.jumlah_chunk),
       })
       // Kalimat lengkapnya dari server, ditampilkan selagi responsnya masih ada;
       // halaman detail hanya menerima penandanya (lihat `tipis` di URL).
       const peringatan = hasil.peringatan ?? []
       for (const pesan of peringatan)
-        toast.warning("Teks dokumen sangat sedikit", {
+        toast.warning(t.upload.thinWarning, {
           description: pesan,
           duration: 12000,
         })
@@ -116,7 +116,7 @@ export function UploadView() {
     } catch (error) {
       setTahap({
         status: "gagal",
-        pesan: error instanceof Error ? error.message : "Unggahan gagal.",
+        pesan: error instanceof Error ? error.message : t.upload.failedGeneric,
       })
     }
   }
@@ -126,19 +126,19 @@ export function UploadView() {
       <Button variant="ghost" size="sm" asChild className="mb-2 -ml-2">
         <Link href="/dokumen">
           <ArrowLeftIcon data-icon="inline-start" />
-          Dokumen
+          {t.upload.back}
         </Link>
       </Button>
       <PageHeader
-        title="Unggah dokumen"
-        description="Setelah diunggah, dokumen dibaca, dipecah menjadi potongan pendek, dan diindeks. Chatbot langsung memakainya untuk pertanyaan berikutnya."
+        title={t.upload.title}
+        description={t.upload.description}
       />
 
       <div className="grid gap-6 lg:grid-cols-3">
         <form onSubmit={kirim} className="space-y-6 lg:col-span-2">
           <Card>
             <CardHeader>
-              <CardTitle>Berkas PDF</CardTitle>
+              <CardTitle>{t.upload.fileCard}</CardTitle>
             </CardHeader>
             <CardContent>
               {file ? (
@@ -146,7 +146,7 @@ export function UploadView() {
                   <FileTextIcon className="size-8 shrink-0 text-muted-foreground" aria-hidden />
                   <div className="min-w-0 flex-1">
                     <p className="truncate font-medium">{file.name}</p>
-                    <p className="text-xs text-muted-foreground">{formatBytes(file.size)}</p>
+                    <p className="text-xs text-muted-foreground">{f.bytes(file.size)}</p>
                   </div>
                   <Button
                     type="button"
@@ -154,7 +154,7 @@ export function UploadView() {
                     size="icon-sm"
                     disabled={sibuk}
                     onClick={() => setFile(null)}
-                    aria-label="Ganti berkas"
+                    aria-label={t.upload.replaceFile}
                   >
                     <XIcon />
                   </Button>
@@ -182,10 +182,8 @@ export function UploadView() {
                   )}
                 >
                   <UploadIcon className="size-6 text-muted-foreground" aria-hidden />
-                  <p className="font-medium">Seret PDF ke sini, atau klik untuk memilih</p>
-                  <p className="text-xs text-muted-foreground">
-                    Hanya PDF digital. PDF hasil scan tanpa lapisan teks akan ditolak.
-                  </p>
+                  <p className="font-medium">{t.upload.dropzone}</p>
+                  <p className="text-xs text-muted-foreground">{t.upload.dropzoneHint}</p>
                 </div>
               )}
               <input
@@ -204,27 +202,25 @@ export function UploadView() {
 
           <Card>
             <CardHeader>
-              <CardTitle>Informasi dokumen</CardTitle>
-              <CardDescription>
-                Judul ditampilkan apa adanya pada kartu sumber yang dilihat mahasiswa.
-              </CardDescription>
+              <CardTitle>{t.upload.infoCard}</CardTitle>
+              <CardDescription>{t.upload.infoCardHint}</CardDescription>
             </CardHeader>
             <CardContent className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2 sm:col-span-2">
-                <Label htmlFor="judul">Judul resmi</Label>
+                <Label htmlFor="judul">{t.upload.judul}</Label>
                 <Input
                   id="judul"
                   required
                   minLength={3}
                   maxLength={500}
-                  placeholder="Panduan Akademik 2026"
+                  placeholder={t.upload.judulPlaceholder}
                   value={judul}
                   disabled={sibuk}
                   onChange={(e) => setJudul(e.target.value)}
                 />
               </div>
               <div className="space-y-2 sm:col-span-2">
-                <Label htmlFor="unit">Unit penerbit</Label>
+                <Label htmlFor="unit">{t.upload.unit}</Label>
                 <UnitField
                   id="unit"
                   required
@@ -235,14 +231,13 @@ export function UploadView() {
                   onChange={setUnit}
                 />
                 {unitTerkunci !== null ? (
-                  <p className="text-xs text-muted-foreground">
-                    Akun Staf/Dosen hanya dapat mengunggah dokumen untuk unitnya sendiri.
-                  </p>
+                  <p className="text-xs text-muted-foreground">{t.upload.unitLocked}</p>
                 ) : null}
               </div>
               <div className="space-y-2">
                 <Label htmlFor="tahun">
-                  Tahun berlaku <span className="font-normal text-muted-foreground">(opsional)</span>
+                  {t.upload.tahun}{" "}
+                  <span className="font-normal text-muted-foreground">{t.upload.optional}</span>
                 </Label>
                 <Input
                   id="tahun"
@@ -258,7 +253,8 @@ export function UploadView() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="valid-until">
-                  Berlaku sampai <span className="font-normal text-muted-foreground">(opsional)</span>
+                  {t.upload.validUntil}{" "}
+                  <span className="font-normal text-muted-foreground">{t.upload.optional}</span>
                 </Label>
                 <DateField
                   id="valid-until"
@@ -267,20 +263,19 @@ export function UploadView() {
                   value={validUntil}
                   disabled={sibuk}
                   onChange={setValidUntil}
-                  placeholder="Tanpa batas"
-                  clearLabel="Jadikan tanpa batas"
+                  placeholder={t.upload.noExpiry}
+                  clearLabel={t.upload.clearExpiry}
                 />
               </div>
               <p className="text-xs text-pretty text-muted-foreground sm:col-span-2">
-                Setelah tanggal berlaku, chatbot otomatis berhenti memakai dokumen ini, tanpa perlu
-                ada yang ingat menonaktifkannya. Kosongkan bila dokumen berlaku tanpa batas.
+                {t.upload.expiryHint}
               </p>
             </CardContent>
           </Card>
 
           {tahap.status === "gagal" ? (
             <Alert variant="destructive">
-              <AlertTitle>Dokumen tidak dapat dipasang</AlertTitle>
+              <AlertTitle>{t.upload.failedTitle}</AlertTitle>
               <AlertDescription>{tahap.pesan}</AlertDescription>
             </Alert>
           ) : null}
@@ -288,8 +283,8 @@ export function UploadView() {
           {tahap.status === "mengunggah" ? (
             <div className="space-y-2" aria-live="polite">
               <div className="flex justify-between text-sm">
-                <span>Mengunggah berkas…</span>
-                <span className="tabular-nums">{formatPercent(tahap.progress, 0)}</span>
+                <span>{t.upload.uploading}</span>
+                <span className="tabular-nums">{f.percent(tahap.progress, 0)}</span>
               </div>
               <Progress value={tahap.progress * 100} />
             </div>
@@ -298,49 +293,45 @@ export function UploadView() {
           {tahap.status === "memproses" ? (
             <Alert aria-live="polite">
               <LoaderCircleIcon className="animate-spin" />
-              <AlertTitle>Dokumen sedang diproses</AlertTitle>
-              <AlertDescription>
-                Membaca teks, memecah per halaman, dan mengindeks. Dokumen tebal bisa memakan waktu
-                beberapa menit. Jangan tutup halaman ini.
-              </AlertDescription>
+              <AlertTitle>{t.upload.processingTitle}</AlertTitle>
+              <AlertDescription>{t.upload.processingBody}</AlertDescription>
             </Alert>
           ) : null}
 
           <div className="flex justify-end gap-2">
             <Button type="button" variant="outline" asChild>
               <Link href="/dokumen" aria-disabled={sibuk}>
-                Batal
+                {t.common.cancel}
               </Link>
             </Button>
             <Button type="submit" disabled={!file || sibuk}>
-              {sibuk ? "Memproses…" : "Unggah dan pasang"}
+              {sibuk ? t.upload.processing : t.upload.submit}
             </Button>
           </div>
         </form>
 
         <Card className="h-fit">
           <CardHeader>
-            <CardTitle>Sebelum mengunggah</CardTitle>
+            <CardTitle>{t.upload.checklistTitle}</CardTitle>
           </CardHeader>
           <CardContent>
             <ul className="list-disc space-y-3 pl-4 text-sm text-pretty text-muted-foreground">
               <li>
-                Pakai <span className="text-foreground">PDF versi digital asli</span>, bukan hasil
-                scan. PDF scan terlihat terpasang tetapi isinya tidak pernah bisa ditemukan.
+                {t.upload.checklist.digitalLead}
+                <span className="text-foreground">{t.upload.checklist.digitalStrong}</span>
+                {t.upload.checklist.digital}
               </li>
               <li>
-                Tulis judul <span className="text-foreground">persis seperti dokumen resmi</span>,
-                karena mahasiswa memakainya untuk memeriksa sumber jawaban.
+                {t.upload.checklist.titleLead}
+                <span className="text-foreground">{t.upload.checklist.titleStrong}</span>
+                {t.upload.checklist.titleTail}
               </li>
               <li>
-                Mengganti dokumen lama? Unggah versi baru, lalu{" "}
-                <span className="text-foreground">nonaktifkan versi lama</span> supaya dua aturan
-                yang berbeda tidak dipakai bersamaan.
+                {t.upload.checklist.replaceLead}
+                <span className="text-foreground">{t.upload.checklist.replaceStrong}</span>
+                {t.upload.checklist.replaceTail}
               </li>
-              <li>
-                Setelah terpasang, periksa pratinjau potongan: tabel atau daftar bernomor yang
-                terpotong di tengah sering membuat jawaban tidak lengkap.
-              </li>
+              <li>{t.upload.checklist.preview}</li>
             </ul>
           </CardContent>
         </Card>

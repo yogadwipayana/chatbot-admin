@@ -6,6 +6,9 @@ import type { Schemas } from "@/lib/api/client"
  * Dipakai HANYA untuk menentukan apa yang ditampilkan. Penegakannya ada di
  * server: menyembunyikan tombol bukan kontrol keamanan, dan setiap operasi
  * tetap diperiksa ulang oleh API (`x-min-role` di api.yaml).
+ *
+ * Nama tampilan dan daftar haknya ada di kamus (`t.roles`), bukan di sini:
+ * keduanya teks antarmuka, sedangkan berkas ini aturan.
  */
 
 export type Role = Schemas["AdminRole"]
@@ -14,32 +17,6 @@ export type Me = Schemas["AdminUser"]
 export const ROLES: Role[] = ["staf", "admin", "superadmin"]
 
 const LEVEL: Record<Role, number> = { staf: 1, admin: 2, superadmin: 3 }
-
-export const ROLE_LABELS: Record<Role, string> = {
-  staf: "Staf/Dosen",
-  admin: "Admin",
-  superadmin: "Superadmin",
-}
-
-export const ROLE_RIGHTS: Record<Role, string[]> = {
-  staf: [
-    "Kelola dokumen dan tanya jawab unitnya sendiri",
-    "Uji coba jawaban",
-    "Lihat pertanyaan tak terjawab",
-  ],
-  admin: [
-    "Semua hak Staf/Dosen",
-    "Kelola dokumen dan tanya jawab semua unit",
-    "Tandai pertanyaan selesai",
-    "Statistik",
-  ],
-  superadmin: [
-    "Semua hak Admin",
-    "Layanan chat (kill switch)",
-    "Konfigurasi pencarian dan pemecahan dokumen",
-    "Kelola akun di menu Admin",
-  ],
-}
 
 export function atLeast(me: Pick<Me, "role"> | null | undefined, minimum: Role): boolean {
   return !!me && LEVEL[me.role] >= LEVEL[minimum]

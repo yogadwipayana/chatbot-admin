@@ -26,28 +26,25 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useNow } from "@/hooks/use-now"
 import type { Schemas } from "@/lib/api/client"
 import { useMe, useSetResolved, useUnanswered } from "@/lib/api/queries"
-import {
-  addDays,
-  formatNumber,
-  formatRelative,
-  formatScore,
-  toDateInput,
-  truncate,
-} from "@/lib/format"
+import { addDays, toDateInput, truncate } from "@/lib/format"
+import { useFormat, useT } from "@/lib/i18n"
 import { atLeast } from "@/lib/roles"
 import { cn } from "@/lib/utils"
 
 type Group = Schemas["UnansweredGroup"]
 type Tab = "belum" | "sudah" | "semua"
 
-const PERIODE = [
-  { value: "7", label: "7 hari terakhir" },
-  { value: "30", label: "30 hari terakhir" },
-  { value: "90", label: "90 hari terakhir" },
-  { value: "semua", label: "Semua waktu" },
-] as const
+const PERIODE = ["7", "30", "90", "semua"] as const
 
 export function UnansweredView() {
+  const t = useT()
+  const f = useFormat()
+  const periodeLabel = {
+    "7": t.labels.periods.d7,
+    "30": t.labels.periods.d30,
+    "90": t.labels.periods.d90,
+    semua: t.labels.periods.all,
+  }
   const now = useNow()
   const [tab, setTab] = useState<Tab>("belum")
   const [periode, setPeriode] = useState<string>("30")
@@ -70,14 +67,14 @@ export function UnansweredView() {
       { ids: group.ids, resolved: value },
       {
         onSuccess: () =>
-          toast.success(value ? "Ditandai sudah ditindaklanjuti" : "Dibuka kembali", {
+          toast.success(value ? t.unanswered.markedDone : t.unanswered.reopened, {
             description: `“${truncate(group.contoh_pertanyaan, 70)}”`,
             action: {
-              label: "Batalkan",
+              label: t.common.undo,
               onClick: () => setResolved.mutate({ ids: group.ids, resolved: !value }),
             },
           }),
-        onError: (error) => toast.error("Gagal menyimpan", { description: error.message }),
+        onError: (error) => toast.error(t.common.saveFailed, { description: error.message }),
       }
     )
   }
@@ -85,33 +82,30 @@ export function UnansweredView() {
   return (
     <>
       <PageHeader
-        title="Pertanyaan tak terjawab"
-        description="Pertanyaan yang ditolak chatbot karena dokumen resmi tidak cukup mendukung jawabannya. Tindak lanjuti kelompok terbesar lebih dulu: unggah atau perbarui dokumen yang menjawabnya, uji ulang, lalu tandai selesai."
+        title={t.unanswered.title}
+        description={t.unanswered.description}
       />
 
       {bolehTandai ? null : (
-        <p className="-mt-3 mb-5 text-sm text-muted-foreground">
-          Akun Staf/Dosen dapat melihat dan menguji pertanyaan ini. Menandai selesai dilakukan oleh
-          Admin.
-        </p>
+        <p className="-mt-3 mb-5 text-sm text-muted-foreground">{t.unanswered.staffNote}</p>
       )}
 
       <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <Tabs value={tab} onValueChange={(v) => setTab(v as Tab)}>
           <TabsList>
-            <TabsTrigger value="belum">Belum ditindaklanjuti</TabsTrigger>
-            <TabsTrigger value="sudah">Sudah</TabsTrigger>
-            <TabsTrigger value="semua">Semua</TabsTrigger>
+            <TabsTrigger value="belum">{t.unanswered.tabs.open}</TabsTrigger>
+            <TabsTrigger value="sudah">{t.unanswered.tabs.done}</TabsTrigger>
+            <TabsTrigger value="semua">{t.unanswered.tabs.all}</TabsTrigger>
           </TabsList>
         </Tabs>
         <Select value={periode} onValueChange={setPeriode}>
-          <SelectTrigger className="w-full sm:w-48" aria-label="Periode">
+          <SelectTrigger className="w-full sm:w-48" aria-label={t.labels.periods.label}>
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
             {PERIODE.map((p) => (
-              <SelectItem key={p.value} value={p.value}>
-                {p.label}
+              <SelectItem key={p} value={p}>
+                {periodeLabel[p]}
               </SelectItem>
             ))}
           </SelectContent>
@@ -125,21 +119,15 @@ export function UnansweredView() {
       ) : groups.length === 0 ? (
         <EmptyState
           icon={CircleCheckBigIcon}
-          title={
-            tab === "sudah"
-              ? "Belum ada yang ditandai selesai"
-              : "Tidak ada pertanyaan tak terjawab"
-          }
+          title={tab === "sudah" ? t.unanswered.emptyDone : t.unanswered.emptyOpen}
           description={
-            tab === "sudah"
-              ? "Pertanyaan yang sudah ditindaklanjuti pada periode ini akan muncul di sini."
-              : "Semua pertanyaan mahasiswa pada periode ini dapat dijawab dari dokumen resmi."
+            tab === "sudah" ? t.unanswered.emptyDoneBody : t.unanswered.emptyOpenBody
           }
         />
       ) : (
         <div className={cn("space-y-3 transition-opacity", query.isPlaceholderData && "opacity-60")}>
           <p className="text-sm text-muted-foreground">
-            {formatNumber(totalPertanyaan)} pertanyaan dalam {formatNumber(groups.length)} kelompok
+            {t.unanswered.summary(f.number(totalPertanyaan), f.number(groups.length))}
           </p>
           <ul className="divide-y rounded-xl border bg-card">
             {groups.map((group) => {
@@ -153,7 +141,9 @@ export function UnansweredView() {
                   <div className="flex w-full shrink-0 items-center gap-3 sm:w-24 sm:flex-col sm:items-start sm:gap-1.5">
                     <p className="leading-none">
                       <span className="text-2xl font-semibold">{group.jumlah}</span>
-                      <span className="ml-1 text-xs text-muted-foreground">kali</span>
+                      <span className="ml-1 text-xs text-muted-foreground">
+                        {t.unanswered.times}
+                      </span>
                     </p>
                     <div className="h-1.5 flex-1 sm:w-full sm:flex-none" aria-hidden>
                       <div
@@ -166,14 +156,14 @@ export function UnansweredView() {
                   <div className="min-w-0 flex-1 space-y-1.5">
                     <p className="font-medium break-words">“{group.contoh_pertanyaan}”</p>
                     <p className="text-xs text-muted-foreground">
-                      Terakhir ditanyakan {formatRelative(group.terakhir_ditanyakan, now)}
+                      {t.unanswered.lastAsked(f.relative(group.terakhir_ditanyakan, now))}
                       {group.top_score_rata2 != null
-                        ? ` · Skor kemiripan rata-rata ${formatScore(group.top_score_rata2)}`
+                        ? t.unanswered.avgScore(f.score(group.top_score_rata2))
                         : null}
                     </p>
                     {tab === "semua" && group.resolved ? (
                       <StatusLabel level="good" className="text-xs">
-                        Sudah ditindaklanjuti
+                        {t.unanswered.handled}
                       </StatusLabel>
                     ) : null}
                   </div>
@@ -182,7 +172,7 @@ export function UnansweredView() {
                     <Button variant="outline" size="sm" asChild>
                       <Link href={`/uji-coba?q=${encodeURIComponent(group.contoh_pertanyaan)}`}>
                         <FlaskConicalIcon data-icon="inline-start" />
-                        Uji coba
+                        {t.labels.testQuery}
                       </Link>
                     </Button>
                     {!bolehTandai ? null : group.resolved ? (
@@ -193,12 +183,12 @@ export function UnansweredView() {
                         onClick={() => tandai(group, false)}
                       >
                         <RotateCcwIcon data-icon="inline-start" />
-                        Buka kembali
+                        {t.unanswered.reopen}
                       </Button>
                     ) : (
                       <Button size="sm" disabled={sibuk} onClick={() => tandai(group, true)}>
                         <CheckIcon data-icon="inline-start" />
-                        Tandai selesai
+                        {t.unanswered.markDone}
                       </Button>
                     )}
                   </div>
@@ -208,12 +198,7 @@ export function UnansweredView() {
           </ul>
           <p className="flex gap-2 pt-2 text-xs text-pretty text-muted-foreground">
             <InfoIcon className="mt-px size-3.5 shrink-0" aria-hidden />
-            <span>
-              Skor kemiripan (0–1) menunjukkan seberapa dekat pertanyaan dengan isi dokumen
-              terbaik. Skor yang mendekati ambang berarti dokumennya mungkin sudah ada tetapi
-              kalimatnya tidak cocok: periksa lewat Uji coba. Skor sangat rendah berarti
-              informasinya memang belum ada di dokumen mana pun.
-            </span>
+            <span>{t.unanswered.scoreHint}</span>
           </p>
         </div>
       )}

@@ -75,8 +75,8 @@ import {
   useUpdateUser,
   useUsers,
 } from "@/lib/api/queries"
-import { formatRelative } from "@/lib/format"
-import { ROLES, ROLE_LABELS, ROLE_RIGHTS, type Role } from "@/lib/roles"
+import { useFormat, useT } from "@/lib/i18n"
+import { ROLES, type Role } from "@/lib/roles"
 import { cn } from "@/lib/utils"
 
 type User = Schemas["AdminUser"]
@@ -90,6 +90,8 @@ const ROLE_BADGE: Record<Role, "default" | "secondary" | "outline"> = {
 }
 
 export function UsersView() {
+  const t = useT()
+  const f = useFormat()
   const now = useNow()
   const me = useMe().data
   const users = useUsers()
@@ -106,16 +108,16 @@ export function UsersView() {
       { id: user.id, body: { is_active: aktifkan } },
       {
         onSuccess: () =>
-          toast.success(aktifkan ? "Akun diaktifkan" : "Akun dinonaktifkan", {
+          toast.success(aktifkan ? t.users.activated : t.users.deactivated, {
             description: aktifkan
-              ? `${user.email} dapat masuk kembali.`
-              : `${user.email} langsung keluar dari semua sesinya.`,
+              ? t.users.activatedBody(user.email)
+              : t.users.deactivatedBody(user.email),
             action: {
-              label: "Batalkan",
+              label: t.common.undo,
               onClick: () => update.mutate({ id: user.id, body: { is_active: !aktifkan } }),
             },
           }),
-        onError: (error) => toast.error("Gagal menyimpan", { description: error.message }),
+        onError: (error) => toast.error(t.common.saveFailed, { description: error.message }),
       }
     )
   }
@@ -123,12 +125,12 @@ export function UsersView() {
   return (
     <>
       <PageHeader
-        title="Admin"
-        description="Kelola akun dashboard dan level aksesnya. Perubahan level, unit, dan status aktif berlaku seketika, termasuk untuk sesi yang sedang terbuka."
+        title={t.users.title}
+        description={t.users.description}
         actions={
           <Button onClick={() => setForm({ mode: "buat" })}>
             <UserPlusIcon data-icon="inline-start" />
-            Tambah akun
+            {t.users.add}
           </Button>
         }
       />
@@ -140,19 +142,19 @@ export function UsersView() {
       ) : !users.data ? (
         <Skeleton className="h-64 w-full rounded-xl" />
       ) : users.data.length === 0 ? (
-        <EmptyState icon={UsersRoundIcon} title="Belum ada akun" />
+        <EmptyState icon={UsersRoundIcon} title={t.users.empty} />
       ) : (
         <div className="rounded-xl border bg-card">
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="min-w-56 pl-4">Akun</TableHead>
-                <TableHead>Level</TableHead>
-                <TableHead>Unit</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Terakhir masuk</TableHead>
+                <TableHead className="min-w-56 pl-4">{t.users.columns.account}</TableHead>
+                <TableHead>{t.users.columns.level}</TableHead>
+                <TableHead>{t.users.columns.unit}</TableHead>
+                <TableHead>{t.users.columns.status}</TableHead>
+                <TableHead>{t.users.columns.lastLogin}</TableHead>
                 <TableHead className="w-12 pr-4">
-                  <span className="sr-only">Aksi</span>
+                  <span className="sr-only">{t.documents.columns.actions}</span>
                 </TableHead>
               </TableRow>
             </TableHeader>
@@ -166,7 +168,7 @@ export function UsersView() {
                         {user.nama || user.email}
                         {diri ? (
                           <span className="ml-2 text-xs font-normal text-muted-foreground">
-                            (Anda)
+                            {t.users.you}
                           </span>
                         ) : null}
                       </p>
@@ -175,26 +177,26 @@ export function UsersView() {
                       ) : null}
                     </TableCell>
                     <TableCell>
-                      <Badge variant={ROLE_BADGE[user.role]}>{ROLE_LABELS[user.role]}</Badge>
+                      <Badge variant={ROLE_BADGE[user.role]}>{t.roles.labels[user.role]}</Badge>
                     </TableCell>
                     <TableCell className="whitespace-normal">
                       {user.unit ?? <span className="text-muted-foreground">—</span>}
                     </TableCell>
                     <TableCell>
                       {user.is_active ? (
-                        <StatusLabel level="good">Aktif</StatusLabel>
+                        <StatusLabel level="good">{t.users.active}</StatusLabel>
                       ) : (
                         <span className="inline-flex items-center gap-1.5 text-sm">
                           <EyeOffIcon className="size-4" aria-hidden />
-                          Nonaktif
+                          {t.users.inactive}
                         </span>
                       )}
                     </TableCell>
                     <TableCell>
                       {user.last_login_at ? (
-                        formatRelative(user.last_login_at, now)
+                        f.relative(user.last_login_at, now)
                       ) : (
-                        <span className="text-muted-foreground">Belum pernah</span>
+                        <span className="text-muted-foreground">{t.users.neverSignedIn}</span>
                       )}
                     </TableCell>
                     <TableCell className="pr-4">
@@ -203,34 +205,34 @@ export function UsersView() {
                           <Button
                             variant="ghost"
                             size="icon-sm"
-                            aria-label={`Aksi untuk ${user.email}`}
+                            aria-label={t.users.rowActions(user.email)}
                           >
                             <EllipsisIcon />
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                           <DropdownMenuItem onSelect={() => setForm({ mode: "ubah", user })}>
-                            <PencilIcon /> Ubah
+                            <PencilIcon /> {t.users.edit}
                           </DropdownMenuItem>
                           {diri ? null : (
                             <>
                               <DropdownMenuItem onSelect={() => setReset(user)}>
-                                <KeyRoundIcon /> Atur ulang kata sandi
+                                <KeyRoundIcon /> {t.users.resetPassword}
                               </DropdownMenuItem>
                               <DropdownMenuItem onSelect={() => alihAktif(user)}>
                                 {user.is_active ? (
                                   <>
-                                    <EyeOffIcon /> Nonaktifkan
+                                    <EyeOffIcon /> {t.documents.deactivate}
                                   </>
                                 ) : (
                                   <>
-                                    <EyeIcon /> Aktifkan
+                                    <EyeIcon /> {t.documents.activate}
                                   </>
                                 )}
                               </DropdownMenuItem>
                               <DropdownMenuSeparator />
                               <DropdownMenuItem variant="destructive" onSelect={() => setHapus(user)}>
-                                <Trash2Icon /> Hapus
+                                <Trash2Icon /> {t.users.delete}
                               </DropdownMenuItem>
                             </>
                           )}
@@ -268,14 +270,15 @@ export function UsersView() {
 }
 
 function RoleGuide() {
+  const t = useT()
   return (
     <Card className="mb-6">
       <CardContent className="grid gap-6 sm:grid-cols-3">
         {ROLES.map((role) => (
           <div key={role} className="space-y-2">
-            <Badge variant={ROLE_BADGE[role]}>{ROLE_LABELS[role]}</Badge>
+            <Badge variant={ROLE_BADGE[role]}>{t.roles.labels[role]}</Badge>
             <ul className="space-y-1 text-sm text-muted-foreground">
-              {ROLE_RIGHTS[role].map((hak) => (
+              {t.roles.rights[role].map((hak) => (
                 <li key={hak} className="flex gap-2">
                   <CheckIcon className="mt-0.5 size-3.5 shrink-0" aria-hidden />
                   <span>{hak}</span>
@@ -300,6 +303,7 @@ function UserFormDialog({
   onClose: () => void
   onCreated: (user: User, password: string) => void
 }) {
+  const t = useT()
   const editing = state.mode === "ubah" ? state.user : null
   const create = useCreateUser()
   const update = useUpdateUser()
@@ -344,7 +348,7 @@ function UserFormDialog({
       { id: editing.id, body },
       {
         onSuccess: () => {
-          toast.success("Akun diperbarui", { description: editing.email })
+          toast.success(t.users.form.updated, { description: editing.email })
           onClose()
         },
         onError: (error) => setGalat(error.message),
@@ -357,11 +361,11 @@ function UserFormDialog({
       <DialogContent>
         <form onSubmit={simpan} className="grid gap-4">
           <DialogHeader>
-            <DialogTitle>{editing ? "Ubah akun" : "Tambah akun"}</DialogTitle>
+            <DialogTitle>
+              {editing ? t.users.form.editTitle : t.users.form.addTitle}
+            </DialogTitle>
             <DialogDescription>
-              {editing
-                ? editing.email
-                : "Kata sandi sementara dibuat otomatis dan ditampilkan sekali setelah akun tersimpan."}
+              {editing ? editing.email : t.users.form.addDescription}
             </DialogDescription>
           </DialogHeader>
 
@@ -373,14 +377,14 @@ function UserFormDialog({
 
           {editing ? null : (
             <div className="space-y-2">
-              <Label htmlFor="akun-email">Email</Label>
+              <Label htmlFor="akun-email">{t.users.form.email}</Label>
               <Input
                 id="akun-email"
                 type="email"
                 required
                 autoFocus
                 autoComplete="off"
-                placeholder="nama@kampus.ac.id"
+                placeholder={t.users.form.emailPlaceholder}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
               />
@@ -389,7 +393,8 @@ function UserFormDialog({
 
           <div className="space-y-2">
             <Label htmlFor="akun-nama">
-              Nama <span className="font-normal text-muted-foreground">(opsional)</span>
+              {t.users.form.name}{" "}
+              <span className="font-normal text-muted-foreground">{t.users.form.optional}</span>
             </Label>
             <Input
               id="akun-nama"
@@ -401,7 +406,7 @@ function UserFormDialog({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="akun-level">Level</Label>
+            <Label htmlFor="akun-level">{t.users.form.level}</Label>
             <Select value={role} onValueChange={(v) => setRole(v as Role)} disabled={diri}>
               <SelectTrigger id="akun-level" className="w-full">
                 <SelectValue />
@@ -409,23 +414,23 @@ function UserFormDialog({
               <SelectContent>
                 {ROLES.map((r) => (
                   <SelectItem key={r} value={r}>
-                    {ROLE_LABELS[r]}
+                    {t.roles.labels[r]}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
             <p className="text-xs text-pretty text-muted-foreground">
               {diri
-                ? "Level akun Anda sendiri tidak dapat diubah, supaya dashboard tidak terkunci tanpa superadmin."
-                : `${ROLE_RIGHTS[role].join(" · ")}.`}
+                ? t.users.form.selfLevel
+                : `${t.roles.rights[role].join(" · ")}.`}
             </p>
           </div>
 
           <div className="space-y-2">
             <Label htmlFor="akun-unit">
-              Unit{" "}
+              {t.users.form.unit}{" "}
               {role === "staf" ? null : (
-                <span className="font-normal text-muted-foreground">(opsional)</span>
+                <span className="font-normal text-muted-foreground">{t.users.form.optional}</span>
               )}
             </Label>
             <UnitField
@@ -434,21 +439,19 @@ function UserFormDialog({
               units={units}
               value={unit}
               onChange={setUnit}
-              placeholder="Biro Keuangan"
+              placeholder={t.users.form.unitPlaceholder}
             />
             <p className="text-xs text-pretty text-muted-foreground">
-              {role === "staf"
-                ? "Staf/dosen hanya dapat melihat dan mengelola dokumen dengan unit ini. Pilih dari saran supaya ejaannya sama persis dengan dokumen yang ada."
-                : "Hanya keterangan; admin dan superadmin mengelola dokumen semua unit."}
+              {role === "staf" ? t.users.form.unitStaff : t.users.form.unitOther}
             </p>
           </div>
 
           <DialogFooter>
             <Button type="button" variant="outline" onClick={onClose} disabled={sibuk}>
-              Batal
+              {t.common.cancel}
             </Button>
             <Button type="submit" disabled={sibuk}>
-              {sibuk ? "Menyimpan…" : editing ? "Simpan" : "Buat akun"}
+              {sibuk ? t.common.saving : editing ? t.common.save : t.users.form.submitCreate}
             </Button>
           </DialogFooter>
         </form>
@@ -466,6 +469,7 @@ function ResetPasswordDialog({
   onClose: () => void
   onDone: (user: User, password: string) => void
 }) {
+  const t = useT()
   const reset = useResetPassword()
 
   function lanjut() {
@@ -475,7 +479,7 @@ function ResetPasswordDialog({
         onClose()
         onDone(user, data.password_sementara)
       },
-      onError: (error) => toast.error("Gagal mengatur ulang", { description: error.message }),
+      onError: (error) => toast.error(t.users.reset.failed, { description: error.message }),
     })
   }
 
@@ -483,16 +487,15 @@ function ResetPasswordDialog({
     <AlertDialog open={user !== null} onOpenChange={(open) => !open && !reset.isPending && onClose()}>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Atur ulang kata sandi?</AlertDialogTitle>
+          <AlertDialogTitle>{t.users.reset.title}</AlertDialogTitle>
           <AlertDialogDescription>
-            {user?.email} langsung keluar dari semua sesinya dan hanya dapat masuk dengan kata sandi
-            sementara baru yang akan ditampilkan sekali.
+            {t.users.reset.body(user?.email ?? "")}
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel disabled={reset.isPending}>Batal</AlertDialogCancel>
+          <AlertDialogCancel disabled={reset.isPending}>{t.common.cancel}</AlertDialogCancel>
           <Button onClick={lanjut} disabled={reset.isPending}>
-            {reset.isPending ? "Memproses…" : "Atur ulang"}
+            {reset.isPending ? t.users.reset.working : t.users.reset.confirm}
           </Button>
         </AlertDialogFooter>
       </AlertDialogContent>
@@ -501,16 +504,17 @@ function ResetPasswordDialog({
 }
 
 function DeleteUserDialog({ user, onClose }: { user: User | null; onClose: () => void }) {
+  const t = useT()
   const remove = useDeleteUser()
 
   function hapus() {
     if (!user) return
     remove.mutate(user.id, {
       onSuccess: () => {
-        toast.success("Akun dihapus", { description: user.email })
+        toast.success(t.users.remove.deleted, { description: user.email })
         onClose()
       },
-      onError: (error) => toast.error("Gagal menghapus", { description: error.message }),
+      onError: (error) => toast.error(t.common.deleteFailed, { description: error.message }),
     })
   }
 
@@ -518,16 +522,15 @@ function DeleteUserDialog({ user, onClose }: { user: User | null; onClose: () =>
     <AlertDialog open={user !== null} onOpenChange={(open) => !open && !remove.isPending && onClose()}>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Hapus akun secara permanen?</AlertDialogTitle>
+          <AlertDialogTitle>{t.users.remove.title}</AlertDialogTitle>
           <AlertDialogDescription>
-            {user?.email} dihapus dan langsung kehilangan akses. Dokumen yang pernah diunggahnya
-            tidak ikut terhapus. Untuk menghentikan akses sementara, pilih Nonaktifkan saja.
+            {t.users.remove.body(user?.email ?? "")}
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel disabled={remove.isPending}>Batal</AlertDialogCancel>
+          <AlertDialogCancel disabled={remove.isPending}>{t.common.cancel}</AlertDialogCancel>
           <Button variant="destructive" onClick={hapus} disabled={remove.isPending}>
-            {remove.isPending ? "Menghapus…" : "Hapus akun"}
+            {remove.isPending ? t.users.remove.deleting : t.users.remove.confirm}
           </Button>
         </AlertDialogFooter>
       </AlertDialogContent>
@@ -536,6 +539,7 @@ function DeleteUserDialog({ user, onClose }: { user: User | null; onClose: () =>
 }
 
 function PasswordRevealDialog({ value, onClose }: { value: Sandi; onClose: () => void }) {
+  const t = useT()
   const [tersalin, setTersalin] = useState(false)
 
   async function salin() {
@@ -543,8 +547,8 @@ function PasswordRevealDialog({ value, onClose }: { value: Sandi; onClose: () =>
       await navigator.clipboard.writeText(value.password)
       setTersalin(true)
     } catch {
-      toast.error("Tidak dapat menyalin otomatis", {
-        description: "Pilih teks kata sandi, lalu salin secara manual.",
+      toast.error(t.users.password.copyFailed, {
+        description: t.users.password.copyFailedBody,
       })
     }
   }
@@ -554,31 +558,29 @@ function PasswordRevealDialog({ value, onClose }: { value: Sandi; onClose: () =>
       {/* Klik di luar tidak menutup: kata sandi ini tidak dapat ditampilkan lagi. */}
       <DialogContent onInteractOutside={(e) => e.preventDefault()}>
         <DialogHeader>
-          <DialogTitle>{value.baru ? "Akun dibuat" : "Kata sandi diatur ulang"}</DialogTitle>
-          <DialogDescription>
-            Kata sandi sementara untuk {value.email}. Hanya ditampilkan sekali ini; setelah jendela
-            ditutup, kata sandi tidak dapat dilihat lagi.
-          </DialogDescription>
+          <DialogTitle>
+            {value.baru ? t.users.password.createdTitle : t.users.password.resetTitle}
+          </DialogTitle>
+          <DialogDescription>{t.users.password.description(value.email)}</DialogDescription>
         </DialogHeader>
         <div className="flex gap-2">
           <Input
             readOnly
             value={value.password}
             className="font-mono"
-            aria-label="Kata sandi sementara"
+            aria-label={t.users.password.label}
             onFocus={(e) => e.currentTarget.select()}
           />
           <Button variant="outline" onClick={salin}>
             {tersalin ? <CheckIcon data-icon="inline-start" /> : <CopyIcon data-icon="inline-start" />}
-            {tersalin ? "Tersalin" : "Salin"}
+            {tersalin ? t.users.password.copied : t.users.password.copy}
           </Button>
         </div>
         <p className="text-xs text-pretty text-muted-foreground">
-          Serahkan lewat jalur yang aman, bukan grup percakapan. Minta pemilik akun segera
-          menggantinya lewat menu akun di pojok kiri bawah, pilih Ganti kata sandi.
+          {t.users.password.handover}
         </p>
         <DialogFooter>
-          <Button onClick={onClose}>Selesai</Button>
+          <Button onClick={onClose}>{t.users.password.done}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

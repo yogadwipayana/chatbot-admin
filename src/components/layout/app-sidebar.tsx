@@ -9,6 +9,7 @@ import {
   FileTextIcon,
   FlaskConicalIcon,
   KeyRoundIcon,
+  LanguagesIcon,
   LogOutIcon,
   MessageCircleQuestionMarkIcon,
   MessageSquareHeartIcon,
@@ -51,24 +52,31 @@ import {
 } from "@/components/ui/sidebar"
 import { useDocuments, useKillSwitch, useMe, useUnanswered } from "@/lib/api/queries"
 import { clearToken } from "@/lib/auth/token"
-import { ROLE_LABELS, atLeast, type Role } from "@/lib/roles"
+import { useLang, useT } from "@/lib/i18n"
+import type { Dict } from "@/lib/i18n/dict"
+import { LANGS, LANG_LABELS, type Lang } from "@/lib/i18n/lang"
+import { atLeast, type Role } from "@/lib/roles"
 
 type NavItem = {
   href: string
-  label: string
+  key: keyof Dict["nav"]["items"]
   icon: LucideIcon
   min: Role
   badge?: "unanswered" | "stale" | "killswitch"
 }
 
-const NAV: { label: string; items: NavItem[] }[] = [
+/**
+ * Label menunya ada di kamus; di sini hanya kuncinya, supaya urutan dan hak
+ * akses menu tidak ikut tersentuh setiap kali teksnya disunting.
+ */
+const NAV: { key: keyof Dict["nav"]["groups"]; items: NavItem[] }[] = [
   {
     // AD-4 ditempatkan paling atas: PRD §9 menyebutnya penentu sistem membaik atau stagnan.
-    label: "Perbaikan",
+    key: "perbaikan",
     items: [
       {
         href: "/pertanyaan",
-        label: "Pertanyaan tak terjawab",
+        key: "unanswered",
         icon: MessageCircleQuestionMarkIcon,
         min: "staf",
         badge: "unanswered",
@@ -76,28 +84,28 @@ const NAV: { label: string; items: NavItem[] }[] = [
     ],
   },
   {
-    label: "Konten",
+    key: "konten",
     items: [
-      { href: "/dokumen", label: "Dokumen", icon: FileTextIcon, min: "staf", badge: "stale" },
-      { href: "/tanya-jawab", label: "Tanya jawab", icon: MessagesSquareIcon, min: "staf" },
-      { href: "/uji-coba", label: "Uji coba jawaban", icon: FlaskConicalIcon, min: "staf" },
+      { href: "/dokumen", key: "documents", icon: FileTextIcon, min: "staf", badge: "stale" },
+      { href: "/tanya-jawab", key: "faq", icon: MessagesSquareIcon, min: "staf" },
+      { href: "/uji-coba", key: "testQuery", icon: FlaskConicalIcon, min: "staf" },
     ],
   },
   {
-    label: "Operasional",
+    key: "operasional",
     items: [
-      { href: "/statistik", label: "Statistik", icon: ChartColumnIcon, min: "admin" },
-      { href: "/biaya", label: "Biaya", icon: CircleDollarSignIcon, min: "admin" },
+      { href: "/statistik", key: "stats", icon: ChartColumnIcon, min: "admin" },
+      { href: "/biaya", key: "costs", icon: CircleDollarSignIcon, min: "admin" },
     ],
   },
   {
-    label: "Pengaturan",
+    key: "pengaturan",
     items: [
-      { href: "/admin", label: "Admin", icon: UsersRoundIcon, min: "superadmin" },
+      { href: "/admin", key: "users", icon: UsersRoundIcon, min: "superadmin" },
       // Isi percakapan, jadi levelnya sama dengan statistik: admin ke atas.
       {
         href: "/umpan-balik",
-        label: "Umpan balik",
+        key: "feedback",
         icon: MessageSquareHeartIcon,
         min: "admin",
       },
@@ -105,7 +113,7 @@ const NAV: { label: string; items: NavItem[] }[] = [
       // jadi setara kill switch: superadmin saja.
       {
         href: "/konfigurasi",
-        label: "Konfigurasi",
+        key: "config",
         icon: SlidersHorizontalIcon,
         min: "superadmin",
         badge: "killswitch",
@@ -115,6 +123,7 @@ const NAV: { label: string; items: NavItem[] }[] = [
 ]
 
 function NavBadge({ kind }: { kind: NonNullable<NavItem["badge"]> }) {
+  const t = useT()
   const unanswered = useUnanswered({ resolved: false })
   // Untuk staf/dosen, server menghitung dokumen usang hanya di unitnya.
   const documents = useDocuments({ include_inactive: false, only_stale: false, limit: 1, offset: 0 })
@@ -123,22 +132,22 @@ function NavBadge({ kind }: { kind: NonNullable<NavItem["badge"]> }) {
   if (kind === "unanswered") {
     const n = unanswered.data?.length ?? 0
     return n > 0 ? (
-      <SidebarMenuBadge aria-label={`${n} kelompok belum ditindaklanjuti`}>{n}</SidebarMenuBadge>
+      <SidebarMenuBadge aria-label={t.nav.badges.unanswered(n)}>{n}</SidebarMenuBadge>
     ) : null
   }
   if (kind === "stale") {
     const n = documents.data?.jumlah_stale ?? 0
     return n > 0 ? (
-      <SidebarMenuBadge aria-label={`${n} dokumen perlu ditinjau`}>
+      <SidebarMenuBadge aria-label={t.nav.badges.stale(n)}>
         <span className="mr-1 size-1.5 rounded-full bg-status-warning" aria-hidden />
         {n}
       </SidebarMenuBadge>
     ) : null
   }
   return killSwitch.data?.engaged ? (
-    <SidebarMenuBadge aria-label="Layanan chat dimatikan">
+    <SidebarMenuBadge aria-label={t.nav.badges.killSwitchLabel}>
       <span className="mr-1 size-1.5 rounded-full bg-status-critical" aria-hidden />
-      Mati
+      {t.nav.badges.killSwitchShort}
     </SidebarMenuBadge>
   ) : null
 }
@@ -150,6 +159,8 @@ function initials(me: { nama?: string | null; email: string }): string {
 }
 
 export function AppSidebar() {
+  const t = useT()
+  const { lang, setLang } = useLang()
   const pathname = usePathname()
   const router = useRouter()
   const queryClient = useQueryClient()
@@ -175,16 +186,16 @@ export function AppSidebar() {
             <BotIcon className="size-4" aria-hidden />
           </div>
           <div className="grid leading-tight">
-            <span className="text-sm font-semibold">Admin Chatbot</span>
-            <span className="text-xs text-muted-foreground">Administrasi Mahasiswa</span>
+            <span className="text-sm font-semibold">{t.app.short}</span>
+            <span className="text-xs text-muted-foreground">{t.app.tagline}</span>
           </div>
         </div>
       </SidebarHeader>
 
       <SidebarContent>
         {groups.map((group) => (
-          <SidebarGroup key={group.label}>
-            <SidebarGroupLabel>{group.label}</SidebarGroupLabel>
+          <SidebarGroup key={group.key}>
+            <SidebarGroupLabel>{t.nav.groups[group.key]}</SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
                 {group.items.map((item) => {
@@ -194,7 +205,7 @@ export function AppSidebar() {
                       <SidebarMenuButton asChild isActive={active}>
                         <Link href={item.href} aria-current={active ? "page" : undefined}>
                           <item.icon />
-                          <span>{item.label}</span>
+                          <span>{t.nav.items[item.key]}</span>
                         </Link>
                       </SidebarMenuButton>
                       {item.badge ? <NavBadge kind={item.badge} /> : null}
@@ -221,7 +232,7 @@ export function AppSidebar() {
                   <div className="grid min-w-0 flex-1 text-left leading-tight">
                     <span className="truncate text-sm font-medium">{me?.nama || me?.email}</span>
                     <span className="truncate text-xs text-muted-foreground">
-                      {me ? ROLE_LABELS[me.role] : ""}
+                      {me ? t.roles.labels[me.role] : ""}
                       {me?.unit ? ` · ${me.unit}` : ""}
                     </span>
                   </div>
@@ -236,30 +247,44 @@ export function AppSidebar() {
                 <DropdownMenuLabel className="font-normal">
                   <span className="block truncate text-sm font-medium">{me?.email}</span>
                   <span className="block truncate text-xs text-muted-foreground">
-                    {me ? ROLE_LABELS[me.role] : ""}
+                    {me ? t.roles.labels[me.role] : ""}
                     {me?.unit ? ` · ${me.unit}` : ""}
                   </span>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onSelect={() => setGantiSandi(true)}>
-                  <KeyRoundIcon /> Ganti kata sandi
+                  <KeyRoundIcon /> {t.nav.account.changePassword}
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuLabel>Tampilan</DropdownMenuLabel>
+                <DropdownMenuLabel>{t.nav.account.appearance}</DropdownMenuLabel>
                 <DropdownMenuRadioGroup value={theme} onValueChange={setTheme}>
                   <DropdownMenuRadioItem value="light">
-                    <SunIcon /> Terang
+                    <SunIcon /> {t.nav.account.light}
                   </DropdownMenuRadioItem>
                   <DropdownMenuRadioItem value="dark">
-                    <MoonIcon /> Gelap
+                    <MoonIcon /> {t.nav.account.dark}
                   </DropdownMenuRadioItem>
                   <DropdownMenuRadioItem value="system">
-                    <MonitorIcon /> Ikuti sistem
+                    <MonitorIcon /> {t.nav.account.system}
                   </DropdownMenuRadioItem>
                 </DropdownMenuRadioGroup>
                 <DropdownMenuSeparator />
+                {/* Nama bahasa tidak ikut diterjemahkan: yang mencarinya sedang
+                    membaca dashboard dalam bahasa yang belum ia pahami. */}
+                <DropdownMenuLabel>{t.nav.account.language}</DropdownMenuLabel>
+                <DropdownMenuRadioGroup
+                  value={lang}
+                  onValueChange={(nilai) => setLang(nilai as Lang)}
+                >
+                  {LANGS.map((kode) => (
+                    <DropdownMenuRadioItem key={kode} value={kode}>
+                      <LanguagesIcon /> {LANG_LABELS[kode]}
+                    </DropdownMenuRadioItem>
+                  ))}
+                </DropdownMenuRadioGroup>
+                <DropdownMenuSeparator />
                 <DropdownMenuItem onSelect={keluar}>
-                  <LogOutIcon /> Keluar
+                  <LogOutIcon /> {t.nav.account.signOut}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>

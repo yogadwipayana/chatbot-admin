@@ -17,19 +17,22 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import type { Schemas } from "@/lib/api/client"
-import { formatDate, formatNumber, formatShortDate } from "@/lib/format"
-
-const config = {
-  jumlah: { label: "Pertanyaan", color: "var(--series-1)" },
-} satisfies ChartConfig
+import { useFormat, useT } from "@/lib/i18n"
 
 type Point = Schemas["DailyVolume"]
+
+function useConfig(): ChartConfig {
+  const t = useT()
+  return { jumlah: { label: t.stats.volumeSeries, color: "var(--series-1)" } }
+}
 
 /**
  * Satu seri, jadi tanpa legenda: judul kartu sudah menyebut isinya.
  * Batang maksimal 24px dengan ujung data membulat 4px dan pangkal rata.
  */
 export function DailyVolumeChart({ data }: { data: Point[] }) {
+  const f = useFormat()
+  const config = useConfig()
   return (
     <ChartContainer config={config} className="aspect-auto h-64 w-full">
       <BarChart data={data} margin={{ top: 8, right: 4, bottom: 0, left: 0 }}>
@@ -40,7 +43,7 @@ export function DailyVolumeChart({ data }: { data: Point[] }) {
           axisLine={{ stroke: "var(--chart-axis)" }}
           tickMargin={8}
           minTickGap={24}
-          tickFormatter={(value: string) => formatShortDate(value)}
+          tickFormatter={(value: string) => f.shortDate(value)}
         />
         <YAxis width={32} tickLine={false} axisLine={false} allowDecimals={false} />
         <ChartTooltip
@@ -50,7 +53,7 @@ export function DailyVolumeChart({ data }: { data: Point[] }) {
               indicator="line"
               labelFormatter={(_, payload) => {
                 const tanggal = payload?.[0]?.payload?.tanggal
-                return typeof tanggal === "string" ? formatDate(tanggal) : null
+                return typeof tanggal === "string" ? f.date(tanggal) : null
               }}
             />
           }
@@ -74,20 +77,22 @@ export function DailyVolumeChart({ data }: { data: Point[] }) {
 
 /** Kembaran tabel grafik: setiap nilai terbaca tanpa hover dan tanpa warna. */
 export function DailyVolumeTable({ data }: { data: Point[] }) {
+  const t = useT()
+  const f = useFormat()
   return (
     <div className="max-h-64 overflow-y-auto rounded-lg border">
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead className="pl-3">Tanggal</TableHead>
-            <TableHead className="pr-3 text-right">Pertanyaan</TableHead>
+            <TableHead className="pl-3">{t.stats.date}</TableHead>
+            <TableHead className="pr-3 text-right">{t.stats.volumeSeries}</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {data.map((p) => (
             <TableRow key={p.tanggal}>
-              <TableCell className="pl-3">{formatDate(p.tanggal)}</TableCell>
-              <TableCell className="pr-3 text-right tabular-nums">{formatNumber(p.jumlah)}</TableCell>
+              <TableCell className="pl-3">{f.date(p.tanggal)}</TableCell>
+              <TableCell className="pr-3 text-right tabular-nums">{f.number(p.jumlah)}</TableCell>
             </TableRow>
           ))}
         </TableBody>

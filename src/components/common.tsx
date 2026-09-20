@@ -1,20 +1,40 @@
 "use client"
 
 import { LoaderCircleIcon, RotateCwIcon, type LucideIcon } from "lucide-react"
+import { useEffect } from "react"
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
+import { useT } from "@/lib/i18n"
 import { cn } from "@/lib/utils"
+
+/**
+ * Judul tab peramban.
+ *
+ * `export const metadata` di tiap `page.tsx` dibangkitkan di server, jadi ia
+ * tidak dapat ikut bahasa yang tersimpan di peramban. Judulnya ditimpa dari
+ * sini -- satu tempat, karena setiap halaman memakai `PageHeader`.
+ */
+function useDocumentTitle(judul: string | undefined) {
+  const t = useT()
+  useEffect(() => {
+    if (judul) document.title = `${judul} · ${t.app.name}`
+  }, [judul, t])
+}
 
 export function PageHeader({
   title,
   description,
   actions,
+  documentTitle,
 }: {
   title: React.ReactNode
   description?: React.ReactNode
   actions?: React.ReactNode
+  /** Untuk judul yang bukan teks biasa; bawaannya `title` bila ia sebuah string. */
+  documentTitle?: string
 }) {
+  useDocumentTitle(documentTitle ?? (typeof title === "string" ? title : undefined))
   return (
     <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
       <div className="min-w-0 space-y-1">
@@ -31,21 +51,22 @@ export function PageHeader({
 export function QueryError({
   error,
   onRetry,
-  title = "Data tidak dapat dimuat",
+  title,
 }: {
   error: Error
   onRetry?: () => void
   title?: string
 }) {
+  const t = useT()
   return (
     <Alert variant="destructive">
-      <AlertTitle>{title}</AlertTitle>
+      <AlertTitle>{title ?? t.common.loadFailed}</AlertTitle>
       <AlertDescription>
         <p>{error.message}</p>
         {onRetry ? (
           <Button variant="outline" size="sm" className="mt-2" onClick={onRetry}>
             <RotateCwIcon data-icon="inline-start" />
-            Coba lagi
+            {t.common.retry}
           </Button>
         ) : null}
       </AlertDescription>

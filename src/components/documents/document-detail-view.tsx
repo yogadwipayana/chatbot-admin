@@ -33,7 +33,8 @@ import { useNow } from "@/hooks/use-now"
 import { ApiError, type Schemas } from "@/lib/api/client"
 import { useChunks, useDocument, useMe, useUnits, useUpdateDocument } from "@/lib/api/queries"
 import { documentFileUrl, isServed, staleReason, type Doc } from "@/lib/documents"
-import { formatDateTime, formatNumber, toDateInput } from "@/lib/format"
+import { toDateInput } from "@/lib/format"
+import { useFormat, useT } from "@/lib/i18n"
 
 export function DocumentDetailView({
   id,
@@ -45,6 +46,7 @@ export function DocumentDetailView({
   /** Ekstraksi hanya menemukan sedikit teks -- isinya diduga berupa gambar. */
   teksTipis?: boolean
 }) {
+  const t = useT()
   const now = useNow()
   const router = useRouter()
   const query = useDocument(id)
@@ -55,7 +57,7 @@ export function DocumentDetailView({
     <Button variant="ghost" size="sm" asChild className="mb-2 -ml-2">
       <Link href="/dokumen">
         <ArrowLeftIcon data-icon="inline-start" />
-        Dokumen
+        {t.upload.back}
       </Link>
     </Button>
   )
@@ -70,22 +72,22 @@ export function DocumentDetailView({
         {unitLain ? (
           <EmptyState
             icon={LockIcon}
-            title="Dokumen milik unit lain"
+            title={t.docDetail.otherUnit}
             description={query.error.message}
             action={
               <Button asChild variant="outline">
-                <Link href="/dokumen">Kembali ke daftar dokumen</Link>
+                <Link href="/dokumen">{t.docDetail.backToList}</Link>
               </Button>
             }
           />
         ) : hilang ? (
           <EmptyState
             icon={FileQuestionIcon}
-            title="Dokumen tidak ditemukan"
-            description="Dokumen ini mungkin sudah dihapus."
+            title={t.docDetail.notFound}
+            description={t.docDetail.notFoundBody}
             action={
               <Button asChild variant="outline">
-                <Link href="/dokumen">Kembali ke daftar dokumen</Link>
+                <Link href="/dokumen">{t.docDetail.backToList}</Link>
               </Button>
             }
           />
@@ -124,7 +126,7 @@ export function DocumentDetailView({
               <Button variant="outline" asChild>
                 <a href={documentFileUrl(doc.id)} target="_blank" rel="noreferrer">
                   <ExternalLinkIcon data-icon="inline-start" />
-                  Buka PDF
+                  {t.documents.openPdf}
                 </a>
               </Button>
             ) : null}
@@ -136,18 +138,18 @@ export function DocumentDetailView({
               {doc.is_active ? (
                 <>
                   <EyeOffIcon data-icon="inline-start" />
-                  Nonaktifkan
+                  {t.documents.deactivate}
                 </>
               ) : (
                 <>
                   <EyeIcon data-icon="inline-start" />
-                  Aktifkan
+                  {t.documents.activate}
                 </>
               )}
             </Button>
             <Button variant="destructive" onClick={() => setHapus(doc)}>
               <Trash2Icon data-icon="inline-start" />
-              Hapus
+              {t.docDetail.delete}
             </Button>
           </>
         }
@@ -161,30 +163,22 @@ export function DocumentDetailView({
         {isNew ? (
           <Alert>
             <CircleCheckIcon className="text-status-good" />
-            <AlertTitle>Dokumen berhasil dipasang</AlertTitle>
-            <AlertDescription>
-              Periksa pratinjau potongan di bawah. Pastikan tabel dan daftar bernomor tidak
-              terpotong di tengah: potongan yang terputus sering membuat jawaban chatbot benar
-              tetapi tidak lengkap.
-            </AlertDescription>
+            <AlertTitle>{t.docDetail.installedTitle}</AlertTitle>
+            <AlertDescription>{t.docDetail.installedBody}</AlertDescription>
           </Alert>
         ) : null}
         {teksTipis ? (
           <Alert>
             <TriangleAlertIcon className="text-status-warning" />
-            <AlertTitle>Teks dokumen sangat sedikit</AlertTitle>
-            <AlertDescription>
-              Chatbot hanya membaca teks, bukan gambar. Bila langkah-langkahnya ada di dalam
-              tangkapan layar, jawaban chatbot akan ikut tipis. Periksa pratinjau potongan di bawah,
-              lalu pertimbangkan menambahkan keterangan teks pada tiap langkah.
-            </AlertDescription>
+            <AlertTitle>{t.docDetail.thinTitle}</AlertTitle>
+            <AlertDescription>{t.docDetail.thinBody}</AlertDescription>
           </Alert>
         ) : null}
         {alasanUsang ? (
           <Alert>
             <TriangleAlertIcon className="text-status-warning" />
-            <AlertTitle>Perlu ditinjau</AlertTitle>
-            <AlertDescription>{alasanUsang}</AlertDescription>
+            <AlertTitle>{t.docStatus.needsReview}</AlertTitle>
+            <AlertDescription>{t.docStatus.stale[alasanUsang]}</AlertDescription>
           </Alert>
         ) : null}
       </div>
@@ -205,6 +199,8 @@ export function DocumentDetailView({
 
 /** Di-remount lewat `key={updated_at}` setelah tersimpan, jadi isian selalu mulai dari data terbaru. */
 function MetadataCard({ doc }: { doc: Doc }) {
+  const t = useT()
+  const f = useFormat()
   const update = useUpdateDocument()
   // Staf/dosen tidak dapat memindahkan dokumen ke unit lain.
   const unitTerkunci = useMe().data?.role === "staf"
@@ -229,8 +225,8 @@ function MetadataCard({ doc }: { doc: Doc }) {
     update.mutate(
       { id: doc.id, body: perubahan },
       {
-        onSuccess: () => toast.success("Perubahan disimpan"),
-        onError: (error) => toast.error("Gagal menyimpan", { description: error.message }),
+        onSuccess: () => toast.success(t.docDetail.saved),
+        onError: (error) => toast.error(t.common.saveFailed, { description: error.message }),
       }
     )
   }
@@ -245,16 +241,13 @@ function MetadataCard({ doc }: { doc: Doc }) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Informasi dokumen</CardTitle>
-        <CardDescription>
-          Menyimpan perubahan dianggap sebagai peninjauan dan menghapus peringatan “lebih dari 6
-          bulan tidak diperbarui”.
-        </CardDescription>
+        <CardTitle>{t.docDetail.infoCard}</CardTitle>
+        <CardDescription>{t.docDetail.infoCardHint}</CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={simpan} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="judul">Judul resmi</Label>
+            <Label htmlFor="judul">{t.upload.judul}</Label>
             <Input
               id="judul"
               required
@@ -265,7 +258,7 @@ function MetadataCard({ doc }: { doc: Doc }) {
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="unit">Unit penerbit</Label>
+            <Label htmlFor="unit">{t.upload.unit}</Label>
             <UnitField
               id="unit"
               required
@@ -275,13 +268,11 @@ function MetadataCard({ doc }: { doc: Doc }) {
               onChange={setUnit}
             />
             {unitTerkunci ? (
-              <p className="text-xs text-muted-foreground">
-                Hanya Admin yang dapat memindahkan dokumen ke unit lain.
-              </p>
+              <p className="text-xs text-muted-foreground">{t.docDetail.unitLocked}</p>
             ) : null}
           </div>
           <div className="space-y-2">
-            <Label htmlFor="tahun">Tahun berlaku</Label>
+            <Label htmlFor="tahun">{t.upload.tahun}</Label>
             <Input
               id="tahun"
               type="number"
@@ -294,10 +285,10 @@ function MetadataCard({ doc }: { doc: Doc }) {
           </div>
           <div className="space-y-2">
             <div className="flex items-center justify-between gap-2">
-              <Label htmlFor="valid-until">Berlaku sampai</Label>
+              <Label htmlFor="valid-until">{t.upload.validUntil}</Label>
               {validUntil ? (
                 <Button type="button" variant="link" size="xs" onClick={() => setValidUntil("")}>
-                  Jadikan tanpa batas
+                  {t.upload.clearExpiry}
                 </Button>
               ) : null}
             </div>
@@ -307,20 +298,18 @@ function MetadataCard({ doc }: { doc: Doc }) {
               spanFrom={hariIni}
               value={validUntil}
               onChange={setValidUntil}
-              placeholder="Tanpa batas"
+              placeholder={t.upload.noExpiry}
             />
             <p className="text-xs text-muted-foreground">
-              {validUntil
-                ? "Setelah tanggal ini chatbot otomatis berhenti memakai dokumen."
-                : "Kosong: berlaku tanpa batas."}
+              {validUntil ? t.docDetail.expiryOn : t.docDetail.expiryOff}
             </p>
           </div>
           <div className="flex justify-end gap-2">
             <Button type="button" variant="ghost" disabled={!berubah || update.isPending} onClick={reset}>
-              Urungkan
+              {t.docDetail.revert}
             </Button>
             <Button type="submit" disabled={!berubah || update.isPending}>
-              {update.isPending ? "Menyimpan…" : "Simpan"}
+              {update.isPending ? t.common.saving : t.common.save}
             </Button>
           </div>
         </form>
@@ -328,12 +317,12 @@ function MetadataCard({ doc }: { doc: Doc }) {
         <Separator className="my-5" />
 
         <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 text-sm">
-          <dt className="text-muted-foreground">Diunggah oleh</dt>
-          <dd className="min-w-0 break-words">{doc.uploaded_by ?? "Tidak tercatat"}</dd>
-          <dt className="text-muted-foreground">Diperbarui</dt>
-          <dd>{formatDateTime(doc.updated_at)}</dd>
-          <dt className="text-muted-foreground">Potongan</dt>
-          <dd className="tabular-nums">{formatNumber(doc.jumlah_chunk)}</dd>
+          <dt className="text-muted-foreground">{t.docDetail.uploadedBy}</dt>
+          <dd className="min-w-0 break-words">{doc.uploaded_by ?? t.docDetail.notRecorded}</dd>
+          <dt className="text-muted-foreground">{t.docDetail.updated}</dt>
+          <dd>{f.dateTime(doc.updated_at)}</dd>
+          <dt className="text-muted-foreground">{t.docDetail.chunks}</dt>
+          <dd className="tabular-nums">{f.number(doc.jumlah_chunk)}</dd>
         </dl>
       </CardContent>
     </Card>
@@ -341,17 +330,16 @@ function MetadataCard({ doc }: { doc: Doc }) {
 }
 
 function ChunksCard({ id, total }: { id: string; total: number }) {
+  const t = useT()
+  const f = useFormat()
   const chunks = useChunks(id)
   const items = chunks.data?.pages.flat() ?? []
 
   return (
     <Card className="lg:col-span-2">
       <CardHeader>
-        <CardTitle>Pratinjau potongan</CardTitle>
-        <CardDescription>
-          Dokumen dipecah per halaman menjadi potongan pendek. Potongan inilah yang dicari dan
-          dikutip chatbot saat menjawab.
-        </CardDescription>
+        <CardTitle>{t.docDetail.previewTitle}</CardTitle>
+        <CardDescription>{t.docDetail.previewHint}</CardDescription>
       </CardHeader>
       <CardContent>
         {chunks.error ? (
@@ -363,15 +351,17 @@ function ChunksCard({ id, total }: { id: string; total: number }) {
             ))}
           </div>
         ) : items.length === 0 ? (
-          <p className="text-sm text-muted-foreground">Dokumen ini tidak memiliki potongan.</p>
+          <p className="text-sm text-muted-foreground">{t.docDetail.noChunks}</p>
         ) : (
           <div className="space-y-3">
             {items.map((chunk) => (
               <article key={chunk.id} className="rounded-lg border p-3">
                 <header className="mb-2 flex items-center gap-2 text-xs text-muted-foreground">
-                  <span className="font-medium text-foreground">Potongan {chunk.urutan + 1}</span>
+                  <span className="font-medium text-foreground">
+                    {t.docDetail.chunkLabel(chunk.urutan + 1)}
+                  </span>
                   <span aria-hidden>·</span>
-                  <span>Halaman {chunk.halaman}</span>
+                  <span>{t.docDetail.pageLabel(chunk.halaman)}</span>
                 </header>
                 <p className="text-sm leading-relaxed break-words whitespace-pre-wrap">
                   {chunk.konten}
@@ -379,9 +369,7 @@ function ChunksCard({ id, total }: { id: string; total: number }) {
               </article>
             ))}
             <div className="flex flex-wrap items-center justify-between gap-2 pt-1 text-sm text-muted-foreground">
-              <span>
-                Menampilkan {formatNumber(items.length)} dari {formatNumber(total)} potongan
-              </span>
+              <span>{t.docDetail.showing(f.number(items.length), f.number(total))}</span>
               {chunks.hasNextPage ? (
                 <Button
                   variant="outline"
@@ -389,7 +377,7 @@ function ChunksCard({ id, total }: { id: string; total: number }) {
                   disabled={chunks.isFetchingNextPage}
                   onClick={() => chunks.fetchNextPage()}
                 >
-                  {chunks.isFetchingNextPage ? "Memuat…" : "Muat lebih banyak"}
+                  {chunks.isFetchingNextPage ? t.docDetail.loading : t.docDetail.loadMore}
                 </Button>
               ) : null}
             </div>

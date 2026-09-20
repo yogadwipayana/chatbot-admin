@@ -16,11 +16,19 @@ export function isServed(doc: Pick<Doc, "is_active" | "valid_until">, nowMs: num
   return doc.is_active && !isExpired(doc, nowMs)
 }
 
-/** Dipakai dokumen dan entri tanya jawab: keduanya baris `documents` yang sama. */
-export function staleReason(doc: Pick<Doc, "stale" | "valid_until">, nowMs: number): string | null {
+export type StaleReason = "expired" | "old"
+
+/**
+ * Alasan sebuah dokumen diberi badge "perlu ditinjau", sebagai kunci dan bukan
+ * kalimat: kalimatnya ada di `t.docStatus.stale`. Dipakai dokumen dan entri
+ * tanya jawab -- keduanya baris `documents` yang sama.
+ */
+export function staleReason(
+  doc: Pick<Doc, "stale" | "valid_until">,
+  nowMs: number
+): StaleReason | null {
   if (!doc.stale) return null
-  if (isExpired(doc, nowMs)) return "Masa berlaku sudah habis, sehingga tidak lagi dipakai chatbot."
-  return "Lebih dari 6 bulan tidak diperbarui. Pastikan isinya masih sesuai aturan terbaru."
+  return isExpired(doc, nowMs) ? "expired" : "old"
 }
 
 /** PDF sumber, sama dengan tujuan kartu sitasi mahasiswa (FE-2). Hanya untuk dokumen yang dipakai. */

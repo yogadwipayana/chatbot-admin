@@ -42,12 +42,14 @@ import {
 import { useNow } from "@/hooks/use-now"
 import { useDocuments, useMe } from "@/lib/api/queries"
 import { documentFileUrl, isServed, staleReason, type Doc } from "@/lib/documents"
-import { formatDate, formatNumber, formatRelative } from "@/lib/format"
+import { useFormat, useT } from "@/lib/i18n"
 import { cn } from "@/lib/utils"
 
 const PAGE_SIZE = 20
 
 export function DocumentsView() {
+  const t = useT()
+  const f = useFormat()
   const now = useNow()
   const [includeInactive, setIncludeInactive] = useState(false)
   const [onlyStale, setOnlyStale] = useState(false)
@@ -69,17 +71,17 @@ export function DocumentsView() {
   return (
     <>
       <PageHeader
-        title="Dokumen sumber"
+        title={t.documents.title}
         description={
           me?.role === "staf"
-            ? `Dokumen unit ${me.unit}. Akun Staf/Dosen hanya dapat melihat dan mengelola dokumen unitnya sendiri. Dokumen yang lewat masa berlaku otomatis berhenti dipakai.`
-            : "Dokumen resmi yang menjadi satu-satunya sumber jawaban chatbot. Dokumen yang lewat masa berlaku otomatis berhenti dipakai."
+            ? t.documents.descriptionStaff(me.unit ?? "")
+            : t.documents.description
         }
         actions={
           <Button asChild>
             <Link href="/dokumen/unggah">
               <FileUpIcon data-icon="inline-start" />
-              Unggah dokumen
+              {t.documents.upload}
             </Link>
           </Button>
         }
@@ -88,13 +90,8 @@ export function DocumentsView() {
       {data && data.jumlah_stale > 0 && !onlyStale ? (
         <Alert className="mb-4">
           <TriangleAlertIcon className="text-status-warning" />
-          <AlertTitle>
-            {formatNumber(data.jumlah_stale)} dokumen aktif perlu ditinjau
-          </AlertTitle>
-          <AlertDescription>
-            Lebih dari 6 bulan tidak diperbarui atau sudah lewat masa berlaku. Dokumen usang
-            membuat chatbot menyebarkan informasi lama atas nama kampus.
-          </AlertDescription>
+          <AlertTitle>{t.documents.staleAlert(data.jumlah_stale)}</AlertTitle>
+          <AlertDescription>{t.documents.staleAlertBody}</AlertDescription>
           <AlertAction>
             <Button
               size="sm"
@@ -104,7 +101,7 @@ export function DocumentsView() {
                 setPage(0)
               }}
             >
-              Tampilkan
+              {t.documents.staleAlertAction}
             </Button>
           </AlertAction>
         </Alert>
@@ -120,7 +117,7 @@ export function DocumentsView() {
               setPage(0)
             }}
           />
-          <Label htmlFor="hanya-usang">Hanya yang perlu ditinjau</Label>
+          <Label htmlFor="hanya-usang">{t.documents.onlyStale}</Label>
         </div>
         <div className="flex items-center gap-2">
           <Switch
@@ -131,7 +128,7 @@ export function DocumentsView() {
               setPage(0)
             }}
           />
-          <Label htmlFor="nonaktif">Tampilkan yang nonaktif</Label>
+          <Label htmlFor="nonaktif">{t.documents.showInactive}</Label>
         </div>
       </div>
 
@@ -143,17 +140,17 @@ export function DocumentsView() {
         onlyStale || includeInactive ? (
           <EmptyState
             icon={FileTextIcon}
-            title="Tidak ada dokumen yang cocok"
-            description="Ubah filter di atas untuk melihat dokumen lain."
+            title={t.documents.noMatch}
+            description={t.documents.noMatchBody}
           />
         ) : (
           <EmptyState
             icon={FileTextIcon}
-            title="Belum ada dokumen"
-            description="Chatbot belum dapat menjawab apa pun sampai dokumen resmi diunggah."
+            title={t.documents.none}
+            description={t.documents.noneBody}
             action={
               <Button asChild>
-                <Link href="/dokumen/unggah">Unggah dokumen pertama</Link>
+                <Link href="/dokumen/unggah">{t.documents.noneAction}</Link>
               </Button>
             }
           />
@@ -164,13 +161,13 @@ export function DocumentsView() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="min-w-64 pl-4">Dokumen</TableHead>
-                  <TableHead className="min-w-44">Status</TableHead>
-                  <TableHead>Berlaku sampai</TableHead>
-                  <TableHead>Diperbarui</TableHead>
-                  <TableHead className="text-right">Potongan</TableHead>
+                  <TableHead className="min-w-64 pl-4">{t.documents.columns.document}</TableHead>
+                  <TableHead className="min-w-44">{t.documents.columns.status}</TableHead>
+                  <TableHead>{t.documents.columns.validUntil}</TableHead>
+                  <TableHead>{t.documents.columns.updated}</TableHead>
+                  <TableHead className="text-right">{t.documents.columns.chunks}</TableHead>
                   <TableHead className="w-12 pr-4">
-                    <span className="sr-only">Aksi</span>
+                    <span className="sr-only">{t.documents.columns.actions}</span>
                   </TableHead>
                 </TableRow>
               </TableHeader>
@@ -191,17 +188,19 @@ export function DocumentsView() {
                       <TableCell className="whitespace-normal">
                         <DocumentStatus doc={doc} now={now} />
                         {doc.is_active && alasan ? (
-                          <p className="mt-1 max-w-56 text-xs text-muted-foreground">{alasan}</p>
+                          <p className="mt-1 max-w-56 text-xs text-muted-foreground">
+                            {t.docStatus.stale[alasan]}
+                          </p>
                         ) : null}
                       </TableCell>
                       <TableCell>
-                        {doc.valid_until ? formatDate(doc.valid_until) : "Tanpa batas"}
+                        {doc.valid_until ? f.date(doc.valid_until) : t.documents.noExpiry}
                       </TableCell>
-                      <TableCell title={formatDate(doc.updated_at)}>
-                        {formatRelative(doc.updated_at, now)}
+                      <TableCell title={f.date(doc.updated_at)}>
+                        {f.relative(doc.updated_at, now)}
                       </TableCell>
                       <TableCell className="text-right tabular-nums">
-                        {formatNumber(doc.jumlah_chunk)}
+                        {f.number(doc.jumlah_chunk)}
                       </TableCell>
                       <TableCell className="pr-4">
                         <DropdownMenu>
@@ -210,7 +209,7 @@ export function DocumentsView() {
                               variant="ghost"
                               size="icon-sm"
                               disabled={pendingId === doc.id}
-                              aria-label={`Aksi untuk ${doc.judul}`}
+                              aria-label={t.documents.rowActions(doc.judul)}
                             >
                               <EllipsisIcon />
                             </Button>
@@ -218,30 +217,30 @@ export function DocumentsView() {
                           <DropdownMenuContent align="end">
                             <DropdownMenuItem asChild>
                               <Link href={`/dokumen/${doc.id}`}>
-                                <EyeIcon /> Detail dan pratinjau
+                                <EyeIcon /> {t.documents.detailAction}
                               </Link>
                             </DropdownMenuItem>
                             {isServed(doc, now) ? (
                               <DropdownMenuItem asChild>
                                 <a href={documentFileUrl(doc.id)} target="_blank" rel="noreferrer">
-                                  <ExternalLinkIcon /> Buka PDF
+                                  <ExternalLinkIcon /> {t.documents.openPdf}
                                 </a>
                               </DropdownMenuItem>
                             ) : null}
                             <DropdownMenuItem onSelect={() => toggle(doc, now)}>
                               {doc.is_active ? (
                                 <>
-                                  <EyeOffIcon /> Nonaktifkan
+                                  <EyeOffIcon /> {t.documents.deactivate}
                                 </>
                               ) : (
                                 <>
-                                  <EyeIcon /> Aktifkan
+                                  <EyeIcon /> {t.documents.activate}
                                 </>
                               )}
                             </DropdownMenuItem>
                             <DropdownMenuSeparator />
                             <DropdownMenuItem variant="destructive" onSelect={() => setHapus(doc)}>
-                              <Trash2Icon /> Hapus permanen
+                              <Trash2Icon /> {t.documents.deletePermanently}
                             </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
@@ -256,8 +255,11 @@ export function DocumentsView() {
           {total > PAGE_SIZE ? (
             <div className="mt-4 flex items-center justify-between gap-4 text-sm text-muted-foreground">
               <span>
-                {formatNumber(page * PAGE_SIZE + 1)}–
-                {formatNumber(Math.min((page + 1) * PAGE_SIZE, total))} dari {formatNumber(total)}
+                {t.documents.range(
+                  f.number(page * PAGE_SIZE + 1),
+                  f.number(Math.min((page + 1) * PAGE_SIZE, total)),
+                  f.number(total)
+                )}
               </span>
               <div className="flex gap-2">
                 <Button
@@ -267,7 +269,7 @@ export function DocumentsView() {
                   onClick={() => setPage((p) => p - 1)}
                 >
                   <ChevronLeftIcon data-icon="inline-start" />
-                  Sebelumnya
+                  {t.documents.previous}
                 </Button>
                 <Button
                   variant="outline"
@@ -275,7 +277,7 @@ export function DocumentsView() {
                   disabled={page >= halamanTerakhir}
                   onClick={() => setPage((p) => p + 1)}
                 >
-                  Berikutnya
+                  {t.documents.next}
                   <ChevronRightIcon data-icon="inline-end" />
                 </Button>
               </div>

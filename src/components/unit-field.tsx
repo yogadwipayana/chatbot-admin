@@ -11,6 +11,7 @@ import {
   ComboboxList,
 } from "@/components/ui/combobox"
 import { Input } from "@/components/ui/input"
+import { useT } from "@/lib/i18n"
 
 /**
  * Isian nama unit: daftar unit yang sudah ada, tetapi tetap boleh diketik bebas.
@@ -29,7 +30,7 @@ export function UnitField({
   disabled,
   readOnly,
   required,
-  placeholder = "Biro Administrasi Akademik",
+  placeholder,
 }: {
   id?: string
   value: string
@@ -42,6 +43,7 @@ export function UnitField({
   required?: boolean
   placeholder?: string
 }) {
+  const t = useT()
   const ketikan = value.trim()
   const sudahAda = units.some((u) => u.toLocaleLowerCase() === ketikan.toLocaleLowerCase())
   const baru = ketikan && !sudahAda ? ketikan : null
@@ -72,19 +74,19 @@ export function UnitField({
       <ComboboxInput
         id={id}
         required={required}
-        placeholder={placeholder}
+        placeholder={placeholder ?? t.unitField.placeholder}
         autoComplete="off"
         className="w-full"
       />
       <ComboboxContent>
-        <ComboboxEmpty>Belum ada unit lain.</ComboboxEmpty>
+        <ComboboxEmpty>{t.unitField.empty}</ComboboxEmpty>
         <ComboboxList>
           {(item: string) => (
             <ComboboxItem key={item} value={item}>
               {item === baru ? (
                 <>
                   <PlusIcon />
-                  Pakai “{item}”
+                  {t.unitField.use(item)}
                 </>
               ) : (
                 item

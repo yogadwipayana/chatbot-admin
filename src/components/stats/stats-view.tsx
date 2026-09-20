@@ -15,16 +15,9 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useNow } from "@/hooks/use-now"
 import type { Schemas } from "@/lib/api/client"
 import { useStats, type StatsRange } from "@/lib/api/queries"
-import {
-  addDays,
-  formatDate,
-  formatDuration,
-  formatNumber,
-  formatPercent,
-  formatUsd,
-  toDateInput,
-} from "@/lib/format"
-import { KIND_LABELS, topicLabel } from "@/lib/labels"
+import { addDays, formatUsd, toDateInput } from "@/lib/format"
+import { useFormat, useT } from "@/lib/i18n"
+import type { Dict } from "@/lib/i18n/dict"
 import { cn } from "@/lib/utils"
 
 type Stats = Schemas["Stats"]
@@ -39,6 +32,8 @@ const TARGET_FEEDBACK = 0.75
 const TARGET_TAK_TERJAWAB = 0.15
 
 export function StatsView() {
+  const t = useT()
+  const f = useFormat()
   const now = useNow()
   const [preset, setPreset] = useState<Preset>("30")
   const [kustom, setKustom] = useState<StatsRange>({ sejak: "", sampai: "" })
@@ -60,17 +55,17 @@ export function StatsView() {
   return (
     <>
       <PageHeader
-        title="Statistik"
-        description="Seberapa membantu chatbot bagi mahasiswa, dan berapa biayanya. Target mengikuti PRD §3."
+        title={t.stats.title}
+        description={t.stats.description}
       />
 
       <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end">
         <Tabs value={preset} onValueChange={(v) => pilihPreset(v as Preset)}>
           <TabsList>
-            <TabsTrigger value="7">7 hari</TabsTrigger>
-            <TabsTrigger value="30">30 hari</TabsTrigger>
-            <TabsTrigger value="90">90 hari</TabsTrigger>
-            <TabsTrigger value="kustom">Pilih tanggal</TabsTrigger>
+            <TabsTrigger value="7">{t.range.d7}</TabsTrigger>
+            <TabsTrigger value="30">{t.range.d30}</TabsTrigger>
+            <TabsTrigger value="90">{t.range.d90}</TabsTrigger>
+            <TabsTrigger value="kustom">{t.range.custom}</TabsTrigger>
           </TabsList>
         </Tabs>
         {preset === "kustom" ? (
@@ -85,9 +80,7 @@ export function StatsView() {
       </div>
 
       {!rangeValid ? (
-        <p className="text-sm text-muted-foreground">
-          Pilih tanggal awal dan akhir, dengan tanggal awal tidak setelah tanggal akhir.
-        </p>
+        <p className="text-sm text-muted-foreground">{t.range.invalid}</p>
       ) : stats.error ? (
         <QueryError error={stats.error} onRetry={() => stats.refetch()} />
       ) : !stats.data ? (
@@ -95,8 +88,8 @@ export function StatsView() {
       ) : stats.data.total_pertanyaan === 0 ? (
         <EmptyState
           icon={ChartColumnIcon}
-          title="Belum ada pertanyaan pada periode ini"
-          description={`${formatDate(stats.data.sejak)} sampai ${formatDate(stats.data.sampai)}`}
+          title={t.stats.empty}
+          description={t.range.between(f.date(stats.data.sejak), f.date(stats.data.sampai))}
         />
       ) : (
         <div className={cn("space-y-6 transition-opacity", stats.isPlaceholderData && "opacity-60")}>
@@ -135,77 +128,86 @@ function StatTile({
 }
 
 function KpiRow({ stats }: { stats: Stats }) {
+  const t = useT()
+  const f = useFormat()
   const fb = stats.rasio_feedback_positif
   const tt = stats.rasio_tak_terjawab
   return (
     <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-      <StatTile label="Umpan balik positif" value={fb == null ? "—" : formatPercent(fb)}>
+      <StatTile label={t.stats.feedbackRatio} value={fb == null ? "—" : f.percent(fb)}>
         {fb == null ? (
-          <p>Belum ada umpan balik pada periode ini.</p>
+          <p>{t.stats.feedbackNone}</p>
         ) : (
           <>
             <StatusLabel level={fb >= TARGET_FEEDBACK ? "good" : "serious"} className="text-xs text-foreground">
-              {fb >= TARGET_FEEDBACK ? "Memenuhi" : "Di bawah"} target ≥ {formatPercent(TARGET_FEEDBACK, 0)}
+              {fb >= TARGET_FEEDBACK
+                ? t.stats.feedbackMeets(f.percent(TARGET_FEEDBACK, 0))
+                : t.stats.feedbackBelow(f.percent(TARGET_FEEDBACK, 0))}
             </StatusLabel>
-            <p>dari {formatNumber(stats.jumlah_feedback)} umpan balik</p>
+            <p>{t.stats.feedbackFrom(f.number(stats.jumlah_feedback))}</p>
           </>
         )}
       </StatTile>
 
-      <StatTile label="Pertanyaan tak terjawab" value={tt == null ? "—" : formatPercent(tt)}>
+      <StatTile label={t.stats.unanswered} value={tt == null ? "—" : f.percent(tt)}>
         {tt == null ? null : (
           <>
             <StatusLabel level={tt < TARGET_TAK_TERJAWAB ? "good" : "serious"} className="text-xs text-foreground">
-              {tt < TARGET_TAK_TERJAWAB ? "Memenuhi" : "Di atas"} target &lt; {formatPercent(TARGET_TAK_TERJAWAB, 0)}
+              {tt < TARGET_TAK_TERJAWAB
+                ? t.stats.unansweredMeets(f.percent(TARGET_TAK_TERJAWAB, 0))
+                : t.stats.unansweredAbove(f.percent(TARGET_TAK_TERJAWAB, 0))}
             </StatusLabel>
             <p>
-              {formatNumber(stats.rincian_jenis.refusal)} dari {formatNumber(stats.total_pertanyaan)}{" "}
-              pertanyaan ·{" "}
+              {t.stats.unansweredOf(
+                f.number(stats.rincian_jenis.refusal),
+                f.number(stats.total_pertanyaan)
+              )}
               <Link href="/pertanyaan" className="underline underline-offset-3 hover:text-foreground">
-                Lihat daftar
+                {t.stats.seeList}
               </Link>
             </p>
           </>
         )}
       </StatTile>
 
-      <StatTile label="Biaya API berjalan" value={formatUsd(stats.biaya_usd_berjalan)}>
+      <StatTile label={t.stats.cost} value={formatUsd(stats.biaya_usd_berjalan)}>
         {stats.pesan_tanpa_estimasi_biaya > 0 ? (
           <StatusLabel level="warning" className="text-xs text-foreground">
-            {formatNumber(stats.pesan_tanpa_estimasi_biaya)} jawaban belum terhitung: tarif model
-            belum didaftarkan
+            {t.stats.costMissing(f.number(stats.pesan_tanpa_estimasi_biaya))}
           </StatusLabel>
         ) : (
-          <p>Estimasi dari token terpakai, bukan tagihan resmi.</p>
+          <p>{t.stats.costNote}</p>
         )}
       </StatTile>
 
       <StatTile
-        label="Waktu proses (p95)"
-        value={stats.latency_p95_ms == null ? "—" : formatDuration(stats.latency_p95_ms)}
+        label={t.stats.latency}
+        value={stats.latency_p95_ms == null ? "—" : f.duration(stats.latency_p95_ms)}
       >
-        <p>95% jawaban selesai dalam waktu ini. Target kemunculan kata pertama &lt; 3 dtk.</p>
+        <p>{t.stats.latencyNote}</p>
       </StatTile>
     </div>
   )
 }
 
 function VolumeCard({ stats }: { stats: Stats }) {
+  const t = useT()
+  const f = useFormat()
   const [tabel, setTabel] = useState(false)
   return (
     <Card className="lg:col-span-2">
       <CardHeader>
-        <CardTitle>Pertanyaan per hari</CardTitle>
+        <CardTitle>{t.stats.volumeTitle}</CardTitle>
         <CardDescription>
-          {formatNumber(stats.total_pertanyaan)} pertanyaan dalam{" "}
-          {formatNumber(stats.total_percakapan)} percakapan. Volume adalah konteks, bukan ukuran
-          keberhasilan: angka tinggi juga bisa berarti mahasiswa bertanya berulang karena jawaban
-          kurang membantu.
+          {t.stats.volumeDescription(
+            f.number(stats.total_pertanyaan),
+            f.number(stats.total_percakapan)
+          )}
         </CardDescription>
         <CardAction>
           <Button variant="ghost" size="sm" onClick={() => setTabel((t) => !t)} aria-pressed={tabel}>
             {tabel ? <ChartColumnIcon data-icon="inline-start" /> : <TableIcon data-icon="inline-start" />}
-            {tabel ? "Grafik" : "Tabel"}
+            {tabel ? t.common.chart : t.common.table}
           </Button>
         </CardAction>
       </CardHeader>
@@ -227,18 +229,20 @@ const KIND_SEGMENTS = [
   { key: "refusal", swatch: "bg-series-2" },
   { key: "support", swatch: "bg-series-3" },
   { key: "smalltalk", swatch: "bg-muted-foreground/40" },
-] as const
+] as const satisfies readonly { key: keyof Dict["labels"]["kind"]; swatch: string }[]
 
 /** Bagian dari keseluruhan: satu batang bertumpuk, legenda sekaligus berfungsi sebagai label nilai. */
 function KindCard({ stats }: { stats: Stats }) {
+  const t = useT()
+  const f = useFormat()
   const total = KIND_SEGMENTS.reduce((jumlah, s) => jumlah + stats.rincian_jenis[s.key], 0)
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Jenis balasan</CardTitle>
+        <CardTitle>{t.stats.kindTitle}</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="flex h-3 w-full gap-0.5" role="img" aria-label="Proporsi jenis balasan">
+        <div className="flex h-3 w-full gap-0.5" role="img" aria-label={t.stats.kindTitle}>
           {KIND_SEGMENTS.filter((s) => stats.rincian_jenis[s.key] > 0).map((s) => (
             <div
               key={s.key}
@@ -253,10 +257,10 @@ function KindCard({ stats }: { stats: Stats }) {
             return (
               <li key={s.key} className="flex items-center gap-2">
                 <span className={cn("size-2.5 shrink-0 rounded-[2px]", s.swatch)} aria-hidden />
-                <span className="flex-1">{KIND_LABELS[s.key]}</span>
-                <span className="font-medium tabular-nums">{formatNumber(n)}</span>
+                <span className="flex-1">{t.labels.kind[s.key]}</span>
+                <span className="font-medium tabular-nums">{f.number(n)}</span>
                 <span className="w-12 text-right text-muted-foreground tabular-nums">
-                  {total ? formatPercent(n / total, 0) : "—"}
+                  {total ? f.percent(n / total, 0) : "—"}
                 </span>
               </li>
             )
@@ -268,28 +272,35 @@ function KindCard({ stats }: { stats: Stats }) {
 }
 
 function TopicCard({ stats }: { stats: Stats }) {
-  const terbanyak = stats.topik_populer.reduce((max, t) => Math.max(max, t.jumlah), 0)
+  const t = useT()
+  const f = useFormat()
+  const terbanyak = stats.topik_populer.reduce((max, baris) => Math.max(max, baris.jumlah), 0)
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Topik berisiko tinggi</CardTitle>
-        <CardDescription>Jawaban pada topik ini selalu disertai kontak unit resmi.</CardDescription>
+        <CardTitle>{t.stats.topicTitle}</CardTitle>
+        <CardDescription>{t.stats.topicDescription}</CardDescription>
       </CardHeader>
       <CardContent>
         {stats.topik_populer.length === 0 ? (
-          <p className="text-sm text-muted-foreground">Belum ada pertanyaan pada topik berisiko.</p>
+          <p className="text-sm text-muted-foreground">{t.stats.topicEmpty}</p>
         ) : (
           <ul className="space-y-3">
-            {stats.topik_populer.map((t) => (
-              <li key={t.topik} className="grid grid-cols-[7.5rem_1fr_auto] items-center gap-3 text-sm">
-                <span className="truncate">{topicLabel(t.topik)}</span>
+            {stats.topik_populer.map((baris) => (
+              <li key={baris.topik} className="grid grid-cols-[7.5rem_1fr_auto] items-center gap-3 text-sm">
+                {/* Topik yang belum dikenal kamus tampil apa adanya, bukan hilang. */}
+                <span className="truncate">
+                  {t.labels.topic[baris.topik as keyof typeof t.labels.topic] ?? baris.topik}
+                </span>
                 <div className="h-2" aria-hidden>
                   <div
                     className="h-full rounded-r-[4px] bg-series-1"
-                    style={{ width: `${(t.jumlah / terbanyak) * 100}%` }}
+                    style={{ width: `${(baris.jumlah / terbanyak) * 100}%` }}
                   />
                 </div>
-                <span className="w-8 text-right font-medium tabular-nums">{formatNumber(t.jumlah)}</span>
+                <span className="w-8 text-right font-medium tabular-nums">
+                  {f.number(baris.jumlah)}
+                </span>
               </li>
             ))}
           </ul>

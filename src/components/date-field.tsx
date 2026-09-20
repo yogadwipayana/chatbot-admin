@@ -1,6 +1,6 @@
 "use client"
 
-import { id as localeId } from "date-fns/locale"
+import { enUS as localeEn, id as localeId } from "date-fns/locale"
 import { CalendarIcon, TriangleAlertIcon, XIcon } from "lucide-react"
 import { useState, type ReactNode } from "react"
 import type { DateRange, Matcher } from "react-day-picker"
@@ -9,7 +9,9 @@ import { Button } from "@/components/ui/button"
 import { Calendar } from "@/components/ui/calendar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { useNow } from "@/hooks/use-now"
-import { formatDate, formatLama, parseDateOnly, toDateInput } from "@/lib/format"
+import { parseDateOnly, toDateInput } from "@/lib/format"
+import { useFormat, useLang, useT } from "@/lib/i18n"
+import type { Lang } from "@/lib/i18n/lang"
 import { cn } from "@/lib/utils"
 
 const SEHARI = 86_400_000
@@ -19,13 +21,22 @@ const SEHARI = 86_400_000
  *
  * Dipusatkan di sini supaya dua pemilih yang berbeda -- satu tanggal dan
  * rentang -- tidak pelan-pelan berbeda bahasanya atau bentuk judulnya setiap
- * kali salah satunya disunting.
+ * kali salah satunya disunting. Nama bulan dan hari datang dari locale
+ * date-fns, jadi kalendernya ikut berganti bahasa bersama sisa dashboard.
  */
-const GAYA_KALENDER = {
-  locale: localeId,
-  captionLayout: "dropdown",
-  autoFocus: true,
-} as const
+function useGayaKalender() {
+  const { lang } = useLang()
+  return {
+    locale: LOCALE_KALENDER[lang],
+    captionLayout: "dropdown",
+    autoFocus: true,
+  } as const
+}
+
+const LOCALE_KALENDER = { id: localeId, en: localeEn } satisfies Record<
+  Lang,
+  typeof localeId
+>
 
 /**
  * Hari yang tidak dapat dipilih, dari `min`/`max` bergaya `YYYY-MM-DD`.
@@ -104,7 +115,7 @@ export function DateField({
   disabled,
   min,
   max,
-  placeholder = "Pilih tanggal",
+  placeholder,
   clearLabel,
   spanFrom,
   className,
@@ -127,6 +138,9 @@ export function DateField({
   spanFrom?: string
   className?: string
 }) {
+  const t = useT()
+  const f = useFormat()
+  const gaya = useGayaKalender()
   const [open, setOpen] = useState(false)
   const terpilih = value ? parseDateOnly(value) : undefined
 
@@ -161,12 +175,12 @@ export function DateField({
           )}
         >
           <CalendarIcon data-icon="inline-start" />
-          {value ? formatDate(value) : placeholder}
+          {value ? f.date(value) : (placeholder ?? t.dateField.placeholder)}
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-auto p-0" align="start">
         <Calendar
-          {...GAYA_KALENDER}
+          {...gaya}
           mode="single"
           startMonth={awalPilihan}
           endMonth={akhirPilihan}
@@ -189,12 +203,13 @@ export function DateField({
           keterangan={
             awal && value ? (
               sudahLewat ? (
-                <>{formatDate(value)} sudah lewat, jadi chatbot langsung berhenti memakainya.</>
+                <>{t.dateField.expired(f.date(value))}</>
               ) : (
                 <>
-                  Berakhir <Tebal>{formatDate(value)}</Tebal>
+                  {t.dateField.endsOn}
+                  <Tebal>{f.date(value)}</Tebal>
                   <Pemisah />
-                  {selisih === 0 ? "hari ini" : `${formatLama(selisih!)} lagi`}
+                  {selisih === 0 ? t.dateField.today : t.dateField.inTime(f.lama(selisih!))}
                 </>
               )
             ) : null
@@ -247,6 +262,9 @@ export function DateRangeField({
   max?: string
   className?: string
 }) {
+  const t = useT()
+  const f = useFormat()
+  const gaya = useGayaKalender()
   const [open, setOpen] = useState(false)
   const now = useNow()
 
@@ -270,9 +288,9 @@ export function DateRangeField({
         ) + 1
       : null
 
-  let label = "Pilih rentang tanggal"
-  if (value.sejak && value.sampai) label = `${formatDate(value.sejak)} – ${formatDate(value.sampai)}`
-  else if (value.sejak) label = `${formatDate(value.sejak)} – pilih tanggal akhir`
+  let label: string = t.dateField.rangePlaceholder
+  if (value.sejak && value.sampai) label = `${f.date(value.sejak)} – ${f.date(value.sampai)}`
+  else if (value.sejak) label = t.dateField.rangePartial(f.date(value.sejak))
 
   return (
     <Popover
@@ -299,7 +317,7 @@ export function DateRangeField({
       </PopoverTrigger>
       <PopoverContent className="w-auto p-0" align="start">
         <Calendar
-          {...GAYA_KALENDER}
+          {...gaya}
           mode="range"
           numberOfMonths={2}
           startMonth={min ? parseDateOnly(min) : new Date(new Date(now).getFullYear() - 5, 0, 1)}
@@ -332,20 +350,21 @@ export function DateRangeField({
           keterangan={
             draf?.from && !draf.to ? (
               <>
-                Mulai <Tebal>{formatDate(draf.from)}</Tebal>
+                {t.dateField.startsOn}
+                <Tebal>{f.date(draf.from)}</Tebal>
                 <Pemisah />
-                pilih tanggal akhirnya
+                {t.dateField.pickEnd}
               </>
             ) : hari !== null ? (
               <>
                 <Tebal>
-                  {formatDate(value.sejak)} – {formatDate(value.sampai)}
+                  {f.date(value.sejak)} – {f.date(value.sampai)}
                 </Tebal>
                 <Pemisah />
-                {hari} hari
+                {t.dateField.rangeDays(hari)}
               </>
             ) : (
-              <>Klik tanggal awal, lalu tanggal akhirnya.</>
+              <>{t.dateField.rangeHint}</>
             )
           }
         />

@@ -1,6 +1,7 @@
 import createClient, { type Middleware } from "openapi-fetch"
 
 import { clearToken, readToken } from "@/lib/auth/token"
+import { dict } from "@/lib/i18n"
 
 import type { components, paths } from "./schema"
 
@@ -21,8 +22,10 @@ export const API_BASE_URL = (
   process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000"
 ).replace(/\/+$/, "")
 
-export const GAGAL_TERHUBUNG =
-  "Tidak dapat terhubung ke server. Periksa koneksi internet atau coba lagi sebentar lagi."
+/** Jaringan mati: satu-satunya kalimat galat yang tidak berasal dari server. */
+export function gagalTerhubung(): string {
+  return dict().api.offline
+}
 
 export class ApiError extends Error {
   constructor(
@@ -53,18 +56,25 @@ const auth: Middleware = {
 export const api = createClient<paths>({ baseUrl: API_BASE_URL })
 api.use(auth)
 
-/** Kalimat galat siap tampil. Backend sudah menulis `detail` non-teknis (PRD §9). */
+/**
+ * Kalimat galat siap tampil. Backend sudah menulis `detail` non-teknis (PRD §9).
+ *
+ * `detail` dari server tetap apa adanya: API hanya berbahasa Indonesia, dan
+ * menerjemahkannya di sini berarti menebak kalimat yang tidak pernah dilihat.
+ * Yang dialihbahasakan hanya kalimat yang disusun dashboard sendiri.
+ */
 export function errorMessage(status: number, body: unknown): string {
+  const t = dict().api
   const detail = (body as { detail?: unknown } | null | undefined)?.detail
   if (typeof detail === "string" && detail) return detail
   if (Array.isArray(detail) && detail.length > 0) {
     const pertama = detail[0] as { msg?: unknown }
     if (typeof pertama?.msg === "string") {
-      return `Isian tidak sah: ${pertama.msg.replace(/^Value error, /, "")}`
+      return t.invalidInput(pertama.msg.replace(/^Value error, /, ""))
     }
   }
-  if (status >= 500) return "Terjadi gangguan di server. Coba lagi beberapa saat lagi."
-  return `Permintaan gagal (kode ${status}).`
+  if (status >= 500) return t.serverError
+  return t.failed(status)
 }
 
 type FetchResult = { data?: unknown; error?: unknown; response: Response }
@@ -78,7 +88,7 @@ export async function unwrap<R extends FetchResult>(
     result = await request
   } catch (error) {
     if (error instanceof DOMException && error.name === "AbortError") throw error
-    throw new ApiError(0, GAGAL_TERHUBUNG)
+    throw new ApiError(0, gagalTerhubung())
   }
   if (!result.response.ok) {
     throw new ApiError(

@@ -1,6 +1,6 @@
 import { clearToken, readToken } from "@/lib/auth/token"
 
-import { API_BASE_URL, ApiError, GAGAL_TERHUBUNG, errorMessage, type Schemas } from "./client"
+import { API_BASE_URL, ApiError, errorMessage, gagalTerhubung, type Schemas } from "./client"
 
 export type UploadInput = {
   file: File
@@ -50,7 +50,7 @@ export function uploadDocument(
       if (xhr.status === 401) clearToken()
       reject(new ApiError(xhr.status, errorMessage(xhr.status, xhr.response)))
     }
-    xhr.onerror = () => reject(new ApiError(0, GAGAL_TERHUBUNG))
+    xhr.onerror = () => reject(new ApiError(0, gagalTerhubung()))
 
     const form = new FormData()
     form.append("file", input.file)

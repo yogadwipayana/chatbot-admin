@@ -17,6 +17,7 @@ import {
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useChangePassword } from "@/lib/api/queries"
+import { useT } from "@/lib/i18n"
 import { setToken } from "@/lib/auth/token"
 
 const PANJANG_MINIMUM = 12
@@ -37,6 +38,7 @@ export function ChangePasswordDialog({
 }
 
 function ChangePasswordForm({ onDone }: { onDone: () => void }) {
+  const t = useT()
   const queryClient = useQueryClient()
   const change = useChangePassword()
   const [lama, setLama] = useState("")
@@ -57,9 +59,7 @@ function ChangePasswordForm({ onDone }: { onDone: () => void }) {
           // Token lama sudah tidak berlaku sejak kata sandi diganti.
           setToken(data.access_token)
           queryClient.invalidateQueries({ queryKey: ["me"] })
-          toast.success("Kata sandi diganti", {
-            description: "Sesi akun ini di perangkat lain sudah diakhiri.",
-          })
+          toast.success(t.password.saved, { description: t.password.savedDetail })
           onDone()
         },
       }
@@ -70,11 +70,8 @@ function ChangePasswordForm({ onDone }: { onDone: () => void }) {
     <DialogContent>
       <form onSubmit={simpan} className="grid gap-4">
         <DialogHeader>
-          <DialogTitle>Ganti kata sandi</DialogTitle>
-          <DialogDescription>
-            Semua sesi akun ini di perangkat lain akan berakhir. Sesi di perangkat ini tetap
-            berjalan.
-          </DialogDescription>
+          <DialogTitle>{t.password.title}</DialogTitle>
+          <DialogDescription>{t.password.description}</DialogDescription>
         </DialogHeader>
 
         {change.error ? (
@@ -84,7 +81,7 @@ function ChangePasswordForm({ onDone }: { onDone: () => void }) {
         ) : null}
 
         <div className="space-y-2">
-          <Label htmlFor="sandi-lama">Kata sandi saat ini</Label>
+          <Label htmlFor="sandi-lama">{t.password.current}</Label>
           <Input
             id="sandi-lama"
             type="password"
@@ -96,7 +93,7 @@ function ChangePasswordForm({ onDone }: { onDone: () => void }) {
           />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="sandi-baru">Kata sandi baru</Label>
+          <Label htmlFor="sandi-baru">{t.password.new}</Label>
           <Input
             id="sandi-baru"
             type="password"
@@ -107,13 +104,10 @@ function ChangePasswordForm({ onDone }: { onDone: () => void }) {
             value={baru}
             onChange={(e) => setBaru(e.target.value)}
           />
-          <p className="text-xs text-muted-foreground">
-            Minimal {PANJANG_MINIMUM} karakter. Kalimat panjang lebih mudah diingat dan lebih sulit
-            ditebak daripada kata acak pendek.
-          </p>
+          <p className="text-xs text-muted-foreground">{t.password.rule(PANJANG_MINIMUM)}</p>
         </div>
         <div className="space-y-2">
-          <Label htmlFor="sandi-ulang">Ulangi kata sandi baru</Label>
+          <Label htmlFor="sandi-ulang">{t.password.repeat}</Label>
           <Input
             id="sandi-ulang"
             type="password"
@@ -124,16 +118,16 @@ function ChangePasswordForm({ onDone }: { onDone: () => void }) {
             onChange={(e) => setUlang(e.target.value)}
           />
           {tidakCocok ? (
-            <p className="text-xs text-destructive">Kedua kata sandi baru belum sama.</p>
+            <p className="text-xs text-destructive">{t.password.mismatch}</p>
           ) : null}
         </div>
 
         <DialogFooter>
           <Button type="button" variant="outline" onClick={onDone} disabled={change.isPending}>
-            Batal
+            {t.common.cancel}
           </Button>
           <Button type="submit" disabled={!siap || change.isPending}>
-            {change.isPending ? "Menyimpan…" : "Ganti kata sandi"}
+            {change.isPending ? t.common.saving : t.password.title}
           </Button>
         </DialogFooter>
       </form>

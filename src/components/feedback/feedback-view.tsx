@@ -26,15 +26,9 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useNow } from "@/hooks/use-now"
 import type { Schemas } from "@/lib/api/client"
 import { useFeedback } from "@/lib/api/queries"
-import {
-  addDays,
-  formatNumber,
-  formatPercent,
-  formatRelative,
-  formatScore,
-  toDateInput,
-} from "@/lib/format"
-import { KIND_LABELS } from "@/lib/labels"
+import { addDays, toDateInput } from "@/lib/format"
+import { useFormat, useT } from "@/lib/i18n"
+import type { Dict } from "@/lib/i18n/dict"
 import { cn } from "@/lib/utils"
 
 type Item = Schemas["FeedbackItem"]
@@ -42,19 +36,24 @@ type Tab = "tidak" | "membantu" | "semua"
 
 const PAGE_SIZE = 20
 
-const PERIODE = [
-  { value: "7", label: "7 hari terakhir" },
-  { value: "30", label: "30 hari terakhir" },
-  { value: "90", label: "90 hari terakhir" },
-  { value: "semua", label: "Semua waktu" },
-] as const
+const PERIODE = ["7", "30", "90", "semua"] as const
 
-function kindLabel(kind: string | null | undefined): string | null {
+/** Nilai `kind` yang belum dikenal kamus tetap ditampilkan apa adanya:
+    lebih baik terbaca mentah daripada hilang dari daftar. */
+function kindLabel(t: Dict, kind: string | null | undefined): string | null {
   if (!kind) return null
-  return KIND_LABELS[kind as Schemas["OutcomeKind"]] ?? kind
+  return t.labels.kind[kind as Schemas["OutcomeKind"]] ?? kind
 }
 
 export function FeedbackView() {
+  const t = useT()
+  const f = useFormat()
+  const periodeLabel = {
+    "7": t.labels.periods.d7,
+    "30": t.labels.periods.d30,
+    "90": t.labels.periods.d90,
+    semua: t.labels.periods.all,
+  }
   const now = useNow()
   // Jempol ke bawah lebih dulu: itu yang menuntut tindakan, sama seperti AD-4.
   const [tab, setTab] = useState<Tab>("tidak")
@@ -85,32 +84,41 @@ export function FeedbackView() {
   /** Angka pada tab baru ditulis setelah datanya ada -- "(0)" saat memuat
       terbaca sebagai "tidak ada", padahal belum diketahui. */
   function jumlah(n: number): string {
-    return data ? ` (${formatNumber(n)})` : ""
+    return data ? ` (${f.number(n)})` : ""
   }
 
   return (
     <>
       <PageHeader
-        title="Umpan balik"
-        description="Penilaian mahasiswa atas jawaban chatbot. Rasio kepuasan di Statistik memberi tahu ada yang salah; halaman ini memberi tahu apanya — pertanyaan yang memicunya, jawaban yang diberikan, dan catatan mahasiswa bila ada. Telusuri jawaban yang ditandai tidak membantu, lalu uji ulang setelah dokumennya diperbaiki."
+        title={t.feedback.title}
+        description={t.feedback.description}
       />
 
       <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <Tabs value={tab} onValueChange={(v) => ganti(() => setTab(v as Tab))}>
           <TabsList>
-            <TabsTrigger value="tidak">Tidak membantu{jumlah(negatif)}</TabsTrigger>
-            <TabsTrigger value="membantu">Membantu{jumlah(positif)}</TabsTrigger>
-            <TabsTrigger value="semua">Semua{jumlah(positif + negatif)}</TabsTrigger>
+            <TabsTrigger value="tidak">
+              {t.feedback.tabs.unhelpful}
+              {jumlah(negatif)}
+            </TabsTrigger>
+            <TabsTrigger value="membantu">
+              {t.feedback.tabs.helpful}
+              {jumlah(positif)}
+            </TabsTrigger>
+            <TabsTrigger value="semua">
+              {t.feedback.tabs.all}
+              {jumlah(positif + negatif)}
+            </TabsTrigger>
           </TabsList>
         </Tabs>
         <Select value={periode} onValueChange={(v) => ganti(() => setPeriode(v))}>
-          <SelectTrigger className="w-full sm:w-48" aria-label="Periode">
+          <SelectTrigger className="w-full sm:w-48" aria-label={t.labels.periods.label}>
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
             {PERIODE.map((p) => (
-              <SelectItem key={p.value} value={p.value}>
-                {p.label}
+              <SelectItem key={p} value={p}>
+                {periodeLabel[p]}
               </SelectItem>
             ))}
           </SelectContent>
@@ -124,23 +132,17 @@ export function FeedbackView() {
       ) : (data?.items.length ?? 0) === 0 ? (
         <EmptyState
           icon={MessageSquareHeartIcon}
-          title={
-            tab === "tidak"
-              ? "Tidak ada jawaban yang ditandai tidak membantu"
-              : "Belum ada umpan balik"
-          }
+          title={tab === "tidak" ? t.feedback.emptyUnhelpful : t.feedback.empty}
           description={
-            tab === "tidak"
-              ? "Pada periode ini tidak ada mahasiswa yang menandai jawaban chatbot tidak membantu."
-              : "Umpan balik dikirim mahasiswa dengan satu klik 👍/👎 di bawah jawaban chatbot. Belum ada yang masuk pada periode ini."
+            tab === "tidak" ? t.feedback.emptyUnhelpfulBody : t.feedback.emptyBody
           }
         />
       ) : (
         <div className={cn("space-y-3 transition-opacity", query.isPlaceholderData && "opacity-60")}>
           <p className="text-sm text-muted-foreground">
-            {formatNumber(positif + negatif)} umpan balik pada periode ini
+            {t.feedback.summary(f.number(positif + negatif))}
             {positif + negatif > 0
-              ? ` · ${formatPercent(positif / (positif + negatif))} menilai jawaban membantu`
+              ? t.feedback.summaryPositive(f.percent(positif / (positif + negatif)))
               : null}
           </p>
 
@@ -159,8 +161,11 @@ export function FeedbackView() {
           {total > PAGE_SIZE ? (
             <div className="flex items-center justify-between gap-4 pt-1 text-sm text-muted-foreground">
               <span>
-                {formatNumber(page * PAGE_SIZE + 1)}–
-                {formatNumber(Math.min((page + 1) * PAGE_SIZE, total))} dari {formatNumber(total)}
+                {t.documents.range(
+                  f.number(page * PAGE_SIZE + 1),
+                  f.number(Math.min((page + 1) * PAGE_SIZE, total)),
+                  f.number(total)
+                )}
               </span>
               <div className="flex gap-2">
                 <Button
@@ -170,7 +175,7 @@ export function FeedbackView() {
                   onClick={() => setPage((p) => p - 1)}
                 >
                   <ChevronLeftIcon data-icon="inline-start" />
-                  Sebelumnya
+                  {t.documents.previous}
                 </Button>
                 <Button
                   variant="outline"
@@ -178,7 +183,7 @@ export function FeedbackView() {
                   disabled={page >= halamanTerakhir}
                   onClick={() => setPage((p) => p + 1)}
                 >
-                  Berikutnya
+                  {t.documents.next}
                   <ChevronRightIcon data-icon="inline-end" />
                 </Button>
               </div>
@@ -187,11 +192,7 @@ export function FeedbackView() {
 
           <p className="flex gap-2 pt-2 text-xs text-pretty text-muted-foreground">
             <InfoIcon className="mt-px size-3.5 shrink-0" aria-hidden />
-            <span>
-              Umpan balik dikirim satu klik tanpa kotak isian wajib, jadi sebagian besar tidak
-              disertai catatan. Pertanyaan sensitif tidak pernah disimpan apa adanya: yang tampil
-              adalah penanda tetap, dan jawabannya memang berupa pengalihan ke layanan konseling.
-            </span>
+            <span>{t.feedback.note}</span>
           </p>
         </div>
       )}
@@ -210,8 +211,10 @@ function Baris({
   terbuka: boolean
   onToggle: () => void
 }) {
+  const t = useT()
+  const f = useFormat()
   const Icon = item.helpful ? ThumbsUpIcon : ThumbsDownIcon
-  const jenis = kindLabel(item.kind)
+  const jenis = kindLabel(t, item.kind)
   // Jawaban pendek muat seluruhnya; tombol ringkas/panjang untuk itu hanya derau.
   const panjang = item.jawaban.length > 200
 
@@ -230,7 +233,9 @@ function Baris({
           )}
           aria-hidden
         />
-        <span className="sr-only">{item.helpful ? "Membantu" : "Tidak membantu"}</span>
+        <span className="sr-only">
+          {item.helpful ? t.feedback.helpful : t.feedback.unhelpful}
+        </span>
       </div>
 
       <div className="min-w-0 flex-1 space-y-2">
@@ -238,7 +243,7 @@ function Baris({
           {item.pertanyaan ? (
             `“${item.pertanyaan}”`
           ) : (
-            <span className="text-muted-foreground">Pertanyaannya sudah tidak ada di log</span>
+            <span className="text-muted-foreground">{t.feedback.questionGone}</span>
           )}
         </p>
 
@@ -258,7 +263,7 @@ function Baris({
             onClick={onToggle}
             aria-expanded={terbuka}
           >
-            {terbuka ? "Ringkas jawaban" : "Lihat jawaban lengkap"}
+            {terbuka ? t.feedback.collapse : t.feedback.expand}
           </Button>
         ) : null}
 
@@ -269,9 +274,9 @@ function Baris({
         ) : null}
 
         <p className="text-xs text-muted-foreground">
-          {formatRelative(item.created_at, now)}
+          {f.relative(item.created_at, now)}
           {jenis ? ` · ${jenis}` : null}
-          {item.top_score != null ? ` · Skor kemiripan ${formatScore(item.top_score)}` : null}
+          {item.top_score != null ? t.feedback.score(f.score(item.top_score)) : null}
         </p>
       </div>
 
@@ -280,7 +285,7 @@ function Baris({
           <Button variant="outline" size="sm" asChild>
             <Link href={`/uji-coba?q=${encodeURIComponent(item.pertanyaan)}`}>
               <FlaskConicalIcon data-icon="inline-start" />
-              Uji coba
+              {t.labels.testQuery}
             </Link>
           </Button>
         </div>

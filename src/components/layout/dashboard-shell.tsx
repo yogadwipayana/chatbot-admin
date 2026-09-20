@@ -13,9 +13,11 @@ import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/s
 import { useNow } from "@/hooks/use-now"
 import { useToken } from "@/hooks/use-token"
 import { useMe } from "@/lib/api/queries"
+import { useT } from "@/lib/i18n"
 import { clearToken, isTokenUsable } from "@/lib/auth/token"
 
 export function DashboardShell({ children }: { children: React.ReactNode }) {
+  const t = useT()
   const token = useToken()
   const now = useNow()
   const router = useRouter()
@@ -35,7 +37,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
   }, [token, usable, pathname, router, queryClient])
 
   if (!usable) {
-    return <FullPage><Spinner label="Memeriksa sesi…" /></FullPage>
+    return <FullPage><Spinner label={t.shell.checkingSession} /></FullPage>
   }
 
   if (me.error) {
@@ -44,14 +46,14 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
     return (
       <FullPage>
         <div className="max-w-sm space-y-3 text-center">
-          <p className="font-medium">Data akun tidak dapat dimuat</p>
+          <p className="font-medium">{t.shell.accountFailed}</p>
           <p className="text-sm text-muted-foreground">{me.error.message}</p>
           <div className="flex justify-center gap-2">
             <Button variant="outline" onClick={() => me.refetch()}>
-              Coba lagi
+              {t.common.retry}
             </Button>
             <Button variant="ghost" onClick={() => clearToken()}>
-              Keluar
+              {t.nav.account.signOut}
             </Button>
           </div>
         </div>
@@ -60,7 +62,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
   }
 
   if (!me.data) {
-    return <FullPage><Spinner label="Memuat akun…" /></FullPage>
+    return <FullPage><Spinner label={t.shell.loadingAccount} /></FullPage>
   }
 
   return (
@@ -70,9 +72,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
         <header className="sticky top-0 z-20 flex h-12 shrink-0 items-center gap-2 border-b bg-background/95 px-4 backdrop-blur supports-backdrop-filter:bg-background/80">
           <SidebarTrigger className="-ml-1" />
           <Separator orientation="vertical" className="mr-1 data-vertical:h-4" />
-          <span className="truncate text-sm text-muted-foreground">
-            Chatbot Administrasi Mahasiswa
-          </span>
+          <span className="truncate text-sm text-muted-foreground">{t.app.header}</span>
         </header>
         <KillSwitchBanner />
         <div className="flex-1 px-4 py-6 md:px-6 lg:px-8 lg:py-8">

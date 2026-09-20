@@ -32,8 +32,8 @@ import {
 import { Textarea } from "@/components/ui/textarea"
 import type { Schemas } from "@/lib/api/client"
 import { useTestQuery } from "@/lib/api/queries"
-import { formatDuration, formatScore } from "@/lib/format"
-import { KIND_LABELS } from "@/lib/labels"
+import { useFormat, useT } from "@/lib/i18n"
+import type { Dict } from "@/lib/i18n/dict"
 import { cn } from "@/lib/utils"
 
 type Result = Schemas["TestQueryResponse"]
@@ -41,6 +41,8 @@ type Result = Schemas["TestQueryResponse"]
 const AMBANG_BAWAAN = 0.35
 
 export function TestQueryView({ initialQuestion }: { initialQuestion: string }) {
+  const t = useT()
+  const f = useFormat()
   const [question, setQuestion] = useState(initialQuestion)
   const [pakaiAmbang, setPakaiAmbang] = useState(false)
   // null = ikuti ambang server; nilainya baru diketahui setelah uji coba pertama.
@@ -61,21 +63,21 @@ export function TestQueryView({ initialQuestion }: { initialQuestion: string }) 
   return (
     <>
       <PageHeader
-        title="Uji coba jawaban"
-        description="Ajukan pertanyaan seperti mahasiswa, lalu lihat potongan dokumen yang ditemukan beserta skornya. Alat utama saat ada laporan “jawabannya salah”. Uji coba tidak dicatat ke statistik."
+        title={t.testQuery.title}
+        description={t.testQuery.description}
       />
 
       <Card className="mb-6">
         <CardContent>
           <form onSubmit={uji} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="pertanyaan">Pertanyaan</Label>
+              <Label htmlFor="pertanyaan">{t.testQuery.question}</Label>
               <Textarea
                 id="pertanyaan"
                 required
                 maxLength={2000}
                 rows={3}
-                placeholder="Kapan pengisian KRS semester ganjil dibuka?"
+                placeholder={t.testQuery.questionPlaceholder}
                 value={question}
                 onChange={(e) => setQuestion(e.target.value)}
                 onKeyDown={(e) => {
@@ -94,7 +96,7 @@ export function TestQueryView({ initialQuestion }: { initialQuestion: string }) 
                     if (v) setAmbang(ambangTampil)
                   }}
                 />
-                <Label htmlFor="pakai-ambang">Coba ambang lain</Label>
+                <Label htmlFor="pakai-ambang">{t.testQuery.tryThreshold}</Label>
               </div>
               <div className={cn("flex flex-1 items-center gap-3", !pakaiAmbang && "opacity-50")}>
                 <Slider
@@ -104,21 +106,20 @@ export function TestQueryView({ initialQuestion }: { initialQuestion: string }) 
                   disabled={!pakaiAmbang}
                   value={[ambangTampil]}
                   onValueChange={([v]) => setAmbang(v)}
-                  aria-label="Ambang kemiripan vektor"
+                  aria-label={t.testQuery.thresholdLabel}
                 />
-                <span className="w-12 text-right text-sm tabular-nums">{formatScore(ambangTampil)}</span>
+                <span className="w-12 text-right text-sm tabular-nums">
+                  {f.score(ambangTampil)}
+                </span>
               </div>
             </div>
-            <p className="-mt-2 text-xs text-muted-foreground">
-              Ambang sementara hanya berlaku untuk uji coba ini; mahasiswa tetap memakai ambang
-              yang diatur di server.
-            </p>
+            <p className="-mt-2 text-xs text-muted-foreground">{t.testQuery.thresholdNote}</p>
 
             <div className="flex items-center justify-end gap-3">
-              {test.isPending ? <Spinner label="Mencari dan menyusun jawaban…" /> : null}
+              {test.isPending ? <Spinner label={t.testQuery.running} /> : null}
               <Button type="submit" disabled={!question.trim() || test.isPending}>
                 <SearchIcon data-icon="inline-start" />
-                Uji
+                {t.testQuery.submit}
               </Button>
             </div>
           </form>
@@ -127,7 +128,7 @@ export function TestQueryView({ initialQuestion }: { initialQuestion: string }) 
 
       {test.error ? (
         <Alert variant="destructive" className="mb-6">
-          <AlertTitle>Uji coba gagal</AlertTitle>
+          <AlertTitle>{t.testQuery.failed}</AlertTitle>
           <AlertDescription>{test.error.message}</AlertDescription>
         </Alert>
       ) : null}
@@ -153,33 +154,27 @@ const KIND_ICON = {
 } as const
 
 function OutcomeCard({ hasil }: { hasil: Result }) {
+  const t = useT()
+  const f = useFormat()
   const Icon = KIND_ICON[hasil.kind]
   return (
     <Card className="lg:col-span-3">
       <CardHeader>
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <CardTitle>Yang dilihat mahasiswa</CardTitle>
+          <CardTitle>{t.testQuery.outcomeTitle}</CardTitle>
           <Badge variant={hasil.kind === "answer" ? "default" : "secondary"}>
             <Icon data-icon="inline-start" />
-            {KIND_LABELS[hasil.kind]}
+            {t.labels.kind[hasil.kind]}
           </Badge>
         </div>
-        <CardDescription>
-          {hasil.kind === "answer"
-            ? "Jawaban disusun model AI hanya dari potongan yang lolos ambang."
-            : hasil.kind === "refusal"
-              ? "Model AI tidak dipanggil: sumbernya dinilai terlalu lemah."
-              : hasil.kind === "support"
-                ? "Pertanyaan bernuansa tekanan mental: tidak dicarikan di dokumen."
-                : "Sapaan atau basa-basi: dibalas singkat tanpa retrieval."}
-        </CardDescription>
+        <CardDescription>{t.testQuery.outcome[hasil.kind]}</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         <p className="text-sm leading-relaxed break-words whitespace-pre-wrap">{hasil.text}</p>
         {hasil.escalated && hasil.contacts.length > 0 ? (
           <div className="rounded-lg bg-muted/60 p-3">
             <p className="mb-2 text-xs font-medium text-muted-foreground">
-              Kontak yang ditampilkan sebagai banner
+              {t.testQuery.contactsTitle}
             </p>
             <ul className="space-y-1.5 text-sm">
               {hasil.contacts.map((c) => (
@@ -193,41 +188,37 @@ function OutcomeCard({ hasil }: { hasil: Result }) {
             </ul>
           </div>
         ) : null}
-        <p className="text-xs text-muted-foreground">Waktu proses {formatDuration(hasil.latency_ms)}</p>
+        <p className="text-xs text-muted-foreground">
+          {t.testQuery.latency(f.duration(hasil.latency_ms))}
+        </p>
       </CardContent>
     </Card>
   )
 }
 
-const REASON_TEXT: Record<NonNullable<Result["decision"]>["reason"], string> = {
-  ok: "Lolos: minimal satu skor mencapai ambangnya, sehingga model AI dipanggil.",
-  below_threshold:
-    "Ditolak: kedua skor terbaik di bawah ambang. Dokumennya mungkin belum ada, atau kalimatnya terlalu berbeda.",
-  no_results: "Ditolak: tidak ada satu pun potongan dokumen aktif yang ditemukan.",
-}
-
 function DecisionCard({ hasil }: { hasil: Result }) {
+  const t = useT()
   const d = hasil.decision
   return (
     <Card className="lg:col-span-2">
       <CardHeader>
-        <CardTitle>Keputusan ambang</CardTitle>
+        <CardTitle>{t.testQuery.decisionTitle}</CardTitle>
         <CardDescription>
-          {d ? REASON_TEXT[d.reason] : "Pertanyaan sensitif dialihkan sebelum pencarian dokumen."}
+          {d ? t.testQuery.reason[d.reason] : t.testQuery.decisionSensitive}
         </CardDescription>
       </CardHeader>
       {d ? (
         <CardContent className="space-y-5">
           <ScoreMeter
-            label="Kemiripan makna"
-            hint="Pencarian vektor, 0–1"
+            label={t.testQuery.vectorLabel}
+            hint={t.testQuery.vectorHint}
             score={d.top_vector_score}
             threshold={hasil.ambang.vector}
             max={1}
           />
           <ScoreMeter
-            label="Kecocokan kata"
-            hint="Pencarian teks penuh"
+            label={t.testQuery.lexicalLabel}
+            hint={t.testQuery.lexicalHint}
             score={d.top_lexical_score}
             threshold={hasil.ambang.fulltext}
             max={Math.max(hasil.ambang.fulltext * 2, d.top_lexical_score ?? 0) * 1.1}
@@ -238,22 +229,32 @@ function DecisionCard({ hasil }: { hasil: Result }) {
   )
 }
 
-function ScoreCell({ value, threshold }: { value: number | undefined; threshold: number }) {
+function ScoreCell({
+  value,
+  threshold,
+  t,
+  f,
+}: {
+  value: number | undefined
+  threshold: number
+  t: Dict
+  f: ReturnType<typeof useFormat>
+}) {
   if (value === undefined) {
     return (
       <span className="text-muted-foreground">
-        —<span className="sr-only">tidak ditemukan sumber ini</span>
+        —<span className="sr-only">{t.testQuery.noSource}</span>
       </span>
     )
   }
   const lolos = value >= threshold
   return (
     <span className="inline-flex items-center justify-end gap-1 tabular-nums">
-      {formatScore(value)}
+      {f.score(value)}
       {lolos ? (
         <>
           <CheckIcon className="size-3.5 text-status-good" aria-hidden />
-          <span className="sr-only">mencapai ambang</span>
+          <span className="sr-only">{t.testQuery.reachedThreshold}</span>
         </>
       ) : (
         <span className="inline-block size-3.5" aria-hidden />
@@ -263,6 +264,8 @@ function ScoreCell({ value, threshold }: { value: number | undefined; threshold:
 }
 
 function RetrievedCard({ hasil }: { hasil: Result }) {
+  const t = useT()
+  const f = useFormat()
   const [terbuka, setTerbuka] = useState<Set<string>>(new Set())
 
   function alih(id: string) {
@@ -277,17 +280,13 @@ function RetrievedCard({ hasil }: { hasil: Result }) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Potongan yang ditemukan</CardTitle>
-        <CardDescription>
-          Urutan hasil penggabungan dua pencarian. Yang menentukan penolakan adalah skor mentah
-          per sumber, bukan skor gabungan: skor gabungan hanya mencerminkan peringkat, jadi potongan
-          terbaik dari sekumpulan potongan yang tidak relevan tetap mendapat nilai tertinggi.
-        </CardDescription>
+        <CardTitle>{t.testQuery.retrievedTitle}</CardTitle>
+        <CardDescription>{t.testQuery.retrievedDescription}</CardDescription>
       </CardHeader>
       <CardContent>
         {hasil.retrieved.length === 0 ? (
           <p className="text-sm text-muted-foreground">
-            {hasil.decision ? "Tidak ada potongan yang ditemukan." : "Tidak ada pencarian dokumen."}
+            {hasil.decision ? t.testQuery.noChunks : t.testQuery.noSearch}
           </p>
         ) : (
           <div className="rounded-lg border">
@@ -295,10 +294,12 @@ function RetrievedCard({ hasil }: { hasil: Result }) {
               <TableHeader>
                 <TableRow>
                   <TableHead className="w-10 pl-3">#</TableHead>
-                  <TableHead className="min-w-56">Dokumen</TableHead>
-                  <TableHead className="text-right">Makna</TableHead>
-                  <TableHead className="text-right">Kata</TableHead>
-                  <TableHead className="pr-3 text-right text-muted-foreground">Gabungan</TableHead>
+                  <TableHead className="min-w-56">{t.testQuery.columns.document}</TableHead>
+                  <TableHead className="text-right">{t.testQuery.columns.semantic}</TableHead>
+                  <TableHead className="text-right">{t.testQuery.columns.keyword}</TableHead>
+                  <TableHead className="pr-3 text-right text-muted-foreground">
+                    {t.testQuery.columns.fused}
+                  </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -331,17 +332,27 @@ function RetrievedCard({ hasil }: { hasil: Result }) {
                               {/* Entri tanya jawab tidak berhalaman; "hal. 1" hanya menyesatkan. */}
                               <span className="text-muted-foreground">
                                 {chunk.jenis === "tanya_jawab"
-                                  ? " · Tanya jawab"
-                                  : ` · hal. ${chunk.halaman}`}
+                                  ? t.testQuery.faqSource
+                                  : t.testQuery.pageSource(chunk.halaman)}
                               </span>
                             </span>
                           </button>
                         </TableCell>
                         <TableCell className="text-right">
-                          <ScoreCell value={chunk.raw_scores.vector} threshold={hasil.ambang.vector} />
+                          <ScoreCell
+                            value={chunk.raw_scores.vector}
+                            threshold={hasil.ambang.vector}
+                            t={t}
+                            f={f}
+                          />
                         </TableCell>
                         <TableCell className="text-right">
-                          <ScoreCell value={chunk.raw_scores.fulltext} threshold={hasil.ambang.fulltext} />
+                          <ScoreCell
+                            value={chunk.raw_scores.fulltext}
+                            threshold={hasil.ambang.fulltext}
+                            t={t}
+                            f={f}
+                          />
                         </TableCell>
                         <TableCell className="pr-3 text-right text-muted-foreground tabular-nums">
                           {chunk.rrf_score.toFixed(4)}
