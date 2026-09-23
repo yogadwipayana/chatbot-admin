@@ -1,7 +1,5 @@
 "use client"
 
-import { PlusIcon } from "lucide-react"
-
 import {
   Combobox,
   ComboboxContent,
@@ -14,13 +12,13 @@ import { Input } from "@/components/ui/input"
 import { useT } from "@/lib/i18n"
 
 /**
- * Isian nama unit: daftar unit yang sudah ada, tetapi tetap boleh diketik bebas.
+ * Isian nama unit: pilih salah satu unit resmi dari `GET /api/units`.
  *
- * Keduanya dibutuhkan sekaligus. Memilih dari daftar mencegah "Biro Akademik"
- * dan "Biro Administrasi Akademik" menjadi dua unit berbeda -- dan unit adalah
- * dasar pembatasan akses staf/dosen, jadi salah ketik berarti dokumen tidak
- * terlihat oleh pemiliknya. Sementara itu unit yang benar-benar baru harus
- * tetap bisa dibuat, karena dokumen pertamanya belum ada di mana pun.
+ * Tidak ada lagi pilihan membuat unit baru dari sini. Unit menentukan dokumen
+ * mana yang dicari saat mahasiswa memilih unit di menu chatbot, dan juga dasar
+ * pembatasan akses staf/dosen -- ejaan di luar daftar resmi ditolak server.
+ * Ketikan tetap diterima sebagai penyaring daftar; huruf besar-kecil tidak
+ * berpengaruh karena server memetakannya ke ejaan resmi.
  */
 export function UnitField({
   id,
@@ -35,7 +33,7 @@ export function UnitField({
   id?: string
   value: string
   onChange: (value: string) => void
-  /** Nama unit yang sudah dipakai, sebagai saran. */
+  /** Nama unit resmi. */
   units: string[]
   disabled?: boolean
   /** Unit terkunci (staf/dosen): tidak ada yang dapat dipilih. */
@@ -44,10 +42,6 @@ export function UnitField({
   placeholder?: string
 }) {
   const t = useT()
-  const ketikan = value.trim()
-  const sudahAda = units.some((u) => u.toLocaleLowerCase() === ketikan.toLocaleLowerCase())
-  const baru = ketikan && !sudahAda ? ketikan : null
-  const items = baru ? [...units, baru] : units
 
   if (readOnly) {
     return (
@@ -64,7 +58,7 @@ export function UnitField({
 
   return (
     <Combobox
-      items={items}
+      items={units}
       value={value === "" ? null : value}
       onValueChange={(unit) => onChange(unit ?? "")}
       inputValue={value}
@@ -83,14 +77,7 @@ export function UnitField({
         <ComboboxList>
           {(item: string) => (
             <ComboboxItem key={item} value={item}>
-              {item === baru ? (
-                <>
-                  <PlusIcon />
-                  {t.unitField.use(item)}
-                </>
-              ) : (
-                item
-              )}
+              {item}
             </ComboboxItem>
           )}
         </ComboboxList>

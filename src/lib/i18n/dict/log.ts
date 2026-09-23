@@ -69,6 +69,8 @@ export const unanswered = {
     (skor: string) => ` · Average similarity score ${skor}`,
   ],
   handled: ["Sudah ditindaklanjuti", "Handled"],
+  collapse: ["Ringkas pertanyaan", "Collapse question"],
+  expand: ["Lihat pertanyaan lengkap", "See the full question"],
   reopen: ["Buka kembali", "Reopen"],
   markDone: ["Tandai selesai", "Mark done"],
   markedDone: ["Ditandai sudah ditindaklanjuti", "Marked as handled"],

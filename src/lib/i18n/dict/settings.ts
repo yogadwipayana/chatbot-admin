@@ -265,9 +265,11 @@ export const killSwitch = {
 } as const
 
 export const unitField = {
-  placeholder: ["Biro Administrasi Akademik", "Academic Administration Office"],
-  empty: ["Belum ada unit lain.", "No other units yet."],
-  use: [(unit: string) => `Pakai “${unit}”`, (unit: string) => `Use “${unit}”`],
+  placeholder: ["Pilih unit", "Pick a unit"],
+  empty: [
+    "Tidak ada unit dengan nama itu. Pilih dari daftar.",
+    "No unit by that name. Pick one from the list.",
+  ],
 } as const
 
 export const dateField = {

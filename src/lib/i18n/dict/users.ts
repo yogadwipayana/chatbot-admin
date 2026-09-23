@@ -50,10 +50,10 @@ export const users = {
       "You cannot change your own level, so the dashboard is never left without a superadmin.",
     ],
     unit: ["Unit", "Unit"],
-    unitPlaceholder: ["Biro Keuangan", "Finance Office"],
+    unitPlaceholder: ["Keuangan", "Keuangan"],
     unitStaff: [
-      "Staf/dosen hanya dapat melihat dan mengelola dokumen dengan unit ini. Pilih dari saran supaya ejaannya sama persis dengan dokumen yang ada.",
-      "Staff/lecturers can only see and manage documents with this unit. Pick from the suggestions so the spelling matches existing documents exactly.",
+      "Staf/dosen hanya dapat melihat dan mengelola dokumen dengan unit ini.",
+      "Staff/lecturers can only see and manage documents with this unit.",
     ],
     unitOther: [
       "Hanya keterangan; admin dan superadmin mengelola dokumen semua unit.",

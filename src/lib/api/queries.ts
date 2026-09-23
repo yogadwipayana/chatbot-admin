@@ -137,37 +137,24 @@ export function useDeleteFaq() {
   })
 }
 
-// --- Saran nama unit -----------------------------------------------------------
+// --- Daftar unit -----------------------------------------------------------------
 
 /**
- * Nama unit yang sudah dipakai, untuk isian unit di seluruh dashboard.
+ * Nama unit resmi, untuk isian unit di seluruh dashboard.
  *
- * Diambil dari dokumen DAN entri tanya jawab: unit adalah dasar pembatasan
- * akses staf/dosen, jadi "Biro Akademik" dan "Biro Administrasi Akademik" yang
- * terlanjur menjadi dua unit berbeda berarti ada isi yang tidak terlihat oleh
- * pemiliknya. Menyarankan ejaan yang sudah ada jauh lebih murah daripada
- * membetulkannya belakangan.
+ * Diambil dari `GET /api/units` -- daftar yang sama dengan menu unit di chatbot
+ * mahasiswa. Server menolak nama di luar daftar ini, karena retrieval
+ * membandingkan unit persis: dokumen berlabel "Biro Keuangan" tidak akan pernah
+ * terambil untuk mahasiswa yang memilih "Keuangan". Urutannya dari server,
+ * sama dengan urutan di menu chatbot.
  */
 export function useUnits(): string[] {
-  const dokumen = useDocuments({
-    include_inactive: true,
-    only_stale: false,
-    limit: 200,
-    offset: 0,
+  const { data } = useQuery({
+    queryKey: ["units"],
+    queryFn: ({ signal }) => unwrap(api.GET("/api/units", { signal })),
+    staleTime: 5 * 60 * 1000,
   })
-  const faq = useFaq({ include_inactive: true, limit: 200, offset: 0 })
-  const dariDokumen = dokumen.data?.items
-  const dariFaq = faq.data?.items
-  return useMemo(
-    () =>
-      [
-        ...new Set([
-          ...(dariDokumen ?? []).map((d) => d.unit),
-          ...(dariFaq ?? []).map((f) => f.unit),
-        ]),
-      ].sort((a, b) => a.localeCompare(b, "id")),
-    [dariDokumen, dariFaq]
-  )
+  return useMemo(() => (data ?? []).map((u) => u.nama), [data])
 }
 
 // --- Pertanyaan tak terjawab (AD-4) --------------------------------------------

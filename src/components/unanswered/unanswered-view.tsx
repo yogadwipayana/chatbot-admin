@@ -48,6 +48,7 @@ export function UnansweredView() {
   const now = useNow()
   const [tab, setTab] = useState<Tab>("belum")
   const [periode, setPeriode] = useState<string>("30")
+  const [terbuka, setTerbuka] = useState<string | null>(null)
 
   const sejak =
     periode === "semua" ? undefined : toDateInput(addDays(new Date(now), -(Number(periode) - 1)))
@@ -133,6 +134,12 @@ export function UnansweredView() {
             {groups.map((group) => {
               const sibuk =
                 setResolved.isPending && setResolved.variables?.ids === group.ids
+              // Pertanyaan mahasiswa hampir selalu satu-dua kalimat dan muat
+              // seluruhnya; tombol ringkas/panjang untuk itu hanya derau. Yang
+              // sesekali masuk adalah tempelan panjang, dan satu baris seperti
+              // itu bisa mendorong seluruh daftar keluar layar.
+              const panjang = group.contoh_pertanyaan.length > 160
+              const tampilPenuh = !panjang || terbuka === group.ids[0]
               return (
                 <li
                   key={group.ids[0]}
@@ -154,7 +161,27 @@ export function UnansweredView() {
                   </div>
 
                   <div className="min-w-0 flex-1 space-y-1.5">
-                    <p className="font-medium break-words">“{group.contoh_pertanyaan}”</p>
+                    <p
+                      className={cn(
+                        "font-medium break-words",
+                        tampilPenuh ? null : "line-clamp-3"
+                      )}
+                    >
+                      “{group.contoh_pertanyaan}”
+                    </p>
+                    {panjang ? (
+                      <Button
+                        variant="link"
+                        size="sm"
+                        className="h-auto p-0 text-xs"
+                        onClick={() =>
+                          setTerbuka(tampilPenuh ? null : group.ids[0])
+                        }
+                        aria-expanded={tampilPenuh}
+                      >
+                        {tampilPenuh ? t.unanswered.collapse : t.unanswered.expand}
+                      </Button>
+                    ) : null}
                     <p className="text-xs text-muted-foreground">
                       {t.unanswered.lastAsked(f.relative(group.terakhir_ditanyakan, now))}
                       {group.top_score_rata2 != null
