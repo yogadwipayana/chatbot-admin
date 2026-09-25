@@ -3,6 +3,7 @@
 import { useQueryClient } from "@tanstack/react-query"
 import {
   BotIcon,
+  Building2Icon,
   CircleDollarSignIcon,
   ChartColumnIcon,
   ChevronsUpDownIcon,
@@ -16,6 +17,7 @@ import {
   MessagesSquareIcon,
   MonitorIcon,
   MoonIcon,
+  ScrollTextIcon,
   SlidersHorizontalIcon,
   SunIcon,
   UsersRoundIcon,
@@ -96,12 +98,16 @@ const NAV: { key: keyof Dict["nav"]["groups"]; items: NavItem[] }[] = [
     items: [
       { href: "/statistik", key: "stats", icon: ChartColumnIcon, min: "admin" },
       { href: "/biaya", key: "costs", icon: CircleDollarSignIcon, min: "admin" },
+      // Log audit di dalamnya disaring API untuk role admin; lihat `logs.md`.
+      { href: "/log", key: "logs", icon: ScrollTextIcon, min: "admin" },
     ],
   },
   {
     key: "pengaturan",
     items: [
       { href: "/admin", key: "users", icon: UsersRoundIcon, min: "superadmin" },
+      // Menentukan menu chatbot dan batas akses staf, jadi superadmin saja.
+      { href: "/unit", key: "units", icon: Building2Icon, min: "superadmin" },
       // Isi percakapan, jadi levelnya sama dengan statistik: admin ke atas.
       {
         href: "/umpan-balik",

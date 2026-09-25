@@ -8,6 +8,7 @@ import {
   HeartHandshakeIcon,
   MessageSquareTextIcon,
   SearchIcon,
+  ShieldBanIcon,
   SmileIcon,
 } from "lucide-react"
 import { Fragment, useState, type FormEvent } from "react"
@@ -151,6 +152,7 @@ const KIND_ICON = {
   refusal: BanIcon,
   support: HeartHandshakeIcon,
   smalltalk: SmileIcon,
+  rejected: ShieldBanIcon,
 } as const
 
 function OutcomeCard({ hasil }: { hasil: Result }) {

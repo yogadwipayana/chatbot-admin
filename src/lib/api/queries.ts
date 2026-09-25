@@ -157,6 +157,45 @@ export function useUnits(): string[] {
   return useMemo(() => (data ?? []).map((u) => u.nama), [data])
 }
 
+/** Semua unit termasuk yang nonaktif, untuk halaman kelola unit (superadmin). */
+export function useAdminUnits() {
+  return useQuery({
+    queryKey: ["admin-units"],
+    queryFn: ({ signal }) => unwrap(api.GET("/api/admin/units", { signal })),
+  })
+}
+
+/**
+ * Setiap perubahan unit menyentuh lebih dari halaman Unit: daftar isian unit
+ * (`useUnits`), dan -- saat nama diganti -- unit yang tersimpan di dokumen,
+ * entri tanya jawab, dan akun lewat `ON UPDATE CASCADE`.
+ */
+function invalidateUnits(queryClient: ReturnType<typeof useQueryClient>) {
+  return Promise.all(
+    ["admin-units", "units", "documents", "document", "faq", "users", "me"].map((key) =>
+      queryClient.invalidateQueries({ queryKey: [key] })
+    )
+  )
+}
+
+export function useCreateUnit() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (body: Schemas["AdminUnitCreate"]) =>
+      unwrap(api.POST("/api/admin/units", { body })),
+    onSuccess: () => invalidateUnits(queryClient),
+  })
+}
+
+export function useUpdateUnit() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ nama, body }: { nama: string; body: Schemas["AdminUnitUpdate"] }) =>
+      unwrap(api.PATCH("/api/admin/units/{nama}", { params: { path: { nama } }, body })),
+    onSuccess: () => invalidateUnits(queryClient),
+  })
+}
+
 // --- Pertanyaan tak terjawab (AD-4) --------------------------------------------
 
 export type UnansweredFilters = { resolved?: boolean; sejak?: string }
@@ -233,6 +272,77 @@ export function useStats(range: StatsRange | null) {
       unwrap(api.GET("/api/admin/stats", { params: { query: range ?? {} }, signal })),
     enabled: range !== null,
     placeholderData: keepPreviousData,
+  })
+}
+
+// --- Log aplikasi (SQLite, `logs.md`) ------------------------------------------
+
+export type LogRange = "24h" | "7d"
+
+/** Log terus bertambah selama halaman terbuka; react-query berhenti menarik
+    saat tab peramban tidak terlihat, jadi interval ini tidak membebani server. */
+const LOG_REFRESH_MS = 60_000
+
+export function useLogSummary(range: LogRange) {
+  return useQuery({
+    queryKey: ["logs", "summary", range],
+    queryFn: ({ signal }) =>
+      unwrap(api.GET("/api/admin/logs/summary", { params: { query: { range } }, signal })),
+    placeholderData: keepPreviousData,
+    refetchInterval: LOG_REFRESH_MS,
+  })
+}
+
+export type TurnFilters = {
+  range: LogRange
+  hasil?: string
+  status?: "ok" | "error" | "dibatalkan"
+  limit: number
+  offset: number
+}
+
+export function useLogTurns(filters: TurnFilters) {
+  return useQuery({
+    queryKey: ["logs", "turns", filters],
+    queryFn: ({ signal }) =>
+      unwrap(api.GET("/api/admin/logs/turns", { params: { query: filters }, signal })),
+    placeholderData: keepPreviousData,
+    refetchInterval: LOG_REFRESH_MS,
+  })
+}
+
+export function useLogTurn(turnId: string | null) {
+  return useQuery({
+    queryKey: ["logs", "turn", turnId],
+    queryFn: ({ signal }) =>
+      unwrap(
+        api.GET("/api/admin/logs/turns/{turn_id}", {
+          params: { path: { turn_id: turnId ?? "" } },
+          signal,
+        })
+      ),
+    enabled: turnId !== null,
+    // Giliran yang sudah tercatat tidak berubah lagi.
+    staleTime: Infinity,
+  })
+}
+
+export type AppLogFilters = {
+  range: LogRange
+  level: "DEBUG" | "INFO" | "WARNING" | "ERROR" | "CRITICAL"
+  logger?: string
+  q?: string
+  limit: number
+  offset: number
+}
+
+export function useAppLogs(filters: AppLogFilters) {
+  return useQuery({
+    queryKey: ["logs", "app", filters],
+    queryFn: ({ signal }) =>
+      unwrap(api.GET("/api/admin/logs/app", { params: { query: filters }, signal })),
+    placeholderData: keepPreviousData,
+    refetchInterval: LOG_REFRESH_MS,
   })
 }
 

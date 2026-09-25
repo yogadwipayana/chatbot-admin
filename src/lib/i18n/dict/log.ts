@@ -6,6 +6,7 @@ export const labels = {
     refusal: ["Ditolak", "Declined"],
     support: ["Dialihkan ke konseling", "Referred to counselling"],
     smalltalk: ["Sapaan", "Small talk"],
+    rejected: ["Ditolak gerbang", "Rejected by gate"],
   },
   topic: {
     deadline: ["Tenggat waktu", "Deadlines"],

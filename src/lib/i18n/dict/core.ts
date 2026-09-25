@@ -78,6 +78,7 @@ export const roles = {
       ["Layanan chat (kill switch)", "Chat service (kill switch)"],
       ["Konfigurasi pencarian dan pemecahan dokumen", "Retrieval and chunking configuration"],
       ["Kelola akun di menu Admin", "Manage accounts under Admin"],
+      ["Kelola daftar unit layanan", "Manage the list of service units"],
     ],
   },
 } as const

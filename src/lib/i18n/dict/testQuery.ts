@@ -38,6 +38,10 @@ export const testQuery = {
       "Sapaan atau basa-basi: dibalas singkat tanpa retrieval.",
       "A greeting or small talk: answered briefly with no retrieval.",
     ],
+    rejected: [
+      "Dihentikan gerbang: pesan tidak bermakna, upaya manipulasi, atau di luar topik kampus. Tanpa retrieval maupun model AI.",
+      "Stopped by the gate: nonsense, a manipulation attempt, or off campus topics. No retrieval and no AI model.",
+    ],
   },
   contactsTitle: ["Kontak yang ditampilkan sebagai banner", "Contacts shown as a banner"],
   latency: [(waktu: string) => `Waktu proses ${waktu}`, (waktu: string) => `Processing time ${waktu}`],

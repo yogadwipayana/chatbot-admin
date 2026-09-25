@@ -637,6 +637,89 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/admin/logs/summary": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Ringkasan performa pipeline chat
+         * @description Dibaca dari SQLite log (`LOG_DB_PATH`), bukan Postgres. KPI giliran, p50/p95
+         *     durasi per node LangGraph, distribusi titik keluar, dan tren per jam (UTC).
+         *     Untuk role admin, log `app.audit` tidak ikut dihitung di `log_error`.
+         */
+        get: operations["log_summary"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/logs/turns": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Daftar giliran chat
+         * @description Terbaru lebih dulu. Tanpa teks pertanyaan/jawaban; buka lewat `message_id`.
+         */
+        get: operations["list_turns"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/logs/turns/{turn_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Detail satu giliran chat
+         * @description Node yang berjalan beserta durasi dan detailnya, plus log selama giliran itu.
+         */
+        get: operations["get_turn"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/logs/app": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Log aplikasi
+         * @description Log Python logger `app.*`. Log `app.audit` hanya untuk superadmin; role admin
+         *     yang memfilter `logger=app.audit` mendapat daftar kosong, bukan 403.
+         */
+        get: operations["list_app_logs"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/admin/kill-switch": {
         parameters: {
             query?: never;
@@ -836,16 +919,67 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/admin/units": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Daftar semua unit layanan
+         * @description Termasuk unit nonaktif, dalam urutan menu, beserta jumlah dokumen dan
+         *     akun yang memakainya. Untuk isian unit gunakan `GET /api/units`, yang
+         *     hanya memuat unit aktif.
+         */
+        get: operations["list_admin_units"];
+        put?: never;
+        /**
+         * Tambah unit layanan
+         * @description Unit baru langsung aktif: tampil di menu chatbot dan dapat dipilih untuk
+         *     dokumen, entri tanya jawab, dan akun staf. `urutan` kosong = paling akhir.
+         */
+        post: operations["create_unit"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/units/{nama}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Ubah nama, deskripsi, urutan, atau status aktif unit
+         * @description Nama baru ikut tersimpan di setiap dokumen dan akun unit itu
+         *     (`ON UPDATE CASCADE`). Unit tidak dapat dihapus; menonaktifkannya
+         *     menyembunyikan unit dari menu chatbot dan dari pilihan isian baru,
+         *     sementara dokumen dan akunnya tetap ada.
+         */
+        patch: operations["update_unit"];
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
         /**
          * @description Menentukan cara frontend menampilkan balasan. Hanya `answer` yang
-         *     membawa sitasi; `refusal`, `support`, dan `smalltalk` tidak pernah.
+         *     membawa sitasi; `refusal`, `support`, `smalltalk`, dan `rejected`
+         *     tidak pernah.
          * @enum {string}
          */
-        OutcomeKind: "answer" | "refusal" | "support" | "smalltalk";
+        OutcomeKind: "answer" | "refusal" | "support" | "smalltalk" | "rejected";
         TurnIn: {
             /** @description `system` sengaja tidak diterima -- itu jalur injeksi. */
             role: string;
@@ -1315,6 +1449,8 @@ export interface components {
              *     disandingkan dengan `answer` seolah keduanya setara.
              */
             smalltalk: number;
+            /** @description Dihentikan gerbang JEV (nonsense, manipulasi, di luar topik). */
+            rejected: number;
         };
         Stats: {
             /** Format: date */
@@ -1396,6 +1532,114 @@ export interface components {
             usage_log_tanpa_biaya: number;
             rincian_model: components["schemas"]["CostByModel"][];
             biaya_harian: components["schemas"]["DailyCost"][];
+        };
+        LogSummary: {
+            sejak: string;
+            sampai: string;
+            jumlah_giliran: number;
+            p50_total_ms: number | null;
+            p95_total_ms: number | null;
+            giliran_error: number;
+            rasio_error: number;
+            diblokir_jev: number;
+            rasio_diblokir_jev: number;
+            /** @description Log ERROR ke atas. Untuk role admin, log audit tidak dihitung. */
+            log_error: number;
+            per_node: components["schemas"]["NodeStat"][];
+            titik_keluar: components["schemas"]["ExitPoint"][];
+            per_jam: components["schemas"]["HourlyLogStat"][];
+        };
+        NodeStat: {
+            node: string;
+            jumlah: number;
+            p50_ms: number | null;
+            p95_ms: number | null;
+            error: number;
+        };
+        ExitPoint: {
+            /** @description Node terakhir yang berjalan, yaitu tempat giliran berhenti. */
+            node: string;
+            jumlah: number;
+        };
+        HourlyLogStat: {
+            /** @description Awal jam, UTC, mis. `2026-09-25T03:00:00Z`. */
+            jam: string;
+            giliran: number;
+            p95_total_ms: number | null;
+            giliran_error: number;
+            log_error: number;
+        };
+        TurnOut: {
+            turn_id: string;
+            waktu: string;
+            /** @enum {string} */
+            endpoint: "chat" | "chat_stream";
+            session_id: string | null;
+            /** @description Tautan ke `messages` di Postgres; teks percakapan hanya ada di sana. */
+            message_id: string | null;
+            unit: string | null;
+            hasil: string | null;
+            node_terakhir: string | null;
+            total_ms: number | null;
+            /** @description Waktu sampai token pertama; hanya untuk chat_stream yang memanggil LLM. */
+            ttft_ms: number | null;
+            /** @enum {string} */
+            status: "ok" | "error" | "dibatalkan";
+            langsmith_run_id: string | null;
+        };
+        TurnPage: {
+            total: number;
+            items: components["schemas"]["TurnOut"][];
+        };
+        NodeRunOut: {
+            node: string;
+            urutan: number;
+            mulai: string;
+            durasi_ms: number;
+            /** @enum {string} */
+            status: "ok" | "error";
+            error_tipe: string | null;
+            error_pesan: string | null;
+            detail: {
+                [key: string]: unknown;
+            };
+        };
+        AppLogOut: {
+            id: number;
+            waktu: string;
+            level: string;
+            logger: string;
+            pesan: string;
+            lokasi: string | null;
+            traceback: string | null;
+            turn_id: string | null;
+        };
+        /** @description TurnOut ditambah node dan log giliran itu. */
+        TurnDetail: {
+            turn_id: string;
+            waktu: string;
+            /** @enum {string} */
+            endpoint: "chat" | "chat_stream";
+            session_id: string | null;
+            /** @description Tautan ke `messages` di Postgres; teks percakapan hanya ada di sana. */
+            message_id: string | null;
+            unit: string | null;
+            hasil: string | null;
+            node_terakhir: string | null;
+            total_ms: number | null;
+            /** @description Waktu sampai token pertama; hanya untuk chat_stream yang memanggil LLM. */
+            ttft_ms: number | null;
+            /** @enum {string} */
+            status: "ok" | "error" | "dibatalkan";
+            langsmith_run_id: string | null;
+            nodes: components["schemas"]["NodeRunOut"][];
+            /** @description Log yang muncul selama giliran ini berjalan. */
+            logs: components["schemas"]["AppLogOut"][];
+        };
+        AppLogPage: {
+            total: number;
+            items: components["schemas"]["AppLogOut"][];
+            loggers: string[];
         };
         KillSwitchRequest: {
             engaged: boolean;
@@ -1528,6 +1772,33 @@ export interface components {
         TemporaryPassword: {
             password_sementara: string;
         };
+        /** @description Satu unit layanan, termasuk yang nonaktif. */
+        AdminUnit: {
+            /** @description Kunci utama; nilai yang tersimpan di `documents.unit` dan `admins.unit`. */
+            nama: string;
+            /** @description Teks bantu di menu chatbot. */
+            deskripsi?: string | null;
+            /** @description Urutan tampil di menu; kecil lebih dulu. */
+            urutan: number;
+            /** @description false = tersembunyi dari menu chatbot dan pilihan isian baru. */
+            is_active: boolean;
+            jumlah_dokumen: number;
+            jumlah_akun: number;
+        };
+        AdminUnitCreate: {
+            /** @description Spasi berlebih dirapikan; tidak boleh memuat `/`. */
+            nama: string;
+            deskripsi?: string | null;
+            /** @description Kosong = diletakkan paling akhir. */
+            urutan?: number | null;
+        };
+        /** @description Hanya field yang dikirim yang diubah. Field tak dikenal ditolak. */
+        AdminUnitUpdate: {
+            nama?: string;
+            deskripsi?: string | null;
+            urutan?: number;
+            is_active?: boolean;
+        };
         PasswordChange: {
             password_lama: string;
             /** @description Maksimal 72 byte (batas bcrypt). */
@@ -1637,6 +1908,8 @@ export interface components {
         SessionIdHeader: string;
         Limit: number;
         Offset: number;
+        /** @description Rentang waktu. 7 hari adalah batas atas karena masa simpan log. */
+        RentangLog: "24h" | "7d";
     };
     requestBodies: never;
     headers: never;
@@ -2519,6 +2792,147 @@ export interface operations {
             };
         };
     };
+    log_summary: {
+        parameters: {
+            query?: {
+                /** @description Rentang waktu. 7 hari adalah batas atas karena masa simpan log. */
+                range?: components["parameters"]["RentangLog"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Ringkasan */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LogSummary"];
+                };
+            };
+            401: components["responses"]["TidakBerwenang"];
+            403: components["responses"]["Terlarang"];
+            /** @description Parameter tidak sah */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    list_turns: {
+        parameters: {
+            query?: {
+                /** @description Rentang waktu. 7 hari adalah batas atas karena masa simpan log. */
+                range?: components["parameters"]["RentangLog"];
+                hasil?: string;
+                status?: "ok" | "error" | "dibatalkan";
+                unit?: string;
+                node_terakhir?: string;
+                limit?: components["parameters"]["Limit"];
+                offset?: components["parameters"]["Offset"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Satu halaman giliran */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TurnPage"];
+                };
+            };
+            401: components["responses"]["TidakBerwenang"];
+            403: components["responses"]["Terlarang"];
+            /** @description Parameter tidak sah */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    get_turn: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                turn_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Detail giliran */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TurnDetail"];
+                };
+            };
+            401: components["responses"]["TidakBerwenang"];
+            403: components["responses"]["Terlarang"];
+            404: components["responses"]["TidakDitemukan"];
+        };
+    };
+    list_app_logs: {
+        parameters: {
+            query?: {
+                /** @description Rentang waktu. 7 hari adalah batas atas karena masa simpan log. */
+                range?: components["parameters"]["RentangLog"];
+                /** @description Level minimum. */
+                level?: "DEBUG" | "INFO" | "WARNING" | "ERROR" | "CRITICAL";
+                /** @description Nama logger; turunannya ikut, mis. `app.rag`. */
+                logger?: string;
+                /** @description Cari di isi pesan. */
+                q?: string;
+                limit?: components["parameters"]["Limit"];
+                offset?: components["parameters"]["Offset"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Satu halaman log */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AppLogPage"];
+                };
+            };
+            401: components["responses"]["TidakBerwenang"];
+            403: components["responses"]["Terlarang"];
+            /** @description Parameter tidak sah */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
     get_kill_switch: {
         parameters: {
             query?: never;
@@ -2865,6 +3279,104 @@ export interface operations {
                     "application/json": components["schemas"]["Error"];
                 };
             };
+        };
+    };
+    list_admin_units: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Semua unit */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminUnit"][];
+                };
+            };
+            401: components["responses"]["TidakBerwenang"];
+            403: components["responses"]["Terlarang"];
+        };
+    };
+    create_unit: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AdminUnitCreate"];
+            };
+        };
+        responses: {
+            /** @description Unit dibuat */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminUnit"];
+                };
+            };
+            401: components["responses"]["TidakBerwenang"];
+            403: components["responses"]["Terlarang"];
+            /** @description Nama sama dengan unit lain (huruf besar-kecil dan spasi tidak dibedakan) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            422: components["responses"]["ValidationError"];
+        };
+    };
+    update_unit: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Ejaan resmi, persis seperti di `GET /api/admin/units`. */
+                nama: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AdminUnitUpdate"];
+            };
+        };
+        responses: {
+            /** @description Tersimpan */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminUnit"];
+                };
+            };
+            401: components["responses"]["TidakBerwenang"];
+            403: components["responses"]["Terlarang"];
+            404: components["responses"]["TidakDitemukan"];
+            /** @description Nama baru sama dengan unit lain */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            422: components["responses"]["ValidationError"];
         };
     };
 }
