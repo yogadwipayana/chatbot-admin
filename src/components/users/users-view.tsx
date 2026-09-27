@@ -165,14 +165,14 @@ export function UsersView() {
                   <TableRow key={user.id} className={cn(!user.is_active && "text-muted-foreground")}>
                     <TableCell className="pl-4 whitespace-normal">
                       <p className="font-medium text-foreground">
-                        {user.nama || user.email}
+                        {user.name || user.email}
                         {diri ? (
                           <span className="ml-2 text-xs font-normal text-muted-foreground">
                             {t.users.you}
                           </span>
                         ) : null}
                       </p>
-                      {user.nama ? (
+                      {user.name ? (
                         <p className="text-xs text-muted-foreground">{user.email}</p>
                       ) : null}
                     </TableCell>
@@ -310,7 +310,7 @@ function UserFormDialog({
   const units = useUnits()
 
   const [email, setEmail] = useState(editing?.email ?? "")
-  const [nama, setNama] = useState(editing?.nama ?? "")
+  const [nama, setNama] = useState(editing?.name ?? "")
   const [role, setRole] = useState<Role>(editing?.role ?? "staf")
   const [unit, setUnit] = useState(editing?.unit ?? "")
   const [galat, setGalat] = useState<string | null>(null)
@@ -324,11 +324,11 @@ function UserFormDialog({
 
     if (!editing) {
       create.mutate(
-        { email: email.trim(), nama: nama.trim() || null, role, unit: unit.trim() || null },
+        { email: email.trim(), name: nama.trim() || null, role, unit: unit.trim() || null },
         {
           onSuccess: (data) => {
             onClose()
-            onCreated(data.user, data.password_sementara)
+            onCreated(data.user, data.temporary_password)
           },
           onError: (error) => setGalat(error.message),
         }
@@ -337,7 +337,7 @@ function UserFormDialog({
     }
 
     const body: Schemas["AdminUserUpdate"] = {}
-    if (nama.trim() !== (editing.nama ?? "")) body.nama = nama.trim() || null
+    if (nama.trim() !== (editing.name ?? "")) body.name = nama.trim() || null
     if (role !== editing.role) body.role = role
     if (unit.trim() !== (editing.unit ?? "")) body.unit = unit.trim() || null
     if (Object.keys(body).length === 0) {
@@ -477,7 +477,7 @@ function ResetPasswordDialog({
     reset.mutate(user.id, {
       onSuccess: (data) => {
         onClose()
-        onDone(user, data.password_sementara)
+        onDone(user, data.temporary_password)
       },
       onError: (error) => toast.error(t.users.reset.failed, { description: error.message }),
     })

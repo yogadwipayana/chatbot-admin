@@ -154,7 +154,7 @@ export function useUnits(): string[] {
     queryFn: ({ signal }) => unwrap(api.GET("/api/units", { signal })),
     staleTime: 5 * 60 * 1000,
   })
-  return useMemo(() => (data ?? []).map((u) => u.nama), [data])
+  return useMemo(() => (data ?? []).map((u) => u.name), [data])
 }
 
 /** Semua unit termasuk yang nonaktif, untuk halaman kelola unit (superadmin). */
@@ -190,15 +190,52 @@ export function useCreateUnit() {
 export function useUpdateUnit() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: ({ nama, body }: { nama: string; body: Schemas["AdminUnitUpdate"] }) =>
-      unwrap(api.PATCH("/api/admin/units/{nama}", { params: { path: { nama } }, body })),
+    mutationFn: ({ name, body }: { name: string; body: Schemas["AdminUnitUpdate"] }) =>
+      unwrap(api.PATCH("/api/admin/units/{name}", { params: { path: { name } }, body })),
     onSuccess: () => invalidateUnits(queryClient),
+  })
+}
+
+// --- Kunci sematan (superadmin) -------------------------------------------------
+
+/** Satu kunci per situs lain yang memasang asisten; lihat `api/app/embed_keys.py`. */
+export function useEmbedKeys() {
+  return useQuery({
+    queryKey: ["embed-keys"],
+    queryFn: ({ signal }) => unwrap(api.GET("/api/admin/embed-keys", { signal })),
+  })
+}
+
+export function useCreateEmbedKey() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (body: Schemas["EmbedKeyCreate"]) =>
+      unwrap(api.POST("/api/admin/embed-keys", { body })),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["embed-keys"] }),
+  })
+}
+
+export function useUpdateEmbedKey() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ key, body }: { key: string; body: Schemas["EmbedKeyUpdate"] }) =>
+      unwrap(api.PATCH("/api/admin/embed-keys/{key}", { params: { path: { key } }, body })),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["embed-keys"] }),
+  })
+}
+
+export function useDeleteEmbedKey() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (key: string) =>
+      unwrap(api.DELETE("/api/admin/embed-keys/{key}", { params: { path: { key } } })),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["embed-keys"] }),
   })
 }
 
 // --- Pertanyaan tak terjawab (AD-4) --------------------------------------------
 
-export type UnansweredFilters = { resolved?: boolean; sejak?: string }
+export type UnansweredFilters = { resolved?: boolean; since?: string }
 
 export function useUnanswered(filters: UnansweredFilters) {
   return useQuery({
@@ -238,7 +275,7 @@ export function useSetResolved() {
 
 export type FeedbackFilters = {
   helpful?: boolean
-  sejak?: string
+  since?: string
   limit: number
   offset: number
 }
@@ -263,7 +300,7 @@ export function useTestQuery() {
 
 // --- Statistik (AD-5) ----------------------------------------------------------
 
-export type StatsRange = { sejak: string; sampai: string }
+export type StatsRange = { since: string; until: string }
 
 export function useStats(range: StatsRange | null) {
   return useQuery({
@@ -295,7 +332,7 @@ export function useLogSummary(range: LogRange) {
 
 export type TurnFilters = {
   range: LogRange
-  hasil?: string
+  outcome?: string
   status?: "ok" | "error" | "dibatalkan"
   limit: number
   offset: number

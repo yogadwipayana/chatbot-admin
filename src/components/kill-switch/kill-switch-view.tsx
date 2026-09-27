@@ -39,7 +39,7 @@ export function KillSwitchView({ embedded = false }: { embedded?: boolean }) {
 
   function matikan() {
     set.mutate(
-      { engaged: true, alasan: alasan.trim() },
+      { engaged: true, reason: alasan.trim() },
       {
         onSuccess: () => {
           setKonfirmasi(null)
@@ -69,7 +69,7 @@ export function KillSwitchView({ embedded = false }: { embedded?: boolean }) {
   function perbaruiAlasan(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     set.mutate(
-      { engaged: true, alasan: alasan.trim() },
+      { engaged: true, reason: alasan.trim() },
       {
         onSuccess: () => {
           setAlasan("")

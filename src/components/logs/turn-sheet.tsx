@@ -80,11 +80,11 @@ function TurnBody({ turn }: { turn: Turn }) {
     <div className="space-y-6">
       <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 text-sm">
         <dt className="text-muted-foreground">{t.logs.turns.columns.time}</dt>
-        <dd>{waktu.waktu(turn.waktu, now)}</dd>
+        <dd>{waktu.waktu(turn.timestamp, now)}</dd>
 
         <dt className="text-muted-foreground">{t.logs.turns.columns.result}</dt>
         <dd className="flex flex-wrap items-center gap-x-3 gap-y-1">
-          <span>{kindLabel(t, turn.hasil)}</span>
+          <span>{kindLabel(t, turn.outcome)}</span>
           <TurnStatus status={turn.status} />
         </dd>
 
@@ -142,7 +142,7 @@ function TurnBody({ turn }: { turn: Turn }) {
                   <LevelLabel level={log.level} />
                   <code className="font-mono text-xs text-muted-foreground">{log.logger}</code>
                 </div>
-                <p className="break-words">{log.pesan}</p>
+                <p className="break-words">{log.message}</p>
                 {log.traceback ? (
                   <pre className="max-h-48 overflow-auto rounded bg-muted p-2 font-mono text-xs">
                     {log.traceback}
@@ -173,9 +173,9 @@ function TurnBody({ turn }: { turn: Turn }) {
 function Waterfall({ turn }: { turn: Turn }) {
   const t = useT()
   const f = useFormat()
-  const awal = new Date(turn.waktu).getTime()
+  const awal = new Date(turn.timestamp).getTime()
   const akhir = turn.nodes.reduce(
-    (max, n) => Math.max(max, new Date(n.mulai).getTime() - awal + n.durasi_ms),
+    (max, n) => Math.max(max, new Date(n.started_at).getTime() - awal + n.duration_ms),
     turn.total_ms ?? 0
   )
   const skala = akhir > 0 ? akhir : 1
@@ -183,18 +183,18 @@ function Waterfall({ turn }: { turn: Turn }) {
   return (
     <ul className="space-y-2.5">
       {turn.nodes.map((n) => {
-        const mulai = Math.max(0, new Date(n.mulai).getTime() - awal)
+        const mulai = Math.max(0, new Date(n.started_at).getTime() - awal)
         const kiri = Math.min((mulai / skala) * 100, 99.5)
-        const lebar = Math.max((n.durasi_ms / skala) * 100, 0.5)
+        const lebar = Math.max((n.duration_ms / skala) * 100, 0.5)
         const gagal = n.status === "error"
         return (
-          <li key={`${n.urutan}-${n.node}`} className="space-y-1">
+          <li key={`${n.position}-${n.node}`} className="space-y-1">
             <div className="flex items-baseline justify-between gap-3 text-sm">
               <span className={cn("truncate", gagal && "text-status-critical")}>
                 {nodeLabel(t, n.node)}
               </span>
               <span className="shrink-0 text-xs tabular-nums text-muted-foreground">
-                {durasi(f, n.durasi_ms)}
+                {durasi(f, n.duration_ms)}
               </span>
             </div>
             <div className="relative h-2 rounded-[2px] bg-muted" aria-hidden>
@@ -222,8 +222,8 @@ function NodeDetail({ node }: { node: NodeRun }) {
   if (node.status === "error") {
     return (
       <p className="text-xs break-words text-status-critical">
-        {node.error_tipe}
-        {node.error_pesan ? `: ${node.error_pesan}` : ""}
+        {node.error_type}
+        {node.error_message ? `: ${node.error_message}` : ""}
       </p>
     )
   }
@@ -249,7 +249,7 @@ function nilaiDetail(
 ): string {
   if (typeof nilai === "boolean") return nilai ? t.logs.yes : t.logs.no
   if (typeof nilai === "number") {
-    if (kunci === "biaya_usd") return formatUsdPrecise(nilai)
+    if (kunci === "cost_usd") return formatUsdPrecise(nilai)
     if (Number.isInteger(nilai)) return f.number(nilai)
     return f.score(nilai)
   }

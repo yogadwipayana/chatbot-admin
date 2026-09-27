@@ -36,14 +36,14 @@ export function StatsView() {
   const f = useFormat()
   const now = useNow()
   const [preset, setPreset] = useState<Preset>("30")
-  const [kustom, setKustom] = useState<StatsRange>({ sejak: "", sampai: "" })
+  const [kustom, setKustom] = useState<StatsRange>({ since: "", until: "" })
 
   const hariIni = toDateInput(new Date(now))
   const range: StatsRange =
     preset === "kustom"
       ? kustom
-      : { sejak: toDateInput(addDays(new Date(now), -(Number(preset) - 1))), sampai: hariIni }
-  const rangeValid = !!range.sejak && !!range.sampai && range.sejak <= range.sampai
+      : { since: toDateInput(addDays(new Date(now), -(Number(preset) - 1))), until: hariIni }
+  const rangeValid = !!range.since && !!range.until && range.since <= range.until
   const stats = useStats(rangeValid ? range : null)
 
   function pilihPreset(value: Preset) {
@@ -85,11 +85,11 @@ export function StatsView() {
         <QueryError error={stats.error} onRetry={() => stats.refetch()} />
       ) : !stats.data ? (
         <StatsSkeleton />
-      ) : stats.data.total_pertanyaan === 0 ? (
+      ) : stats.data.total_questions === 0 ? (
         <EmptyState
           icon={ChartColumnIcon}
           title={t.stats.empty}
-          description={t.range.between(f.date(stats.data.sejak), f.date(stats.data.sampai))}
+          description={t.range.between(f.date(stats.data.since), f.date(stats.data.until))}
         />
       ) : (
         <div className={cn("space-y-6 transition-opacity", stats.isPlaceholderData && "opacity-60")}>
@@ -130,8 +130,8 @@ function StatTile({
 function KpiRow({ stats }: { stats: Stats }) {
   const t = useT()
   const f = useFormat()
-  const fb = stats.rasio_feedback_positif
-  const tt = stats.rasio_tak_terjawab
+  const fb = stats.positive_feedback_ratio
+  const tt = stats.unanswered_ratio
   return (
     <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
       <StatTile label={t.stats.feedbackRatio} value={fb == null ? "—" : f.percent(fb)}>
@@ -144,7 +144,7 @@ function KpiRow({ stats }: { stats: Stats }) {
                 ? t.stats.feedbackMeets(f.percent(TARGET_FEEDBACK, 0))
                 : t.stats.feedbackBelow(f.percent(TARGET_FEEDBACK, 0))}
             </StatusLabel>
-            <p>{t.stats.feedbackFrom(f.number(stats.jumlah_feedback))}</p>
+            <p>{t.stats.feedbackFrom(f.number(stats.feedback_count))}</p>
           </>
         )}
       </StatTile>
@@ -159,8 +159,8 @@ function KpiRow({ stats }: { stats: Stats }) {
             </StatusLabel>
             <p>
               {t.stats.unansweredOf(
-                f.number(stats.rincian_jenis.refusal),
-                f.number(stats.total_pertanyaan)
+                f.number(stats.kind_breakdown.refusal),
+                f.number(stats.total_questions)
               )}
               <Link href="/pertanyaan" className="underline underline-offset-3 hover:text-foreground">
                 {t.stats.seeList}
@@ -170,10 +170,10 @@ function KpiRow({ stats }: { stats: Stats }) {
         )}
       </StatTile>
 
-      <StatTile label={t.stats.cost} value={formatUsd(stats.biaya_usd_berjalan)}>
-        {stats.pesan_tanpa_estimasi_biaya > 0 ? (
+      <StatTile label={t.stats.cost} value={formatUsd(stats.running_cost_usd)}>
+        {stats.messages_without_cost_estimate > 0 ? (
           <StatusLabel level="warning" className="text-xs text-foreground">
-            {t.stats.costMissing(f.number(stats.pesan_tanpa_estimasi_biaya))}
+            {t.stats.costMissing(f.number(stats.messages_without_cost_estimate))}
           </StatusLabel>
         ) : (
           <p>{t.stats.costNote}</p>
@@ -200,8 +200,8 @@ function VolumeCard({ stats }: { stats: Stats }) {
         <CardTitle>{t.stats.volumeTitle}</CardTitle>
         <CardDescription>
           {t.stats.volumeDescription(
-            f.number(stats.total_pertanyaan),
-            f.number(stats.total_percakapan)
+            f.number(stats.total_questions),
+            f.number(stats.total_conversations)
           )}
         </CardDescription>
         <CardAction>
@@ -213,9 +213,9 @@ function VolumeCard({ stats }: { stats: Stats }) {
       </CardHeader>
       <CardContent>
         {tabel ? (
-          <DailyVolumeTable data={stats.volume_harian} />
+          <DailyVolumeTable data={stats.daily_volume} />
         ) : (
-          <DailyVolumeChart data={stats.volume_harian} />
+          <DailyVolumeChart data={stats.daily_volume} />
         )}
       </CardContent>
     </Card>
@@ -235,7 +235,7 @@ const KIND_SEGMENTS = [
 function KindCard({ stats }: { stats: Stats }) {
   const t = useT()
   const f = useFormat()
-  const total = KIND_SEGMENTS.reduce((jumlah, s) => jumlah + stats.rincian_jenis[s.key], 0)
+  const total = KIND_SEGMENTS.reduce((jumlah, s) => jumlah + stats.kind_breakdown[s.key], 0)
   return (
     <Card>
       <CardHeader>
@@ -243,17 +243,17 @@ function KindCard({ stats }: { stats: Stats }) {
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="flex h-3 w-full gap-0.5" role="img" aria-label={t.stats.kindTitle}>
-          {KIND_SEGMENTS.filter((s) => stats.rincian_jenis[s.key] > 0).map((s) => (
+          {KIND_SEGMENTS.filter((s) => stats.kind_breakdown[s.key] > 0).map((s) => (
             <div
               key={s.key}
               className={cn("h-full first:rounded-l-[4px] last:rounded-r-[4px]", s.swatch)}
-              style={{ flexGrow: stats.rincian_jenis[s.key], flexBasis: 0 }}
+              style={{ flexGrow: stats.kind_breakdown[s.key], flexBasis: 0 }}
             />
           ))}
         </div>
         <ul className="space-y-2 text-sm">
           {KIND_SEGMENTS.map((s) => {
-            const n = stats.rincian_jenis[s.key]
+            const n = stats.kind_breakdown[s.key]
             return (
               <li key={s.key} className="flex items-center gap-2">
                 <span className={cn("size-2.5 shrink-0 rounded-[2px]", s.swatch)} aria-hidden />
@@ -274,7 +274,7 @@ function KindCard({ stats }: { stats: Stats }) {
 function TopicCard({ stats }: { stats: Stats }) {
   const t = useT()
   const f = useFormat()
-  const terbanyak = stats.topik_populer.reduce((max, baris) => Math.max(max, baris.jumlah), 0)
+  const terbanyak = stats.top_topics.reduce((max, baris) => Math.max(max, baris.count), 0)
   return (
     <Card>
       <CardHeader>
@@ -282,24 +282,24 @@ function TopicCard({ stats }: { stats: Stats }) {
         <CardDescription>{t.stats.topicDescription}</CardDescription>
       </CardHeader>
       <CardContent>
-        {stats.topik_populer.length === 0 ? (
+        {stats.top_topics.length === 0 ? (
           <p className="text-sm text-muted-foreground">{t.stats.topicEmpty}</p>
         ) : (
           <ul className="space-y-3">
-            {stats.topik_populer.map((baris) => (
-              <li key={baris.topik} className="grid grid-cols-[7.5rem_1fr_auto] items-center gap-3 text-sm">
+            {stats.top_topics.map((baris) => (
+              <li key={baris.topic} className="grid grid-cols-[7.5rem_1fr_auto] items-center gap-3 text-sm">
                 {/* Topik yang belum dikenal kamus tampil apa adanya, bukan hilang. */}
                 <span className="truncate">
-                  {t.labels.topic[baris.topik as keyof typeof t.labels.topic] ?? baris.topik}
+                  {t.labels.topic[baris.topic as keyof typeof t.labels.topic] ?? baris.topic}
                 </span>
                 <div className="h-2" aria-hidden>
                   <div
                     className="h-full rounded-r-[4px] bg-series-1"
-                    style={{ width: `${(baris.jumlah / terbanyak) * 100}%` }}
+                    style={{ width: `${(baris.count / terbanyak) * 100}%` }}
                   />
                 </div>
                 <span className="w-8 text-right font-medium tabular-nums">
-                  {f.number(baris.jumlah)}
+                  {f.number(baris.count)}
                 </span>
               </li>
             ))}

@@ -67,7 +67,18 @@ export const config = {
         "How PDFs and Q&A entries are split into chunks before indexing.",
       ],
     },
+    limits: {
+      title: ["Batas pemakaian", "Usage limits"],
+      description: [
+        "Jaring pengaman kuota model AI. Chat mahasiswa dapat dipanggil siapa pun tanpa login, termasuk lewat skrip; batas ini membatasi kerugian satu hari.",
+        "A safety net for the AI model quota. Anyone can call the student chat without logging in, including from scripts; this caps the damage of a single day.",
+      ],
+    },
   },
+  limitsNote: [
+    "Batas per IP dan per sesi diatur di .env server (RATE_LIMIT_*), bukan di sini. Bila batas harian menyalakan layanan chat mati, naikkan dulu nilainya di sini sebelum menyalakan layanan lagi — kalau tidak, layanan mati lagi pada pertanyaan berikutnya.",
+    "Per-IP and per-session limits live in the server's .env (RATE_LIMIT_*), not here. If the daily limit switches the chat service off, raise it here before turning the service back on — otherwise it switches off again on the next question.",
+  ],
   thresholdNoteLead: ["Setelah mengubah ambang, buktikan hasilnya di ", "After changing a threshold, prove it in "],
   chunkingNote: [
     "Hanya berlaku untuk dokumen yang diproses setelah ini. Dokumen yang sudah ada baru mengikuti setelan baru bila diunggah ulang.",
@@ -140,6 +151,13 @@ export const config = {
       help: [
         "Bagian akhir potongan yang diulang di potongan berikutnya, supaya kalimat yang terpotong tidak kehilangan konteks. Harus lebih kecil dari panjang potongan.",
         "How much of a chunk's tail is repeated at the start of the next one, so a sentence cut in half keeps its context. Must be smaller than the chunk size.",
+      ],
+    },
+    chat_daily_limit: {
+      label: ["Batas pertanyaan harian", "Daily question limit"],
+      help: [
+        "Pertanyaan per hari dari portal dan semua situs penyemat. Terlampaui, layanan chat dimatikan otomatis sampai dinyalakan lagi. Isi 0 untuk tanpa batas.",
+        "Questions per day from the portal and every embedding site. Once exceeded, the chat service switches itself off until turned back on. Set it to 0 for no limit.",
       ],
     },
   },

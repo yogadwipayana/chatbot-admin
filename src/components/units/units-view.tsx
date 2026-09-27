@@ -57,17 +57,17 @@ export function UnitsView() {
   function alihAktif(unit: Unit) {
     const aktifkan = !unit.is_active
     update.mutate(
-      { nama: unit.nama, body: { is_active: aktifkan } },
+      { name: unit.name, body: { is_active: aktifkan } },
       {
         onSuccess: () =>
           toast.success(aktifkan ? t.units.activated : t.units.deactivated, {
             description: aktifkan
-              ? t.units.activatedBody(unit.nama)
-              : t.units.deactivatedBody(unit.nama),
+              ? t.units.activatedBody(unit.name)
+              : t.units.deactivatedBody(unit.name),
             action: {
               label: t.common.undo,
               onClick: () =>
-                update.mutate({ nama: unit.nama, body: { is_active: !aktifkan } }),
+                update.mutate({ name: unit.name, body: { is_active: !aktifkan } }),
             },
           }),
         onError: (error) => toast.error(t.common.saveFailed, { description: error.message }),
@@ -112,18 +112,18 @@ export function UnitsView() {
             <TableBody>
               {units.data.map((unit) => (
                 <TableRow
-                  key={unit.nama}
+                  key={unit.name}
                   className={cn(!unit.is_active && "text-muted-foreground")}
                 >
-                  <TableCell className="pl-4 tabular-nums">{unit.urutan}</TableCell>
+                  <TableCell className="pl-4 tabular-nums">{unit.sort_order}</TableCell>
                   <TableCell className="whitespace-normal">
-                    <p className="font-medium text-foreground">{unit.nama}</p>
-                    {unit.deskripsi ? (
-                      <p className="text-xs text-muted-foreground">{unit.deskripsi}</p>
+                    <p className="font-medium text-foreground">{unit.name}</p>
+                    {unit.description ? (
+                      <p className="text-xs text-muted-foreground">{unit.description}</p>
                     ) : null}
                   </TableCell>
-                  <TableCell className="text-right tabular-nums">{unit.jumlah_dokumen}</TableCell>
-                  <TableCell className="text-right tabular-nums">{unit.jumlah_akun}</TableCell>
+                  <TableCell className="text-right tabular-nums">{unit.document_count}</TableCell>
+                  <TableCell className="text-right tabular-nums">{unit.account_count}</TableCell>
                   <TableCell>
                     {unit.is_active ? (
                       <StatusLabel level="good">{t.units.active}</StatusLabel>
@@ -140,7 +140,7 @@ export function UnitsView() {
                         <Button
                           variant="ghost"
                           size="icon-sm"
-                          aria-label={t.units.rowActions(unit.nama)}
+                          aria-label={t.units.rowActions(unit.name)}
                         >
                           <EllipsisIcon />
                         </Button>
@@ -172,7 +172,7 @@ export function UnitsView() {
 
       {form ? (
         <UnitFormDialog
-          key={form.mode === "ubah" ? form.unit.nama : "baru"}
+          key={form.mode === "ubah" ? form.unit.name : "baru"}
           state={form}
           onClose={() => setForm(null)}
         />
@@ -187,13 +187,13 @@ function UnitFormDialog({ state, onClose }: { state: FormState; onClose: () => v
   const create = useCreateUnit()
   const update = useUpdateUnit()
 
-  const [nama, setNama] = useState(editing?.nama ?? "")
-  const [deskripsi, setDeskripsi] = useState(editing?.deskripsi ?? "")
-  const [urutan, setUrutan] = useState(editing ? String(editing.urutan) : "")
+  const [nama, setNama] = useState(editing?.name ?? "")
+  const [deskripsi, setDeskripsi] = useState(editing?.description ?? "")
+  const [urutan, setUrutan] = useState(editing ? String(editing.sort_order) : "")
   const [galat, setGalat] = useState<string | null>(null)
 
   const sibuk = create.isPending || update.isPending
-  const ganti = !!editing && nama.trim() !== "" && nama.trim() !== editing.nama
+  const ganti = !!editing && nama.trim() !== "" && nama.trim() !== editing.name
 
   function simpan(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -202,10 +202,10 @@ function UnitFormDialog({ state, onClose }: { state: FormState; onClose: () => v
 
     if (!editing) {
       create.mutate(
-        { nama: nama.trim(), deskripsi: deskripsi.trim() || null, urutan: angka },
+        { name: nama.trim(), description: deskripsi.trim() || null, sort_order: angka },
         {
           onSuccess: (data) => {
-            toast.success(t.units.form.created, { description: data.nama })
+            toast.success(t.units.form.created, { description: data.name })
             onClose()
           },
           onError: (error) => setGalat(error.message),
@@ -215,18 +215,19 @@ function UnitFormDialog({ state, onClose }: { state: FormState; onClose: () => v
     }
 
     const body: Schemas["AdminUnitUpdate"] = {}
-    if (nama.trim() !== editing.nama) body.nama = nama.trim()
-    if (deskripsi.trim() !== (editing.deskripsi ?? "")) body.deskripsi = deskripsi.trim() || null
-    if (angka !== null && angka !== editing.urutan) body.urutan = angka
+    if (nama.trim() !== editing.name) body.name = nama.trim()
+    if (deskripsi.trim() !== (editing.description ?? ""))
+      body.description = deskripsi.trim() || null
+    if (angka !== null && angka !== editing.sort_order) body.sort_order = angka
     if (Object.keys(body).length === 0) {
       onClose()
       return
     }
     update.mutate(
-      { nama: editing.nama, body },
+      { name: editing.name, body },
       {
         onSuccess: (data) => {
-          toast.success(t.units.form.updated, { description: data.nama })
+          toast.success(t.units.form.updated, { description: data.name })
           onClose()
         },
         onError: (error) => setGalat(error.message),
@@ -241,7 +242,7 @@ function UnitFormDialog({ state, onClose }: { state: FormState; onClose: () => v
           <DialogHeader>
             <DialogTitle>{editing ? t.units.form.editTitle : t.units.form.addTitle}</DialogTitle>
             <DialogDescription>
-              {editing ? editing.nama : t.units.form.addDescription}
+              {editing ? editing.name : t.units.form.addDescription}
             </DialogDescription>
           </DialogHeader>
 
@@ -268,7 +269,7 @@ function UnitFormDialog({ state, onClose }: { state: FormState; onClose: () => v
             {ganti && editing ? (
               <Alert>
                 <AlertDescription>
-                  {t.units.form.renameWarning(editing.jumlah_dokumen, editing.jumlah_akun)}
+                  {t.units.form.renameWarning(editing.document_count, editing.account_count)}
                 </AlertDescription>
               </Alert>
             ) : null}

@@ -188,10 +188,10 @@ export function FaqView() {
                           className="text-left font-medium text-foreground underline-offset-4 hover:underline"
                           onClick={() => setForm({ mode: "ubah", entry })}
                         >
-                          {entry.pertanyaan}
+                          {entry.question}
                         </button>
                         <p className="mt-0.5 line-clamp-2 text-xs text-muted-foreground">
-                          {entry.jawaban}
+                          {entry.answer}
                         </p>
                       </TableCell>
                       <TableCell className="whitespace-normal">{entry.unit}</TableCell>
@@ -216,7 +216,7 @@ export function FaqView() {
                               variant="ghost"
                               size="icon-sm"
                               disabled={update.isPending && update.variables?.id === entry.id}
-                              aria-label={t.faq.rowActions(truncate(entry.pertanyaan, 50))}
+                              aria-label={t.faq.rowActions(truncate(entry.question, 50))}
                             >
                               <EllipsisIcon />
                             </Button>
@@ -311,8 +311,8 @@ function FaqFormDialog({ state, onClose }: { state: FormState; onClose: () => vo
 
   const units = useUnits()
 
-  const [pertanyaan, setPertanyaan] = useState(editing?.pertanyaan ?? "")
-  const [jawaban, setJawaban] = useState(editing?.jawaban ?? "")
+  const [pertanyaan, setPertanyaan] = useState(editing?.question ?? "")
+  const [jawaban, setJawaban] = useState(editing?.answer ?? "")
   const [unit, setUnit] = useState(editing?.unit ?? unitTerkunci ?? "")
   const [validUntil, setValidUntil] = useState(editing?.valid_until ?? "")
   const [galat, setGalat] = useState<string | null>(null)
@@ -327,8 +327,8 @@ function FaqFormDialog({ state, onClose }: { state: FormState; onClose: () => vo
     if (!editing) {
       create.mutate(
         {
-          pertanyaan: pertanyaan.trim(),
-          jawaban: jawaban.trim(),
+          question: pertanyaan.trim(),
+          answer: jawaban.trim(),
           unit: unitDipakai.trim(),
           valid_until: validUntil || null,
         },
@@ -336,8 +336,8 @@ function FaqFormDialog({ state, onClose }: { state: FormState; onClose: () => vo
           onSuccess: (entry) => {
             toast.success(t.faq.form.added, {
               description:
-                entry.jumlah_chunk > 1
-                  ? t.faq.form.addedChunks(entry.jumlah_chunk)
+                entry.chunk_count > 1
+                  ? t.faq.form.addedChunks(entry.chunk_count)
                   : t.faq.form.addedSingle,
             })
             onClose()
@@ -349,8 +349,8 @@ function FaqFormDialog({ state, onClose }: { state: FormState; onClose: () => vo
     }
 
     const body: Schemas["FaqEntryUpdate"] = {}
-    if (pertanyaan.trim() !== editing.pertanyaan) body.pertanyaan = pertanyaan.trim()
-    if (jawaban.trim() !== editing.jawaban) body.jawaban = jawaban.trim()
+    if (pertanyaan.trim() !== editing.question) body.question = pertanyaan.trim()
+    if (jawaban.trim() !== editing.answer) body.answer = jawaban.trim()
     if (unitDipakai.trim() !== editing.unit) body.unit = unitDipakai.trim()
     if ((validUntil || null) !== (editing.valid_until ?? null)) body.valid_until = validUntil || null
     if (Object.keys(body).length === 0) {
@@ -363,7 +363,7 @@ function FaqFormDialog({ state, onClose }: { state: FormState; onClose: () => vo
         onSuccess: () => {
           toast.success(t.faq.form.saved, {
             description:
-              body.pertanyaan || body.jawaban ? t.faq.form.savedReindexed : undefined,
+              body.question || body.answer ? t.faq.form.savedReindexed : undefined,
           })
           onClose()
         },
@@ -482,7 +482,7 @@ function DeleteFaqDialog({ entry, onClose }: { entry: Faq | null; onClose: () =>
     remove.mutate(entry.id, {
       onSuccess: () => {
         toast.success(t.faq.remove.deleted, {
-          description: `“${truncate(entry.pertanyaan, 70)}”`,
+          description: `“${truncate(entry.question, 70)}”`,
         })
         onClose()
       },
@@ -499,7 +499,7 @@ function DeleteFaqDialog({ entry, onClose }: { entry: Faq | null; onClose: () =>
         <AlertDialogHeader>
           <AlertDialogTitle>{t.faq.remove.title}</AlertDialogTitle>
           <AlertDialogDescription>
-            {t.faq.remove.body(entry ? truncate(entry.pertanyaan, 100) : "")}
+            {t.faq.remove.body(entry ? truncate(entry.question, 100) : "")}
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>

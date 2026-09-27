@@ -87,10 +87,10 @@ export function DocumentsView() {
         }
       />
 
-      {data && data.jumlah_stale > 0 && !onlyStale ? (
+      {data && data.stale_count > 0 && !onlyStale ? (
         <Alert className="mb-4">
           <TriangleAlertIcon className="text-status-warning" />
-          <AlertTitle>{t.documents.staleAlert(data.jumlah_stale)}</AlertTitle>
+          <AlertTitle>{t.documents.staleAlert(data.stale_count)}</AlertTitle>
           <AlertDescription>{t.documents.staleAlertBody}</AlertDescription>
           <AlertAction>
             <Button
@@ -181,7 +181,7 @@ export function DocumentsView() {
                           href={`/dokumen/${doc.id}`}
                           className="font-medium text-foreground underline-offset-4 hover:underline"
                         >
-                          {doc.judul}
+                          {doc.title}
                         </Link>
                         <p className="text-xs text-muted-foreground">{doc.unit}</p>
                       </TableCell>
@@ -200,7 +200,7 @@ export function DocumentsView() {
                         {f.relative(doc.updated_at, now)}
                       </TableCell>
                       <TableCell className="text-right tabular-nums">
-                        {f.number(doc.jumlah_chunk)}
+                        {f.number(doc.chunk_count)}
                       </TableCell>
                       <TableCell className="pr-4">
                         <DropdownMenu>
@@ -209,7 +209,7 @@ export function DocumentsView() {
                               variant="ghost"
                               size="icon-sm"
                               disabled={pendingId === doc.id}
-                              aria-label={t.documents.rowActions(doc.judul)}
+                              aria-label={t.documents.rowActions(doc.title)}
                             >
                               <EllipsisIcon />
                             </Button>

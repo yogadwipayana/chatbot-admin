@@ -226,7 +226,7 @@ function LogRow({
         aria-controls={idRincian}
       >
         <span className="whitespace-nowrap text-muted-foreground tabular-nums">
-          {waktu.waktu(log.waktu, now)}
+          {waktu.waktu(log.timestamp, now)}
         </span>
         <span className="sm:order-none">
           <LevelLabel level={log.level} />
@@ -242,16 +242,16 @@ function LogRow({
           {log.logger}
         </code>
         <span className={cn("col-span-3 min-w-0 break-words sm:col-span-1", !terbuka && "line-clamp-2")}>
-          {log.pesan}
+          {log.message}
         </span>
       </button>
 
       {terbuka ? (
         <div id={idRincian} className="space-y-3 border-t bg-muted/30 px-3 py-3 text-sm">
           <p className="text-xs text-muted-foreground">
-            {t.logs.app.location}: <code className="font-mono text-foreground">{log.lokasi ?? "—"}</code>
+            {t.logs.app.location}: <code className="font-mono text-foreground">{log.location ?? "—"}</code>
             {" · "}
-            {waktu.lengkap(log.waktu)}
+            {waktu.lengkap(log.timestamp)}
           </p>
           {log.traceback ? (
             <div className="space-y-1">

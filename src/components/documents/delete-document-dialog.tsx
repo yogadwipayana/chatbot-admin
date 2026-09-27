@@ -39,7 +39,7 @@ export function DeleteDocumentDialog({
     if (!doc) return
     remove.mutate(doc.id, {
       onSuccess: () => {
-        toast.success(t.deleteDocument.deleted, { description: doc.judul })
+        toast.success(t.deleteDocument.deleted, { description: doc.title })
         onClose()
         onDeleted?.()
       },
@@ -69,7 +69,7 @@ export function DeleteDocumentDialog({
         <AlertDialogHeader>
           <AlertDialogTitle>{t.deleteDocument.title}</AlertDialogTitle>
           <AlertDialogDescription>
-            {t.deleteDocument.body(doc?.judul ?? "", f.number(doc?.jumlah_chunk ?? 0))}
+            {t.deleteDocument.body(doc?.title ?? "", f.number(doc?.chunk_count ?? 0))}
             {doc?.is_active ? t.deleteDocument.suggestDeactivate : null}
           </AlertDialogDescription>
         </AlertDialogHeader>

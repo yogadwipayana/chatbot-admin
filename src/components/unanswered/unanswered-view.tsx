@@ -53,15 +53,15 @@ export function UnansweredView() {
   const sejak =
     periode === "semua" ? undefined : toDateInput(addDays(new Date(now), -(Number(periode) - 1)))
   const resolved = tab === "semua" ? undefined : tab === "sudah"
-  const query = useUnanswered({ resolved, sejak })
+  const query = useUnanswered({ resolved, since: sejak })
   const setResolved = useSetResolved()
   // Staf/dosen boleh melihat (supaya tahu dokumen apa yang dicari mahasiswa),
   // hanya admin ke atas yang menandai selesai.
   const bolehTandai = atLeast(useMe().data, "admin")
 
   const groups = query.data ?? []
-  const totalPertanyaan = groups.reduce((sum, g) => sum + g.jumlah, 0)
-  const terbanyak = groups.reduce((max, g) => Math.max(max, g.jumlah), 0)
+  const totalPertanyaan = groups.reduce((sum, g) => sum + g.count, 0)
+  const terbanyak = groups.reduce((max, g) => Math.max(max, g.count), 0)
 
   function tandai(group: Group, value: boolean) {
     setResolved.mutate(
@@ -69,7 +69,7 @@ export function UnansweredView() {
       {
         onSuccess: () =>
           toast.success(value ? t.unanswered.markedDone : t.unanswered.reopened, {
-            description: `“${truncate(group.contoh_pertanyaan, 70)}”`,
+            description: `“${truncate(group.sample_question, 70)}”`,
             action: {
               label: t.common.undo,
               onClick: () => setResolved.mutate({ ids: group.ids, resolved: !value }),
@@ -138,7 +138,7 @@ export function UnansweredView() {
               // seluruhnya; tombol ringkas/panjang untuk itu hanya derau. Yang
               // sesekali masuk adalah tempelan panjang, dan satu baris seperti
               // itu bisa mendorong seluruh daftar keluar layar.
-              const panjang = group.contoh_pertanyaan.length > 160
+              const panjang = group.sample_question.length > 160
               const tampilPenuh = !panjang || terbuka === group.ids[0]
               return (
                 <li
@@ -147,7 +147,7 @@ export function UnansweredView() {
                 >
                   <div className="flex w-full shrink-0 items-center gap-3 sm:w-24 sm:flex-col sm:items-start sm:gap-1.5">
                     <p className="leading-none">
-                      <span className="text-2xl font-semibold">{group.jumlah}</span>
+                      <span className="text-2xl font-semibold">{group.count}</span>
                       <span className="ml-1 text-xs text-muted-foreground">
                         {t.unanswered.times}
                       </span>
@@ -155,7 +155,7 @@ export function UnansweredView() {
                     <div className="h-1.5 flex-1 sm:w-full sm:flex-none" aria-hidden>
                       <div
                         className="h-full rounded-r-[4px] bg-series-1"
-                        style={{ width: `${(group.jumlah / terbanyak) * 100}%` }}
+                        style={{ width: `${(group.count / terbanyak) * 100}%` }}
                       />
                     </div>
                   </div>
@@ -167,7 +167,7 @@ export function UnansweredView() {
                         tampilPenuh ? null : "line-clamp-3"
                       )}
                     >
-                      “{group.contoh_pertanyaan}”
+                      “{group.sample_question}”
                     </p>
                     {panjang ? (
                       <Button
@@ -183,9 +183,9 @@ export function UnansweredView() {
                       </Button>
                     ) : null}
                     <p className="text-xs text-muted-foreground">
-                      {t.unanswered.lastAsked(f.relative(group.terakhir_ditanyakan, now))}
-                      {group.top_score_rata2 != null
-                        ? t.unanswered.avgScore(f.score(group.top_score_rata2))
+                      {t.unanswered.lastAsked(f.relative(group.last_asked_at, now))}
+                      {group.avg_top_score != null
+                        ? t.unanswered.avgScore(f.score(group.avg_top_score))
                         : null}
                     </p>
                     {tab === "semua" && group.resolved ? (
@@ -197,7 +197,7 @@ export function UnansweredView() {
 
                   <div className="flex shrink-0 flex-wrap gap-2">
                     <Button variant="outline" size="sm" asChild>
-                      <Link href={`/uji-coba?q=${encodeURIComponent(group.contoh_pertanyaan)}`}>
+                      <Link href={`/uji-coba?q=${encodeURIComponent(group.sample_question)}`}>
                         <FlaskConicalIcon data-icon="inline-start" />
                         {t.labels.testQuery}
                       </Link>

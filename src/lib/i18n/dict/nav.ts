@@ -17,6 +17,7 @@ export const nav = {
     logs: ["Log", "Logs"],
     users: ["Admin", "Admins"],
     units: ["Unit", "Units"],
+    embed: ["Sematan", "Embeds"],
     feedback: ["Umpan balik", "Feedback"],
     config: ["Konfigurasi", "Configuration"],
   },

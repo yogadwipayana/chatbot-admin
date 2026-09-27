@@ -23,7 +23,7 @@ type Point = Schemas["DailyVolume"]
 
 function useConfig(): ChartConfig {
   const t = useT()
-  return { jumlah: { label: t.stats.volumeSeries, color: "var(--series-1)" } }
+  return { count: { label: t.stats.volumeSeries, color: "var(--series-1)" } }
 }
 
 /**
@@ -38,7 +38,7 @@ export function DailyVolumeChart({ data }: { data: Point[] }) {
       <BarChart data={data} margin={{ top: 8, right: 4, bottom: 0, left: 0 }}>
         <CartesianGrid vertical={false} stroke="var(--chart-grid)" />
         <XAxis
-          dataKey="tanggal"
+          dataKey="date"
           tickLine={false}
           axisLine={{ stroke: "var(--chart-axis)" }}
           tickMargin={8}
@@ -52,7 +52,7 @@ export function DailyVolumeChart({ data }: { data: Point[] }) {
             <ChartTooltipContent
               indicator="line"
               labelFormatter={(_, payload) => {
-                const tanggal = payload?.[0]?.payload?.tanggal
+                const tanggal = payload?.[0]?.payload?.date
                 return typeof tanggal === "string" ? f.date(tanggal) : null
               }}
             />
@@ -64,8 +64,8 @@ export function DailyVolumeChart({ data }: { data: Point[] }) {
             tidak tergambar pada tangkapan layar Chrome headless meski ukurannya
             di DOM sudah final. */}
         <Bar
-          dataKey="jumlah"
-          fill="var(--color-jumlah)"
+          dataKey="count"
+          fill="var(--color-count)"
           radius={[4, 4, 0, 0]}
           maxBarSize={24}
           isAnimationActive={false}
@@ -90,9 +90,9 @@ export function DailyVolumeTable({ data }: { data: Point[] }) {
         </TableHeader>
         <TableBody>
           {data.map((p) => (
-            <TableRow key={p.tanggal}>
-              <TableCell className="pl-3">{f.date(p.tanggal)}</TableCell>
-              <TableCell className="pr-3 text-right tabular-nums">{f.number(p.jumlah)}</TableCell>
+            <TableRow key={p.date}>
+              <TableCell className="pl-3">{f.date(p.date)}</TableCell>
+              <TableCell className="pr-3 text-right tabular-nums">{f.number(p.count)}</TableCell>
             </TableRow>
           ))}
         </TableBody>

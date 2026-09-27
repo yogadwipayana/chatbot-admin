@@ -76,7 +76,9 @@ const POTONGAN: Field[] = [
   { key: "chunk_overlap", min: 0, max: 1000, step: 5 },
 ]
 
-const SEMUA = [...PENCARIAN, ...AMBANG, ...POTONGAN]
+const BATAS: Field[] = [{ key: "chat_daily_limit", min: 0, max: 1_000_000, step: 1 }]
+
+const SEMUA = [...PENCARIAN, ...AMBANG, ...POTONGAN, ...BATAS]
 
 export function ConfigView() {
   const t = useT()
@@ -91,10 +93,10 @@ export function ConfigView() {
   const sibuk = simpan.isPending || kembalikan.isPending
 
   function nilai(key: Key): string {
-    return draft[key] ?? (data ? String(data.nilai[key]) : "")
+    return draft[key] ?? (data ? String(data.values[key]) : "")
   }
 
-  const berubah = data ? SEMUA.filter((f) => nilai(f.key) !== String(data.nilai[f.key])) : []
+  const berubah = data ? SEMUA.filter((f) => nilai(f.key) !== String(data.values[f.key])) : []
   const keluhan: Partial<Record<Key, string>> = data ? periksa(nilai, t) : {}
   const adaKeluhan = Object.keys(keluhan).length > 0
 
@@ -133,7 +135,7 @@ export function ConfigView() {
             <>
               <Button
                 variant="outline"
-                disabled={sibuk || data.diubah.length === 0}
+                disabled={sibuk || data.overridden.length === 0}
                 onClick={() => setKonfirmasi(true)}
               >
                 <RotateCcwIcon data-icon="inline-start" />
@@ -160,13 +162,13 @@ export function ConfigView() {
           <>
           <LanguageCard />
 
-          {data.peringatan ? (
+          {data.warning ? (
             <Alert variant="destructive">
               <TriangleAlertIcon />
               <AlertTitle>{t.config.warningTitle}</AlertTitle>
               <AlertDescription>
                 <p>
-                  {data.peringatan} {t.config.warningBody}
+                  {data.warning} {t.config.warningBody}
                 </p>
               </AlertDescription>
             </Alert>
@@ -221,12 +223,29 @@ export function ConfigView() {
             }
           />
 
+          <Kelompok
+            judul={t.config.groups.limits.title}
+            keterangan={t.config.groups.limits.description}
+            fields={BATAS}
+            data={data}
+            nilai={nilai}
+            keluhan={keluhan}
+            disabled={sibuk}
+            onChange={(key, v) => setDraft((d) => ({ ...d, [key]: v }))}
+            catatan={
+              <p className="flex items-start gap-1.5 text-sm text-pretty text-muted-foreground">
+                <InfoIcon className="mt-0.5 size-4 shrink-0" aria-hidden />
+                {t.config.limitsNote}
+              </p>
+            }
+          />
+
           <ModelCard data={data} />
 
-          {data.diperbarui_at ? (
+          {data.updated_at ? (
             <p className="text-sm text-muted-foreground">
-              {t.config.lastChanged(f.dateTime(data.diperbarui_at))}
-              {data.diperbarui_oleh ? t.config.lastChangedBy(data.diperbarui_oleh) : ""}.
+              {t.config.lastChanged(f.dateTime(data.updated_at))}
+              {data.updated_by ? t.config.lastChangedBy(data.updated_by) : ""}.
             </p>
           ) : (
             <p className="text-sm text-muted-foreground">{t.config.untouched}</p>
@@ -319,8 +338,8 @@ function Baris({
   const t = useT()
   const teks = t.config.fields[field.key]
   const id = `konfigurasi-${field.key}`
-  const nilaiServer = String(data.nilai_env[field.key])
-  const ditimpa = data.diubah.includes(field.key)
+  const nilaiServer = String(data.env_values[field.key])
+  const ditimpa = data.overridden.includes(field.key)
 
   return (
     <div className="grid gap-2 sm:grid-cols-[1fr_auto] sm:items-start sm:gap-6">
@@ -425,7 +444,7 @@ function ModelCard({ data }: { data: Config }) {
           </dd>
           <dt className="text-muted-foreground">{t.config.model.apiKey}</dt>
           <dd>
-            {data.api_key_terisi ? (
+            {data.api_key_set ? (
               <Badge variant="outline">{t.config.model.keySet}</Badge>
             ) : (
               <Badge variant="destructive">{t.config.model.keyMissing}</Badge>

@@ -4,9 +4,9 @@ import { API_BASE_URL, ApiError, errorMessage, gagalTerhubung, type Schemas } fr
 
 export type UploadInput = {
   file: File
-  judul: string
+  title: string
   unit: string
-  tahun_berlaku?: number
+  effective_year?: number
   valid_until?: string
 }
 
@@ -54,11 +54,13 @@ export function uploadDocument(
 
     const form = new FormData()
     form.append("file", input.file)
-    form.append("judul", input.judul)
+    form.append("title", input.title)
     form.append("unit", input.unit)
     // Field opsional dikirim hanya bila diisi: string kosong ditolak validasi
     // bilangan/tanggal di server.
-    if (input.tahun_berlaku !== undefined) form.append("tahun_berlaku", String(input.tahun_berlaku))
+    if (input.effective_year !== undefined) {
+      form.append("effective_year", String(input.effective_year))
+    }
     if (input.valid_until) form.append("valid_until", input.valid_until)
     xhr.send(form)
   })

@@ -31,7 +31,7 @@ export function PerformanceTab({ range }: { range: LogRange }) {
 
   if (summary.error) return <QueryError error={summary.error} onRetry={() => summary.refetch()} />
   if (!summary.data) return <PerformanceSkeleton />
-  if (summary.data.jumlah_giliran === 0) {
+  if (summary.data.turn_count === 0) {
     return (
       <EmptyState
         icon={ActivityIcon}
@@ -62,11 +62,11 @@ export function PerformanceTab({ range }: { range: LogRange }) {
 function KpiRow({ data }: { data: Summary }) {
   const t = useT()
   const f = useFormat()
-  const dijawab = data.titik_keluar.find((x) => x.node === "generate")?.jumlah ?? 0
+  const dijawab = data.exit_points.find((x) => x.node === "generate")?.count ?? 0
 
   return (
     <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-      <StatTile label={t.logs.kpi.turns} value={f.number(data.jumlah_giliran)}>
+      <StatTile label={t.logs.kpi.turns} value={f.number(data.turn_count)}>
         <p>{t.logs.kpi.turnsNote(f.number(dijawab))}</p>
       </StatTile>
 
@@ -83,17 +83,17 @@ function KpiRow({ data }: { data: Summary }) {
         )}
       </StatTile>
 
-      <StatTile label={t.logs.kpi.errors} value={f.percent(data.rasio_error)}>
+      <StatTile label={t.logs.kpi.errors} value={f.percent(data.error_ratio)}>
         <StatusLabel
-          level={data.giliran_error === 0 && data.log_error === 0 ? "good" : "critical"}
+          level={data.error_turn_count === 0 && data.error_log_count === 0 ? "good" : "critical"}
           className="text-xs text-foreground"
         >
-          {t.logs.kpi.errorsNote(f.number(data.log_error))}
+          {t.logs.kpi.errorsNote(f.number(data.error_log_count))}
         </StatusLabel>
       </StatTile>
 
-      <StatTile label={t.logs.kpi.blocked} value={f.percent(data.rasio_diblokir_jev)}>
-        <p>{t.logs.kpi.blockedNote(f.number(data.diblokir_jev))}</p>
+      <StatTile label={t.logs.kpi.blocked} value={f.percent(data.jev_blocked_ratio)}>
+        <p>{t.logs.kpi.blockedNote(f.number(data.jev_blocked_count))}</p>
       </StatTile>
     </div>
   )
@@ -151,7 +151,7 @@ function NodeCard({ data, className }: { data: Summary; className?: string }) {
                 <span className="min-w-0">
                   <span className="block truncate">{nodeLabel(t, n.node)}</span>
                   <span className="block text-xs text-muted-foreground">
-                    {t.logs.nodeRuns(f.number(n.jumlah))}
+                    {t.logs.nodeRuns(f.number(n.count))}
                     {n.error > 0 ? (
                       <span className="text-status-critical"> · {t.logs.nodeErrors(f.number(n.error))}</span>
                     ) : null}
@@ -195,8 +195,8 @@ function NodeCard({ data, className }: { data: Summary; className?: string }) {
 function ExitCard({ data, className }: { data: Summary; className?: string }) {
   const t = useT()
   const f = useFormat()
-  const total = data.titik_keluar.reduce((jumlah, x) => jumlah + x.jumlah, 0)
-  const terbanyak = data.titik_keluar.reduce((max, x) => Math.max(max, x.jumlah), 0)
+  const total = data.exit_points.reduce((jumlah, x) => jumlah + x.count, 0)
+  const terbanyak = data.exit_points.reduce((max, x) => Math.max(max, x.count), 0)
 
   return (
     <Card className={className}>
@@ -206,7 +206,7 @@ function ExitCard({ data, className }: { data: Summary; className?: string }) {
       </CardHeader>
       <CardContent>
         <ul className="space-y-3">
-          {data.titik_keluar.map((x) => (
+          {data.exit_points.map((x) => (
             <li key={x.node} className="grid grid-cols-[8.5rem_1fr_auto] items-center gap-3 text-sm">
               <span className="truncate">{nodeLabel(t, x.node)}</span>
               <div className="h-2" aria-hidden>
@@ -215,13 +215,13 @@ function ExitCard({ data, className }: { data: Summary; className?: string }) {
                     "h-full rounded-[2px]",
                     x.node === "generate" ? "bg-series-1" : "bg-series-2"
                   )}
-                  style={{ width: `${terbanyak ? (x.jumlah / terbanyak) * 100 : 0}%` }}
+                  style={{ width: `${terbanyak ? (x.count / terbanyak) * 100 : 0}%` }}
                 />
               </div>
               <span className="w-20 text-right tabular-nums">
-                <span className="font-medium">{f.number(x.jumlah)}</span>
+                <span className="font-medium">{f.number(x.count)}</span>
                 <span className="ml-1.5 text-xs text-muted-foreground">
-                  {total ? f.percent(x.jumlah / total, 0) : "—"}
+                  {total ? f.percent(x.count / total, 0) : "—"}
                 </span>
               </span>
             </li>
@@ -250,10 +250,10 @@ function LatencyCard({ data, range }: { data: Summary; range: LogRange }) {
       </CardHeader>
       <CardContent>
         <ChartContainer config={config} className="aspect-auto h-56 w-full">
-          <LineChart data={data.per_jam} margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
+          <LineChart data={data.per_hour} margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
             <CartesianGrid vertical={false} stroke="var(--chart-grid)" />
             <XAxis
-              dataKey="jam"
+              dataKey="hour"
               tickLine={false}
               axisLine={{ stroke: "var(--chart-axis)" }}
               tickMargin={8}
@@ -271,7 +271,7 @@ function LatencyCard({ data, range }: { data: Summary; range: LogRange }) {
                 <ChartTooltipContent
                   indicator="line"
                   labelFormatter={(_, payload) => {
-                    const jam = payload?.[0]?.payload?.jam
+                    const jam = payload?.[0]?.payload?.hour
                     return typeof jam === "string" ? waktu.lengkap(jam) : null
                   }}
                   formatter={(value) => (
@@ -308,8 +308,8 @@ function ErrorCard({ data, range }: { data: Summary; range: LogRange }) {
   const f = useFormat()
   const waktu = useLogTime()
   const config = {
-    giliran_error: { label: t.logs.series.turnErrors, color: "var(--status-critical)" },
-    log_error: { label: t.logs.series.logErrors, color: "var(--status-serious)" },
+    error_turn_count: { label: t.logs.series.turnErrors, color: "var(--status-critical)" },
+    error_log_count: { label: t.logs.series.logErrors, color: "var(--status-serious)" },
   } satisfies ChartConfig
 
   return (
@@ -320,10 +320,10 @@ function ErrorCard({ data, range }: { data: Summary; range: LogRange }) {
       </CardHeader>
       <CardContent className="space-y-3">
         <ChartContainer config={config} className="aspect-auto h-56 w-full">
-          <BarChart data={data.per_jam} margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
+          <BarChart data={data.per_hour} margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
             <CartesianGrid vertical={false} stroke="var(--chart-grid)" />
             <XAxis
-              dataKey="jam"
+              dataKey="hour"
               tickLine={false}
               axisLine={{ stroke: "var(--chart-axis)" }}
               tickMargin={8}
@@ -343,23 +343,23 @@ function ErrorCard({ data, range }: { data: Summary; range: LogRange }) {
                 <ChartTooltipContent
                   indicator="line"
                   labelFormatter={(_, payload) => {
-                    const jam = payload?.[0]?.payload?.jam
+                    const jam = payload?.[0]?.payload?.hour
                     return typeof jam === "string" ? waktu.lengkap(jam) : null
                   }}
                 />
               }
             />
             <Bar
-              dataKey="giliran_error"
+              dataKey="error_turn_count"
               stackId="error"
-              fill="var(--color-giliran_error)"
+              fill="var(--color-error_turn_count)"
               maxBarSize={16}
               isAnimationActive={false}
             />
             <Bar
-              dataKey="log_error"
+              dataKey="error_log_count"
               stackId="error"
-              fill="var(--color-log_error)"
+              fill="var(--color-error_log_count)"
               radius={[3, 3, 0, 0]}
               maxBarSize={16}
               isAnimationActive={false}

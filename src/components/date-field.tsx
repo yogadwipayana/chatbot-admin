@@ -255,8 +255,8 @@ export function DateRangeField({
 }: {
   id?: string
   /** Keduanya `YYYY-MM-DD`; string kosong berarti belum dipilih. */
-  value: { sejak: string; sampai: string }
-  onChange: (value: { sejak: string; sampai: string }) => void
+  value: { since: string; until: string }
+  onChange: (value: { since: string; until: string }) => void
   /** Batas tanggal yang boleh dipilih, `YYYY-MM-DD`. */
   min?: string
   max?: string
@@ -273,24 +273,24 @@ export function DateRangeField({
   // dipilih, supaya grafik di belakang tidak berkedip setengah jalan.
   const [draf, setDraf] = useState<DateRange | undefined>()
 
-  const tersimpan: DateRange | undefined = value.sejak
+  const tersimpan: DateRange | undefined = value.since
     ? {
-        from: parseDateOnly(value.sejak),
-        to: value.sampai ? parseDateOnly(value.sampai) : undefined,
+        from: parseDateOnly(value.since),
+        to: value.until ? parseDateOnly(value.until) : undefined,
       }
     : undefined
   const terpilih = draf ?? tersimpan
 
   const hari =
-    value.sejak && value.sampai
+    value.since && value.until
       ? Math.round(
-          (parseDateOnly(value.sampai).getTime() - parseDateOnly(value.sejak).getTime()) / SEHARI
+          (parseDateOnly(value.until).getTime() - parseDateOnly(value.since).getTime()) / SEHARI
         ) + 1
       : null
 
   let label: string = t.dateField.rangePlaceholder
-  if (value.sejak && value.sampai) label = `${f.date(value.sejak)} – ${f.date(value.sampai)}`
-  else if (value.sejak) label = t.dateField.rangePartial(f.date(value.sejak))
+  if (value.since && value.until) label = `${f.date(value.since)} – ${f.date(value.until)}`
+  else if (value.since) label = t.dateField.rangePartial(f.date(value.since))
 
   return (
     <Popover
@@ -305,7 +305,7 @@ export function DateRangeField({
           id={id}
           type="button"
           variant="outline"
-          data-empty={!value.sejak}
+          data-empty={!value.since}
           className={cn(
             "justify-start font-normal data-[empty=true]:text-muted-foreground",
             className
@@ -342,7 +342,7 @@ export function DateRangeField({
             const [dari, sampai] =
               hariDiklik < draf.from ? [hariDiklik, draf.from] : [draf.from, hariDiklik]
             setDraf(undefined)
-            onChange({ sejak: toDateInput(dari), sampai: toDateInput(sampai) })
+            onChange({ since: toDateInput(dari), until: toDateInput(sampai) })
             setOpen(false)
           }}
         />
@@ -358,7 +358,7 @@ export function DateRangeField({
             ) : hari !== null ? (
               <>
                 <Tebal>
-                  {f.date(value.sejak)} – {f.date(value.sampai)}
+                  {f.date(value.since)} – {f.date(value.until)}
                 </Tebal>
                 <Pemisah />
                 {t.dateField.rangeDays(hari)}

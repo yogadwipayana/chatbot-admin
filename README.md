@@ -64,6 +64,7 @@ terdampak -- bukan sebagai layar kosong saat dipakai.
 | `/layanan` | FR-9 | Kill switch dengan alasan wajib dan konfirmasi | – | – | ✓ |
 | `/konfigurasi` | FR-1..FR-3 | Setelan pencarian, ambang menjawab, dan pemecahan dokumen; berlaku tanpa restart | – | – | ✓ |
 | `/admin` | – | Kelola akun: level, unit, aktif/nonaktif, atur ulang kata sandi | – | – | ✓ |
+| `/sematan` | – | Kunci sematan per situs lain yang memasang asisten: daftar domain, aktif/nonaktif, kode siap tempel | – | – | ✓ |
 
 `/` membuka `/dokumen` untuk staf/dosen dan `/pertanyaan` untuk level lain.
 Setiap akun dapat mengganti kata sandinya sendiri dari menu akun di pojok kiri

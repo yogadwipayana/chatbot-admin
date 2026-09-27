@@ -7,6 +7,7 @@ import {
   CircleDollarSignIcon,
   ChartColumnIcon,
   ChevronsUpDownIcon,
+  CodeXmlIcon,
   FileTextIcon,
   FlaskConicalIcon,
   KeyRoundIcon,
@@ -108,6 +109,8 @@ const NAV: { key: keyof Dict["nav"]["groups"]; items: NavItem[] }[] = [
       { href: "/admin", key: "users", icon: UsersRoundIcon, min: "superadmin" },
       // Menentukan menu chatbot dan batas akses staf, jadi superadmin saja.
       { href: "/unit", key: "units", icon: Building2Icon, min: "superadmin" },
+      // Siapa yang boleh memakai kuota model dari situs lain: superadmin saja.
+      { href: "/sematan", key: "embed", icon: CodeXmlIcon, min: "superadmin" },
       // Isi percakapan, jadi levelnya sama dengan statistik: admin ke atas.
       {
         href: "/umpan-balik",
@@ -142,7 +145,7 @@ function NavBadge({ kind }: { kind: NonNullable<NavItem["badge"]> }) {
     ) : null
   }
   if (kind === "stale") {
-    const n = documents.data?.jumlah_stale ?? 0
+    const n = documents.data?.stale_count ?? 0
     return n > 0 ? (
       <SidebarMenuBadge aria-label={t.nav.badges.stale(n)}>
         <span className="mr-1 size-1.5 rounded-full bg-status-warning" aria-hidden />
@@ -158,8 +161,8 @@ function NavBadge({ kind }: { kind: NonNullable<NavItem["badge"]> }) {
   ) : null
 }
 
-function initials(me: { nama?: string | null; email: string }): string {
-  const sumber = me.nama?.trim() || me.email
+function initials(me: { name?: string | null; email: string }): string {
+  const sumber = me.name?.trim() || me.email
   const kata = sumber.split(/[\s.@_-]+/).filter(Boolean)
   return ((kata[0]?.[0] ?? "") + (kata[1]?.[0] ?? "")).toUpperCase() || "?"
 }
@@ -236,7 +239,7 @@ export function AppSidebar() {
                     {me ? initials(me) : "?"}
                   </div>
                   <div className="grid min-w-0 flex-1 text-left leading-tight">
-                    <span className="truncate text-sm font-medium">{me?.nama || me?.email}</span>
+                    <span className="truncate text-sm font-medium">{me?.name || me?.email}</span>
                     <span className="truncate text-xs text-muted-foreground">
                       {me ? t.roles.labels[me.role] : ""}
                       {me?.unit ? ` · ${me.unit}` : ""}

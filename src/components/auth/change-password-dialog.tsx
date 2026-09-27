@@ -53,7 +53,7 @@ function ChangePasswordForm({ onDone }: { onDone: () => void }) {
     event.preventDefault()
     if (!siap) return
     change.mutate(
-      { password_lama: lama, password_baru: baru },
+      { current_password: lama, new_password: baru },
       {
         onSuccess: (data) => {
           // Token lama sudah tidak berlaku sejak kata sandi diganti.

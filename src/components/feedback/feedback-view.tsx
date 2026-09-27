@@ -65,15 +65,15 @@ export function FeedbackView() {
     periode === "semua" ? undefined : toDateInput(addDays(new Date(now), -(Number(periode) - 1)))
   const query = useFeedback({
     helpful: tab === "semua" ? undefined : tab === "membantu",
-    sejak,
+    since: sejak,
     limit: PAGE_SIZE,
     offset: page * PAGE_SIZE,
   })
 
   const data = query.data
   const total = data?.total ?? 0
-  const positif = data?.jumlah_positif ?? 0
-  const negatif = data?.jumlah_negatif ?? 0
+  const positif = data?.positive_count ?? 0
+  const negatif = data?.negative_count ?? 0
   const halamanTerakhir = Math.max(0, Math.ceil(total / PAGE_SIZE) - 1)
 
   function ganti(ubah: () => void) {
@@ -216,7 +216,7 @@ function Baris({
   const Icon = item.helpful ? ThumbsUpIcon : ThumbsDownIcon
   const jenis = kindLabel(t, item.kind)
   // Jawaban pendek muat seluruhnya; tombol ringkas/panjang untuk itu hanya derau.
-  const panjang = item.jawaban.length > 200
+  const panjang = item.answer.length > 200
 
   return (
     <li className="flex flex-col gap-3 p-4 sm:flex-row">
@@ -240,8 +240,8 @@ function Baris({
 
       <div className="min-w-0 flex-1 space-y-2">
         <p className="font-medium break-words">
-          {item.pertanyaan ? (
-            `“${item.pertanyaan}”`
+          {item.question ? (
+            `“${item.question}”`
           ) : (
             <span className="text-muted-foreground">{t.feedback.questionGone}</span>
           )}
@@ -253,7 +253,7 @@ function Baris({
             panjang && !terbuka && "line-clamp-3"
           )}
         >
-          {item.jawaban}
+          {item.answer}
         </p>
         {panjang ? (
           <Button
@@ -267,9 +267,9 @@ function Baris({
           </Button>
         ) : null}
 
-        {item.catatan ? (
+        {item.comment ? (
           <p className="rounded-md border-l-2 border-l-series-1 bg-muted/50 px-3 py-2 text-sm break-words">
-            {item.catatan}
+            {item.comment}
           </p>
         ) : null}
 
@@ -280,10 +280,10 @@ function Baris({
         </p>
       </div>
 
-      {item.pertanyaan ? (
+      {item.question ? (
         <div className="shrink-0">
           <Button variant="outline" size="sm" asChild>
-            <Link href={`/uji-coba?q=${encodeURIComponent(item.pertanyaan)}`}>
+            <Link href={`/uji-coba?q=${encodeURIComponent(item.question)}`}>
               <FlaskConicalIcon data-icon="inline-start" />
               {t.labels.testQuery}
             </Link>

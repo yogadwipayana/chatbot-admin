@@ -61,14 +61,14 @@ export function CostsView() {
   const f = useFormat()
   const now = useNow()
   const [preset, setPreset] = useState<Preset>("30")
-  const [kustom, setKustom] = useState<StatsRange>({ sejak: "", sampai: "" })
+  const [kustom, setKustom] = useState<StatsRange>({ since: "", until: "" })
 
   const hariIni = toDateInput(new Date(now))
   const range: StatsRange =
     preset === "kustom"
       ? kustom
-      : { sejak: toDateInput(addDays(new Date(now), -(Number(preset) - 1))), sampai: hariIni }
-  const valid = !!range.sejak && !!range.sampai && range.sejak <= range.sampai
+      : { since: toDateInput(addDays(new Date(now), -(Number(preset) - 1))), until: hariIni }
+  const valid = !!range.since && !!range.until && range.since <= range.until
   const hari = valid ? jumlahHari(range) : 0
 
   const costs = useCosts(valid ? range : null)
@@ -115,7 +115,7 @@ export function CostsView() {
         <EmptyState
           icon={CircleDollarSignIcon}
           title={t.costs.empty}
-          description={t.range.between(f.date(costs.data.sejak), f.date(costs.data.sampai))}
+          description={t.range.between(f.date(costs.data.since), f.date(costs.data.until))}
         />
       ) : (
         <div className={cn("space-y-6 transition-opacity", costs.isPlaceholderData && "opacity-60")}>
@@ -144,21 +144,20 @@ function KpiRow({
 }) {
   const t = useT()
   const f = useFormat()
-  const perHari = costs.biaya_usd / hari
+  const perHari = costs.cost_usd / hari
   const panggilan = jumlahPanggilan(costs)
-  const tanpaBiaya =
-    costs.llm_tanpa_biaya + costs.embed_chat_tanpa_biaya + costs.usage_log_tanpa_biaya
+  const tanpaBiaya = costs.llm_calls_without_cost + costs.chat_embeds_without_cost
   const cakupan = (panggilan - tanpaBiaya) / panggilan
   // Penolakan FR-3 berbiaya embedding tanpa memanggil LLM, jadi pembilangnya
   // memuat biaya yang penyebutnya tidak hitung. Disebut di keterangan, bukan
   // disembunyikan: menghapusnya justru membuat biaya per jawaban tampak murah.
-  const biayaChat = costs.biaya_llm_usd + costs.biaya_embed_chat_usd
-  const perJawaban = costs.jumlah_panggilan_llm ? biayaChat / costs.jumlah_panggilan_llm : null
+  const biayaChat = costs.llm_cost_usd + costs.chat_embed_cost_usd
+  const perJawaban = costs.llm_call_count ? biayaChat / costs.llm_call_count : null
 
   return (
     <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-      <StatTile label={t.costs.total} value={formatUsd(costs.biaya_usd)}>
-        <Delta sekarang={costs.biaya_usd} sebelum={sebelumnya?.biaya_usd} hari={hari} />
+      <StatTile label={t.costs.total} value={formatUsd(costs.cost_usd)}>
+        <Delta sekarang={costs.cost_usd} sebelum={sebelumnya?.cost_usd} hari={hari} />
       </StatTile>
 
       <StatTile label={t.costs.perDay} value={formatUsdPrecise(perHari)}>
@@ -172,7 +171,7 @@ function KpiRow({
         {perJawaban == null ? (
           <p>{t.costs.perAnswerNone}</p>
         ) : (
-          <p>{t.costs.perAnswerNote(f.number(costs.jumlah_panggilan_llm))}</p>
+          <p>{t.costs.perAnswerNote(f.number(costs.llm_call_count))}</p>
         )}
       </StatTile>
 
@@ -247,17 +246,17 @@ function DailyCard({ costs, range, hari }: { costs: Costs; range: StatsRange; ha
   const t = useT()
   const f = useFormat()
   const [tabel, setTabel] = useState(false)
-  const data = lengkapiHari(costs.biaya_harian, range)
-  const puncak = data.reduce((max, row) => (row.biaya_usd > max.biaya_usd ? row : max), data[0])
+  const data = lengkapiHari(costs.daily_costs, range)
+  const puncak = data.reduce((max, row) => (row.cost_usd > max.cost_usd ? row : max), data[0])
 
   return (
     <Card className="lg:col-span-2">
       <CardHeader>
         <CardTitle>{t.costs.dailyTitle}</CardTitle>
         <CardDescription>
-          {t.costs.dailyRange(f.shortDate(range.sejak), f.date(range.sampai), f.number(hari))}
-          {puncak && puncak.biaya_usd > 0
-            ? t.costs.dailyPeak(f.date(puncak.tanggal), formatUsd(puncak.biaya_usd))
+          {t.costs.dailyRange(f.shortDate(range.since), f.date(range.until), f.number(hari))}
+          {puncak && puncak.cost_usd > 0
+            ? t.costs.dailyPeak(f.date(puncak.date), formatUsd(puncak.cost_usd))
             : null}
         </CardDescription>
         <CardAction>
@@ -290,7 +289,7 @@ function DailyCard({ costs, range, hari }: { costs: Costs; range: StatsRange; ha
 
 /**
  * Bagian dari keseluruhan sebagai satu batang bertumpuk, pola yang sama dengan
- * "Jenis balasan" di halaman Statistik. Tiga potongan yang satu di antaranya
+ * "Jenis balasan" di halaman Statistik. Potongan yang satu di antaranya
  * hampir selalu mendominasi tidak terbaca sebagai lingkaran.
  */
 function SourceCard({ costs }: { costs: Costs }) {
@@ -299,27 +298,20 @@ function SourceCard({ costs }: { costs: Costs }) {
   const baris = [
     {
       ...SERIES[0],
-      biaya: costs.biaya_llm_usd,
-      panggilan: costs.jumlah_panggilan_llm,
+      biaya: costs.llm_cost_usd,
+      panggilan: costs.llm_call_count,
       rincian: t.costs.inOut(f.number(costs.input_tokens), f.number(costs.output_tokens)),
-      tanpaBiaya: costs.llm_tanpa_biaya,
+      tanpaBiaya: costs.llm_calls_without_cost,
     },
     {
       ...SERIES[1],
-      biaya: costs.biaya_embed_chat_usd,
-      panggilan: costs.jumlah_embed_chat,
-      rincian: t.costs.tokens(f.number(costs.embed_chat_tokens)),
-      tanpaBiaya: costs.embed_chat_tanpa_biaya,
-    },
-    {
-      ...SERIES[2],
-      biaya: costs.biaya_usage_log_usd,
-      panggilan: costs.jumlah_usage_log,
-      rincian: t.costs.tokens(f.number(costs.usage_log_tokens)),
-      tanpaBiaya: costs.usage_log_tanpa_biaya,
+      biaya: costs.chat_embed_cost_usd,
+      panggilan: costs.chat_embed_count,
+      rincian: t.costs.tokens(f.number(costs.chat_embed_tokens)),
+      tanpaBiaya: costs.chat_embeds_without_cost,
     },
   ]
-  const total = costs.biaya_usd
+  const total = costs.cost_usd
 
   return (
     <Card>
@@ -372,12 +364,12 @@ function SourceCard({ costs }: { costs: Costs }) {
 
 // --- Rincian per model -----------------------------------------------------
 
-const JENIS: ByModel["jenis"][] = ["llm_chat", "embedding_chat", "embedding_ingestion"]
+const JENIS: ByModel["type"][] = ["llm_chat", "embedding_chat"]
 
 function ModelCard({ costs }: { costs: Costs }) {
   const t = useT()
   const f = useFormat()
-  const total = costs.biaya_usd
+  const total = costs.cost_usd
 
   return (
     <Card>
@@ -399,7 +391,7 @@ function ModelCard({ costs }: { costs: Costs }) {
             </TableHeader>
             <TableBody>
               {JENIS.map((jenis) => {
-                const rows = costs.rincian_model.filter((row) => row.jenis === jenis)
+                const rows = costs.model_breakdown.filter((row) => row.type === jenis)
                 if (rows.length === 0) return null
                 return <ModelGroup key={jenis} jenis={jenis} rows={rows} total={total} t={t} f={f} />
               })}
@@ -433,7 +425,7 @@ function ModelGroup({
   t,
   f,
 }: {
-  jenis: ByModel["jenis"]
+  jenis: ByModel["type"]
   rows: ByModel[]
   total: number
   t: Dict
@@ -449,28 +441,28 @@ function ModelGroup({
         </TableCell>
       </TableRow>
       {rows.map((row) => (
-        <TableRow key={`${row.jenis}-${row.model}`}>
+        <TableRow key={`${row.type}-${row.model}`}>
           <TableCell className="max-w-64 pl-3 font-medium break-words">{row.model}</TableCell>
-          <TableCell className="text-right tabular-nums">{f.number(row.jumlah_panggilan)}</TableCell>
+          <TableCell className="text-right tabular-nums">{f.number(row.call_count)}</TableCell>
           <TableCell className="text-right tabular-nums">
             {f.number(row.tokens)}
-            {row.jenis === "llm_chat" ? (
+            {row.type === "llm_chat" ? (
               <span className="block text-xs text-muted-foreground">
                 {t.costs.inOut(f.number(row.input_tokens), f.number(row.output_tokens))}
               </span>
             ) : null}
           </TableCell>
-          <TableCell className="text-right tabular-nums">{formatUsdPrecise(row.biaya_usd)}</TableCell>
+          <TableCell className="text-right tabular-nums">{formatUsdPrecise(row.cost_usd)}</TableCell>
           <TableCell className="pr-3">
             <div className="flex items-center justify-end gap-2">
               <div className="h-1.5 w-10 rounded-[2px] bg-series-1-track" aria-hidden>
                 <div
                   className="h-full rounded-[2px] bg-series-1"
-                  style={{ width: `${total ? Math.min((row.biaya_usd / total) * 100, 100) : 0}%` }}
+                  style={{ width: `${total ? Math.min((row.cost_usd / total) * 100, 100) : 0}%` }}
                 />
               </div>
               <span className="w-9 text-right text-muted-foreground tabular-nums">
-                {total ? f.percent(row.biaya_usd / total, 0) : "—"}
+                {total ? f.percent(row.cost_usd / total, 0) : "—"}
               </span>
             </div>
           </TableCell>
@@ -483,19 +475,19 @@ function ModelGroup({
 // --- Bantuan ---------------------------------------------------------------
 
 function jumlahPanggilan(costs: Costs): number {
-  return costs.jumlah_panggilan_llm + costs.jumlah_embed_chat + costs.jumlah_usage_log
+  return costs.llm_call_count + costs.chat_embed_count
 }
 
 /** Rentang inklusif: 1–30 September berarti 30 hari, bukan 29. */
 function jumlahHari(range: StatsRange): number {
-  const jarak = parseDateOnly(range.sampai).getTime() - parseDateOnly(range.sejak).getTime()
+  const jarak = parseDateOnly(range.until).getTime() - parseDateOnly(range.since).getTime()
   return Math.round(jarak / MS_PER_HARI) + 1
 }
 
 /** Rentang sepanjang `hari` yang berakhir tepat sehari sebelum rentang ini mulai. */
 function rentangSebelumnya(range: StatsRange, hari: number): StatsRange {
-  const sampai = addDays(parseDateOnly(range.sejak), -1)
-  return { sejak: toDateInput(addDays(sampai, -(hari - 1))), sampai: toDateInput(sampai) }
+  const sampai = addDays(parseDateOnly(range.since), -1)
+  return { since: toDateInput(addDays(sampai, -(hari - 1))), until: toDateInput(sampai) }
 }
 
 /**
@@ -504,24 +496,23 @@ function rentangSebelumnya(range: StatsRange, hari: number): StatsRange {
  * sebagai tiga hari berturut-turut, dan tren yang dibaca dari situ salah.
  */
 function lengkapiHari(data: Daily[], range: StatsRange): Daily[] {
-  const peta = new Map(data.map((row) => [row.tanggal, row]))
+  const peta = new Map(data.map((row) => [row.date, row]))
   const hasil: Daily[] = []
   for (
-    let hari = parseDateOnly(range.sejak);
-    toDateInput(hari) <= range.sampai;
+    let hari = parseDateOnly(range.since);
+    toDateInput(hari) <= range.until;
     hari = addDays(hari, 1)
   ) {
     const tanggal = toDateInput(hari)
     hasil.push(
       peta.get(tanggal) ?? {
-        tanggal,
-        jumlah_panggilan: 0,
+        date: tanggal,
+        call_count: 0,
         llm_tokens: 0,
         embed_tokens: 0,
-        biaya_llm_usd: 0,
-        biaya_embedding_usd: 0,
-        biaya_ingestion_usd: 0,
-        biaya_usd: 0,
+        llm_cost_usd: 0,
+        embedding_cost_usd: 0,
+        cost_usd: 0,
       }
     )
   }

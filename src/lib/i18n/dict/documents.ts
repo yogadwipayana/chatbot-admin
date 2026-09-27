@@ -117,24 +117,35 @@ export const upload = {
   back: ["Dokumen", "Documents"],
   title: ["Unggah dokumen", "Upload document"],
   description: [
-    "Setelah diunggah, dokumen dibaca, dipecah menjadi potongan pendek, dan diindeks. Chatbot langsung memakainya untuk pertanyaan berikutnya.",
-    "Once uploaded, the document is read, split into short chunks, and indexed. The chatbot uses it from the very next question.",
+    "Satu atau beberapa PDF sekaligus. Tiap dokumen dibaca, dipecah menjadi potongan pendek, dan diindeks bergiliran. Chatbot langsung memakainya untuk pertanyaan berikutnya.",
+    "One PDF or several at once. Each document is read, split into short chunks, and indexed in turn. The chatbot uses it from the very next question.",
   ],
-  fileCard: ["Berkas PDF", "PDF file"],
-  replaceFile: ["Ganti berkas", "Replace file"],
-  dropzone: ["Seret PDF ke sini, atau klik untuk memilih", "Drop a PDF here, or click to choose"],
+  fileCard: ["Berkas PDF", "PDF files"],
+  removeFile: [
+    (nama: string) => `Keluarkan ${nama} dari daftar`,
+    (nama: string) => `Remove ${nama} from the list`,
+  ],
+  dropzone: [
+    "Seret satu atau beberapa PDF ke sini, atau klik untuk memilih",
+    "Drop one or more PDFs here, or click to choose",
+  ],
   dropzoneHint: [
-    "Hanya PDF digital. PDF hasil scan tanpa lapisan teks akan ditolak.",
-    "Digital PDFs only. Scanned PDFs without a text layer are rejected.",
+    "Hanya PDF digital. PDF tanpa lapisan teks (hasil scan atau Print to PDF) akan ditolak.",
+    "Digital PDFs only. PDFs without a text layer (scans or Print to PDF output) are rejected.",
   ],
   notPdf: [
     (nama: string) => `'${nama}' bukan berkas PDF. Unggah dokumen dalam format PDF.`,
     (nama: string) => `'${nama}' is not a PDF. Upload the document as a PDF.`,
   ],
+  duplicate: [
+    (nama: string) => `'${nama}' sudah ada di daftar.`,
+    (nama: string) => `'${nama}' is already in the list.`,
+  ],
+  rejectedTitle: ["Tidak ditambahkan ke daftar", "Not added to the list"],
   infoCard: ["Informasi dokumen", "Document details"],
   infoCardHint: [
-    "Judul ditampilkan apa adanya pada kartu sumber yang dilihat mahasiswa.",
-    "The title is shown verbatim on the source card students see.",
+    "Diisi per dokumen. Judul ditampilkan apa adanya pada kartu sumber yang dilihat mahasiswa.",
+    "Filled in per document. The title is shown verbatim on the source card students see.",
   ],
   judul: ["Judul resmi", "Official title"],
   judulPlaceholder: ["Panduan Akademik 2026", "Academic Handbook 2026"],
@@ -143,6 +154,12 @@ export const upload = {
     "Akun Staf/Dosen hanya dapat mengunggah dokumen untuk unitnya sendiri.",
     "Staff/Lecturer accounts can only upload documents for their own unit.",
   ],
+  applyUnitToAll: ["Terapkan ke semua", "Apply to all"],
+  unitApplied: [
+    (unit: string, n: number) => `Unit ${unit} diterapkan ke ${n} dokumen`,
+    (unit: string, n: number) => `${unit} applied to ${n} documents`,
+  ],
+  undoApply: ["Urungkan", "Undo"],
   optional: ["(opsional)", "(optional)"],
   tahun: ["Tahun berlaku", "Effective year"],
   validUntil: ["Berlaku sampai", "Valid until"],
@@ -161,7 +178,21 @@ export const upload = {
     "Reading the text, splitting it per page, and indexing. A thick document can take a few minutes. Do not close this page.",
   ],
   processing: ["Memproses…", "Processing…"],
+  processingOf: [
+    (ke: number, dari: number) => `Memproses ${ke} dari ${dari}…`,
+    (ke: number, dari: number) => `Processing ${ke} of ${dari}…`,
+  ],
   submit: ["Unggah dan pasang", "Upload and install"],
+  submitMany: [
+    (n: number) => `Unggah dan pasang ${n} dokumen`,
+    (n: number) => `Upload and install ${n} documents`,
+  ],
+  waiting: ["Menunggu giliran", "Waiting its turn"],
+  done: [
+    (halaman: number, potongan: number) => `Terpasang: ${halaman} halaman, ${potongan} potongan`,
+    (halaman: number, potongan: number) => `Installed: ${halaman} pages, ${potongan} chunks`,
+  ],
+  checkPreview: ["Periksa pratinjau", "Check the preview"],
   installed: ["Dokumen terpasang", "Document installed"],
   installedBody: [
     (halaman: number, potongan: number) =>
@@ -169,7 +200,27 @@ export const upload = {
     (halaman: number, potongan: number) =>
       `${halaman} pages became ${potongan} chunks and are in use by the chatbot right away.`,
   ],
+  installedMany: [
+    (n: number) => `${n} dokumen terpasang`,
+    (n: number) => `${n} documents installed`,
+  ],
+  installedManyBody: [
+    "Semuanya langsung dipakai chatbot. Periksa pratinjau potongan tiap dokumen dari halaman detailnya.",
+    "All are in use by the chatbot right away. Check each document's chunk preview on its detail page.",
+  ],
+  partialTitle: [
+    (gagal: number, total: number) => `${gagal} dari ${total} dokumen gagal dipasang`,
+    (gagal: number, total: number) => `${gagal} of ${total} documents could not be installed`,
+  ],
+  partialBody: [
+    "Yang berhasil sudah dipakai chatbot. Perbaiki yang gagal lalu unggah lagi, atau keluarkan dari daftar.",
+    "The ones that succeeded are already in use. Fix the failed ones and upload again, or remove them from the list.",
+  ],
   thinWarning: ["Teks dokumen sangat sedikit", "Very little text in this document"],
+  thinWarningOf: [
+    (judul: string) => `Teks “${judul}” sangat sedikit`,
+    (judul: string) => `Very little text in “${judul}”`,
+  ],
   checklistTitle: ["Sebelum mengunggah", "Before you upload"],
   checklist: {
     digitalStrong: ["PDF versi digital asli", "a born-digital PDF"],

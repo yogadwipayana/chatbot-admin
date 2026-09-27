@@ -26,14 +26,13 @@ import type { Dict } from "@/lib/i18n/dict"
 type Daily = Schemas["DailyCost"]
 
 /**
- * Tiga jalur biaya. Kunci, warna, dan urutannya tetap di sini; labelnya diambil
+ * Dua jalur biaya. Kunci, warna, dan urutannya tetap di sini; labelnya diambil
  * dari kamus saat menggambar, sehingga grafik, legenda, dan tabel tidak pernah
  * menyebut jalur yang sama dengan dua nama berbeda.
  */
 export const SERIES = [
-  { key: "biaya_llm_usd", source: "llm", color: "var(--series-1)", swatch: "bg-series-1" },
-  { key: "biaya_embedding_usd", source: "embedding", color: "var(--series-2)", swatch: "bg-series-2" },
-  { key: "biaya_ingestion_usd", source: "ingestion", color: "var(--series-3)", swatch: "bg-series-3" },
+  { key: "llm_cost_usd", source: "llm", color: "var(--series-1)", swatch: "bg-series-1" },
+  { key: "embedding_cost_usd", source: "embedding", color: "var(--series-2)", swatch: "bg-series-2" },
 ] as const satisfies readonly {
   key: keyof Daily
   source: keyof Dict["costs"]["sources"]
@@ -68,7 +67,7 @@ export function CostDailyChart({ data }: { data: Daily[] }) {
       <BarChart data={data} margin={{ top: 8, right: 4, bottom: 0, left: 0 }}>
         <CartesianGrid vertical={false} stroke="var(--chart-grid)" />
         <XAxis
-          dataKey="tanggal"
+          dataKey="date"
           tickLine={false}
           axisLine={{ stroke: "var(--chart-axis)" }}
           tickMargin={8}
@@ -87,10 +86,10 @@ export function CostDailyChart({ data }: { data: Daily[] }) {
             <ChartTooltipContent
               indicator="line"
               labelFormatter={(_, payload) => {
-                const tanggal = payload?.[0]?.payload?.tanggal
+                const tanggal = payload?.[0]?.payload?.date
                 return typeof tanggal === "string" ? f.date(tanggal) : null
               }}
-              // Tooltip menyertakan totalnya sendiri: tiga potongan yang harus
+              // Tooltip menyertakan totalnya sendiri: potongan yang harus
               // dijumlahkan sendiri oleh pembaca membuat perbandingan antar hari
               // -- satu-satunya alasan hover di sini -- mustahil dilakukan cepat.
               formatter={(value, name, item, index) => (
@@ -130,13 +129,13 @@ export function CostDailyChart({ data }: { data: Daily[] }) {
   )
 }
 
-function TooltipTotal({ item }: { item?: { payload?: { biaya_usd?: number } } }) {
+function TooltipTotal({ item }: { item?: { payload?: { cost_usd?: number } } }) {
   const t = useT()
   return (
     <div className="mt-0.5 flex w-full items-center justify-between gap-3 border-t pt-1">
       <span>{t.costs.dailyTotal}</span>
       <span className="font-mono font-medium tabular-nums">
-        {formatUsdPrecise(Number(item?.payload?.biaya_usd ?? 0))}
+        {formatUsdPrecise(Number(item?.payload?.cost_usd ?? 0))}
       </span>
     </div>
   )
@@ -154,9 +153,9 @@ function TooltipTotal({ item }: { item?: { payload?: { biaya_usd?: number } } })
 export function CostDailyTable({ data }: { data: Daily[] }) {
   const t = useT()
   const f = useFormat()
-  const terpakai = data.filter((row) => row.biaya_usd > 0 || row.jumlah_panggilan > 0)
+  const terpakai = data.filter((row) => row.cost_usd > 0 || row.call_count > 0)
   const kosong = data.length - terpakai.length
-  const total = terpakai.reduce((jumlah, row) => jumlah + row.biaya_usd, 0)
+  const total = terpakai.reduce((jumlah, row) => jumlah + row.cost_usd, 0)
 
   if (terpakai.length === 0) {
     return <p className="py-8 text-center text-sm text-muted-foreground">{t.costs.noDays}</p>
@@ -179,15 +178,15 @@ export function CostDailyTable({ data }: { data: Daily[] }) {
           </TableHeader>
           <TableBody>
             {terpakai.map((row) => (
-              <TableRow key={row.tanggal}>
-                <TableCell className="pl-3 whitespace-nowrap">{f.date(row.tanggal)}</TableCell>
+              <TableRow key={row.date}>
+                <TableCell className="pl-3 whitespace-nowrap">{f.date(row.date)}</TableCell>
                 {SERIES.map((s) => (
                   <TableCell key={s.key} className="text-right tabular-nums">
                     {formatUsdPrecise(row[s.key])}
                   </TableCell>
                 ))}
                 <TableCell className="pr-3 text-right font-medium tabular-nums">
-                  {formatUsd(row.biaya_usd)}
+                  {formatUsd(row.cost_usd)}
                 </TableCell>
               </TableRow>
             ))}

@@ -27,7 +27,14 @@ export type Resolved<T> = T extends Entry
     ? Resolved<E>[]
     : { [K in keyof T]: Resolved<T[K]> }
 
-const cache = new Map<Lang, unknown>()
+/**
+ * Per objek sumber, lalu per bahasa. Kunci bahasa saja tidak cukup: saat kamus
+ * disunting, hot reload membangun `DICT` baru tetapi tidak menjalankan ulang
+ * berkas ini, dan cache yang hanya mengenal bahasa terus menyerahkan kamus
+ * lama -- kunci yang baru ditambahkan terbaca `undefined` sampai halaman
+ * dimuat ulang penuh.
+ */
+const cache = new WeakMap<object, Map<Lang, unknown>>()
 
 /**
  * Daun dikenali dari isinya, bukan dari bentuknya: `["Biaya", "Costs"]` dan
@@ -57,10 +64,15 @@ function pilih(node: unknown, index: 0 | 1): unknown {
  * membandingkan rujukan, dan objek baru tiap render akan membuat seluruh
  * dashboard menggambar ulang tanpa ada yang berubah.
  */
-export function resolveDict<T>(source: T, lang: Lang): Resolved<T> {
-  const tersimpan = cache.get(lang)
+export function resolveDict<T extends object>(source: T, lang: Lang): Resolved<T> {
+  let perBahasa = cache.get(source)
+  if (!perBahasa) {
+    perBahasa = new Map()
+    cache.set(source, perBahasa)
+  }
+  const tersimpan = perBahasa.get(lang)
   if (tersimpan) return tersimpan as Resolved<T>
   const hasil = pilih(source, lang === "en" ? 1 : 0)
-  cache.set(lang, hasil)
+  perBahasa.set(lang, hasil)
   return hasil as Resolved<T>
 }

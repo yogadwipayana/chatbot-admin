@@ -2,18 +2,38 @@
 
 export const auth = {
   pageTitle: ["Masuk", "Sign in"],
+  heading: ["Selamat datang kembali", "Welcome back"],
   intro: [
-    "Masuk untuk mengelola dokumen sumber dan memantau pertanyaan mahasiswa.",
-    "Sign in to manage source documents and keep an eye on student questions.",
+    "Masuk ke Dashboard Admin Chatbot",
+    "Sign in to the Chatbot Admin Dashboard",
   ],
   email: ["Email", "Email"],
   password: ["Kata sandi", "Password"],
+  showPassword: ["Tampilkan kata sandi", "Show password"],
+  capsLock: ["Caps Lock aktif.", "Caps Lock is on."],
   submit: ["Masuk", "Sign in"],
   checking: ["Memeriksa…", "Checking…"],
   help: [
     "Akun admin dibuat oleh pengelola teknis. Lupa kata sandi? Hubungi pengelola teknis.",
     "Admin accounts are created by the technical team. Forgot your password? Contact them.",
   ],
+  // Panel samping halaman masuk: contoh percakapan, bukan data sungguhan.
+  showcase: {
+    question: [
+      "Bagaimana cara mengajukan cuti akademik?",
+      "How do I apply for academic leave?",
+    ],
+    sourceLabel: ["Sumber", "Source"],
+    source: ["Pedoman Akademik", "Academic Handbook"],
+    title: [
+      "Setiap jawaban bersumber dari dokumen yang Anda kelola.",
+      "Every answer comes from the documents you manage.",
+    ],
+    body: [
+      "Perbarui dokumen, jawab pertanyaan yang terlewat, dan uji jawaban sebelum mahasiswa bertanya.",
+      "Keep documents current, answer what the chatbot missed, and test answers before students ask.",
+    ],
+  },
 } as const
 
 export const password = {

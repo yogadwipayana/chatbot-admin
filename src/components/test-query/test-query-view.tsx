@@ -51,7 +51,7 @@ export function TestQueryView({ initialQuestion }: { initialQuestion: string }) 
   const test = useTestQuery()
   const hasil = test.data
 
-  const ambangTampil = ambang ?? hasil?.ambang.vector ?? AMBANG_BAWAAN
+  const ambangTampil = ambang ?? hasil?.thresholds.vector ?? AMBANG_BAWAAN
 
   function uji(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -180,10 +180,10 @@ function OutcomeCard({ hasil }: { hasil: Result }) {
             </p>
             <ul className="space-y-1.5 text-sm">
               {hasil.contacts.map((c) => (
-                <li key={`${c.unit}-${c.kontak}`}>
+                <li key={`${c.unit}-${c.contact}`}>
                   <span className="font-medium">{c.unit}</span>{" "}
                   <span className="text-muted-foreground">
-                    · {c.jam_layanan} · {c.kontak}
+                    · {c.service_hours} · {c.contact}
                   </span>
                 </li>
               ))}
@@ -215,15 +215,15 @@ function DecisionCard({ hasil }: { hasil: Result }) {
             label={t.testQuery.vectorLabel}
             hint={t.testQuery.vectorHint}
             score={d.top_vector_score}
-            threshold={hasil.ambang.vector}
+            threshold={hasil.thresholds.vector}
             max={1}
           />
           <ScoreMeter
             label={t.testQuery.lexicalLabel}
             hint={t.testQuery.lexicalHint}
             score={d.top_lexical_score}
-            threshold={hasil.ambang.fulltext}
-            max={Math.max(hasil.ambang.fulltext * 2, d.top_lexical_score ?? 0) * 1.1}
+            threshold={hasil.thresholds.fulltext}
+            max={Math.max(hasil.thresholds.fulltext * 2, d.top_lexical_score ?? 0) * 1.1}
           />
         </CardContent>
       ) : null}
@@ -330,12 +330,12 @@ function RetrievedCard({ hasil }: { hasil: Result }) {
                               <ChevronRightIcon className="mt-0.5 size-4 shrink-0" aria-hidden />
                             )}
                             <span>
-                              <span className="font-medium">{chunk.judul}</span>
+                              <span className="font-medium">{chunk.title}</span>
                               {/* Entri tanya jawab tidak berhalaman; "hal. 1" hanya menyesatkan. */}
                               <span className="text-muted-foreground">
-                                {chunk.jenis === "tanya_jawab"
+                                {chunk.type === "tanya_jawab"
                                   ? t.testQuery.faqSource
-                                  : t.testQuery.pageSource(chunk.halaman)}
+                                  : t.testQuery.pageSource(chunk.page)}
                               </span>
                             </span>
                           </button>
@@ -343,7 +343,7 @@ function RetrievedCard({ hasil }: { hasil: Result }) {
                         <TableCell className="text-right">
                           <ScoreCell
                             value={chunk.raw_scores.vector}
-                            threshold={hasil.ambang.vector}
+                            threshold={hasil.thresholds.vector}
                             t={t}
                             f={f}
                           />
@@ -351,7 +351,7 @@ function RetrievedCard({ hasil }: { hasil: Result }) {
                         <TableCell className="text-right">
                           <ScoreCell
                             value={chunk.raw_scores.fulltext}
-                            threshold={hasil.ambang.fulltext}
+                            threshold={hasil.thresholds.fulltext}
                             t={t}
                             f={f}
                           />
@@ -364,7 +364,7 @@ function RetrievedCard({ hasil }: { hasil: Result }) {
                         <TableRow className="hover:bg-transparent">
                           <TableCell colSpan={5} className="bg-muted/40 px-4 py-3 whitespace-normal">
                             <p className="text-sm leading-relaxed break-words whitespace-pre-wrap">
-                              {chunk.konten}
+                              {chunk.content}
                             </p>
                           </TableCell>
                         </TableRow>

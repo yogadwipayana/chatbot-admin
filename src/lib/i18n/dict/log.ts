@@ -18,8 +18,8 @@ export const labels = {
   /** Kalimat yang dilihat mahasiswa saat kill switch aktif. Selalu bahasa
       Indonesia: yang membacanya mahasiswa di jendela chat, bukan admin. */
   closedMessage: [
-    "Layanan chat sedang dinonaktifkan sementara. Silakan hubungi Biro Administrasi Akademik pada jam kerja.",
-    "Layanan chat sedang dinonaktifkan sementara. Silakan hubungi Biro Administrasi Akademik pada jam kerja.",
+    "Layanan chat sedang dinonaktifkan sementara. Silakan hubungi Front Office INSTIKI: Telepon (0361) 256995 / WhatsApp 0813-3896-9832.",
+    "Layanan chat sedang dinonaktifkan sementara. Silakan hubungi Front Office INSTIKI: Telepon (0361) 256995 / WhatsApp 0813-3896-9832.",
   ],
   periods: {
     d7: ["7 hari terakhir", "Last 7 days"],

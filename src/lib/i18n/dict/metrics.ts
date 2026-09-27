@@ -88,14 +88,13 @@ export const stats = {
 export const costs = {
   title: ["Biaya", "Costs"],
   description: [
-    "Estimasi belanja model dari messages.meta dan usage_log: LLM chat, embedding pertanyaan, serta ingestion dan reindex. Bukan tagihan resmi penyedia.",
-    "Estimated model spend from messages.meta and usage_log: chat LLM, question embedding, plus ingestion and reindexing. Not the provider's official invoice.",
+    "Estimasi belanja model dari messages.meta: LLM chat dan embedding pertanyaan. Bukan tagihan resmi penyedia.",
+    "Estimated model spend from messages.meta: chat LLM and question embedding. Not the provider's official invoice.",
   ],
   empty: ["Belum ada pemanggilan model pada periode ini", "No model calls in this period"],
   sources: {
     llm: ["LLM chat", "Chat LLM"],
     embedding: ["Embedding pertanyaan", "Question embedding"],
-    ingestion: ["Ingestion & reindex", "Ingestion & reindexing"],
   },
   total: ["Total biaya", "Total cost"],
   totalRange: [(hari: string) => `Rentang ${hari} hari.`, (hari: string) => `Over ${hari} days.`],
@@ -155,8 +154,8 @@ export const costs = {
   noDays: ["Tidak ada hari berbiaya pada rentang ini.", "No days with cost in this range."],
   sourceTitle: ["Sumber biaya", "Where the cost comes from"],
   sourceDescription: [
-    "Tiga jalur pemakaian model yang menyusun total.",
-    "The three model usage paths that make up the total.",
+    "Dua jalur pemakaian model yang menyusun total.",
+    "The two model usage paths that make up the total.",
   ],
   sourceProportion: ["Proporsi sumber biaya", "Cost source proportions"],
   noCalls: ["Belum ada panggilan tercatat", "No calls recorded yet"],
@@ -179,8 +178,8 @@ export const costs = {
   ],
   modelTitle: ["Rincian per model", "Breakdown by model"],
   modelDescription: [
-    "Dikelompokkan menurut jalur pemakaian: token LLM dan token embedding tidak sebanding, dan satu model yang sama bisa muncul di dua kelompok.",
-    "Grouped by usage path: LLM tokens and embedding tokens are not comparable, and the same model can appear in two groups.",
+    "Dikelompokkan menurut jalur pemakaian: token LLM dan token embedding tidak sebanding.",
+    "Grouped by usage path: LLM tokens and embedding tokens are not comparable.",
   ],
   kinds: {
     llm_chat: {
@@ -192,13 +191,6 @@ export const costs = {
       note: [
         "Model yang diminta, bukan yang dilaporkan gateway.",
         "The model requested, not the one the gateway reports.",
-      ],
-    },
-    embedding_ingestion: {
-      label: ["Embedding ingestion & reindex", "Ingestion & reindex embedding"],
-      note: [
-        "Dari usage_log — biaya yang terjadi tanpa ada mahasiswa bertanya.",
-        "From usage_log — cost incurred with no student asking anything.",
       ],
     },
   },

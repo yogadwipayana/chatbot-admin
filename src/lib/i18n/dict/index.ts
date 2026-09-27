@@ -3,6 +3,7 @@ import type { Node, Resolved } from "@/lib/i18n/resolve"
 import { auth, password } from "./auth"
 import { api, app, common, roles } from "./core"
 import { deleteDocument, docDetail, docStatus, documents, upload } from "./documents"
+import { embedKeys } from "./embed"
 import { faq } from "./faq"
 import { feedback, labels, unanswered } from "./log"
 import { logs } from "./logs"
@@ -51,6 +52,7 @@ export const DICT = {
   dateField,
   users,
   units,
+  embedKeys,
 } as const satisfies Node
 
 export type Dict = Resolved<typeof DICT>

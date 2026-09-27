@@ -118,7 +118,7 @@ export function DocumentDetailView({
     <>
       {kembali}
       <PageHeader
-        title={doc.judul}
+        title={doc.title}
         description={doc.unit}
         actions={
           <>
@@ -185,7 +185,7 @@ export function DocumentDetailView({
 
       <div className="mt-6 grid items-start gap-6 lg:grid-cols-3">
         <MetadataCard key={doc.updated_at} doc={doc} />
-        <ChunksCard id={doc.id} total={doc.jumlah_chunk} />
+        <ChunksCard id={doc.id} total={doc.chunk_count} />
       </div>
 
       <DeleteDocumentDialog
@@ -206,16 +206,16 @@ function MetadataCard({ doc }: { doc: Doc }) {
   const unitTerkunci = useMe().data?.role === "staf"
   const hariIni = toDateInput(new Date(useNow()))
   const units = useUnits()
-  const [judul, setJudul] = useState(doc.judul)
+  const [judul, setJudul] = useState(doc.title)
   const [unit, setUnit] = useState(doc.unit)
-  const [tahun, setTahun] = useState(doc.tahun_berlaku?.toString() ?? "")
+  const [tahun, setTahun] = useState(doc.effective_year?.toString() ?? "")
   const [validUntil, setValidUntil] = useState(doc.valid_until ?? "")
 
   const perubahan: Schemas["DocumentUpdate"] = {}
-  if (judul.trim() !== doc.judul) perubahan.judul = judul.trim()
+  if (judul.trim() !== doc.title) perubahan.title = judul.trim()
   if (unit.trim() !== doc.unit) perubahan.unit = unit.trim()
   const tahunBaru = tahun === "" ? null : Number(tahun)
-  if (tahunBaru !== (doc.tahun_berlaku ?? null)) perubahan.tahun_berlaku = tahunBaru
+  if (tahunBaru !== (doc.effective_year ?? null)) perubahan.effective_year = tahunBaru
   const berlakuBaru = validUntil === "" ? null : validUntil
   if (berlakuBaru !== (doc.valid_until ?? null)) perubahan.valid_until = berlakuBaru
   const berubah = Object.keys(perubahan).length > 0
@@ -232,9 +232,9 @@ function MetadataCard({ doc }: { doc: Doc }) {
   }
 
   function reset() {
-    setJudul(doc.judul)
+    setJudul(doc.title)
     setUnit(doc.unit)
-    setTahun(doc.tahun_berlaku?.toString() ?? "")
+    setTahun(doc.effective_year?.toString() ?? "")
     setValidUntil(doc.valid_until ?? "")
   }
 
@@ -322,7 +322,7 @@ function MetadataCard({ doc }: { doc: Doc }) {
           <dt className="text-muted-foreground">{t.docDetail.updated}</dt>
           <dd>{f.dateTime(doc.updated_at)}</dd>
           <dt className="text-muted-foreground">{t.docDetail.chunks}</dt>
-          <dd className="tabular-nums">{f.number(doc.jumlah_chunk)}</dd>
+          <dd className="tabular-nums">{f.number(doc.chunk_count)}</dd>
         </dl>
       </CardContent>
     </Card>
@@ -358,13 +358,13 @@ function ChunksCard({ id, total }: { id: string; total: number }) {
               <article key={chunk.id} className="rounded-lg border p-3">
                 <header className="mb-2 flex items-center gap-2 text-xs text-muted-foreground">
                   <span className="font-medium text-foreground">
-                    {t.docDetail.chunkLabel(chunk.urutan + 1)}
+                    {t.docDetail.chunkLabel(chunk.position + 1)}
                   </span>
                   <span aria-hidden>·</span>
-                  <span>{t.docDetail.pageLabel(chunk.halaman)}</span>
+                  <span>{t.docDetail.pageLabel(chunk.page)}</span>
                 </header>
                 <p className="text-sm leading-relaxed break-words whitespace-pre-wrap">
-                  {chunk.konten}
+                  {chunk.content}
                 </p>
               </article>
             ))}

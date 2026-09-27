@@ -79,6 +79,7 @@ export const roles = {
       ["Konfigurasi pencarian dan pemecahan dokumen", "Retrieval and chunking configuration"],
       ["Kelola akun di menu Admin", "Manage accounts under Admin"],
       ["Kelola daftar unit layanan", "Manage the list of service units"],
+      ["Kelola situs lain yang memasang asisten", "Manage other sites that embed the assistant"],
     ],
   },
 } as const

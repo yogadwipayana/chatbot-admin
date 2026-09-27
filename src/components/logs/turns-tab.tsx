@@ -57,7 +57,7 @@ export function TurnsTab({
 
   const query = useLogTurns({
     range,
-    hasil: hasil === SEMUA ? undefined : hasil,
+    outcome: hasil === SEMUA ? undefined : hasil,
     status: status === SEMUA ? undefined : (status as TurnFilters["status"]),
     limit: PAGE_SIZE,
     offset: page * PAGE_SIZE,
@@ -143,14 +143,14 @@ export function TurnsTab({
                           e.stopPropagation()
                           onOpenTurn(turn.turn_id)
                         }}
-                        aria-label={`${t.logs.turns.open}: ${waktu.lengkap(turn.waktu)}`}
+                        aria-label={`${t.logs.turns.open}: ${waktu.lengkap(turn.timestamp)}`}
                       >
-                        {waktu.waktu(turn.waktu, now)}
+                        {waktu.waktu(turn.timestamp, now)}
                       </button>
                     </TableCell>
-                    <TableCell>{kindLabel(t, turn.hasil)}</TableCell>
+                    <TableCell>{kindLabel(t, turn.outcome)}</TableCell>
                     <TableCell className="text-muted-foreground">
-                      {nodeLabel(t, turn.node_terakhir)}
+                      {nodeLabel(t, turn.last_node)}
                     </TableCell>
                     <TableCell className="text-right whitespace-nowrap tabular-nums">
                       {turn.total_ms == null ? "—" : durasi(f, turn.total_ms)}
