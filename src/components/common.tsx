@@ -120,16 +120,31 @@ export function Spinner({ label, className }: { label: string; className?: strin
 /**
  * Jawaban chatbot, ditampilkan sama seperti yang dibaca mahasiswa di widget.
  *
- * Model kadang menulis penekanan Markdown (`**Rp675.000**`). Widget
- * (`RichText` di `client/src/components/chat/chat-message.tsx`) hanya
- * menerjemahkan tebal; sisanya -- termasuk sitasi `[Judul, hal. 12]` --
- * tampil apa adanya. Admin yang menelusuri keluhan harus melihat hal yang
- * sama, bukan tanda bintang mentah. Pembungkusnya tetap `whitespace-pre-wrap`
- * supaya baris dan daftar bernomor tidak menyatu.
+ * Model kadang menulis penekanan Markdown: tebal (`**Rp675.000**`) dan kode
+ * sebaris (`` `TRANSFER NomorVA NOMINAL` ``). Widget (`RichText` di
+ * `client/src/components/chat/chat-message.tsx`) hanya menerjemahkan dua itu;
+ * sisanya -- termasuk sitasi `[Judul, hal. 12]` -- tampil apa adanya. Admin
+ * yang menelusuri keluhan harus melihat hal yang sama, bukan tanda bintang
+ * atau backtick mentah. Pembungkusnya tetap `whitespace-pre-wrap` supaya baris
+ * dan daftar bernomor tidak menyatu.
  */
 export function RichText({ text }: { text: string }) {
-  const bagian = text.split(/\*\*([\s\S]+?)\*\*/g)
+  const bagian = text.split(/(\*\*[\s\S]+?\*\*|`[^`\n]+`)/g)
   return (
-    <>{bagian.map((teks, index) => (index % 2 === 1 ? <strong key={index}>{teks}</strong> : teks))}</>
+    <>
+      {bagian.map((teks, index) =>
+        index % 2 === 0 ? (
+          teks
+        ) : teks.startsWith("`") ? (
+          <code key={index} className="rounded border bg-muted px-1 font-mono text-[0.9em]">
+            {teks.slice(1, -1)}
+          </code>
+        ) : (
+          <strong key={index}>
+            <RichText text={teks.slice(2, -2)} />
+          </strong>
+        )
+      )}
+    </>
   )
 }
