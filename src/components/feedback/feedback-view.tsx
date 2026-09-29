@@ -12,7 +12,7 @@ import {
 import Link from "next/link"
 import { useState } from "react"
 
-import { EmptyState, PageHeader, QueryError } from "@/components/common"
+import { EmptyState, PageHeader, QueryError, RichText } from "@/components/common"
 import { Button } from "@/components/ui/button"
 import {
   Select,
@@ -253,7 +253,7 @@ function Baris({
             panjang && !terbuka && "line-clamp-3"
           )}
         >
-          {item.answer}
+          <RichText text={item.answer} />
         </p>
         {panjang ? (
           <Button

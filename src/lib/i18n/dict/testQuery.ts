@@ -39,9 +39,53 @@ export const testQuery = {
       "A greeting or small talk: answered briefly with no retrieval.",
     ],
     rejected: [
-      "Dihentikan gerbang: pesan tidak bermakna, upaya manipulasi, atau di luar topik kampus. Tanpa retrieval maupun model AI.",
-      "Stopped by the gate: nonsense, a manipulation attempt, or off campus topics. No retrieval and no AI model.",
+      "Dihentikan gerbang JEV: pesan tidak bermakna, upaya manipulasi, atau di luar topik kampus. Pencarian dihentikan dan model AI tidak dipanggil.",
+      "Stopped by the JEV gate: nonsense, a manipulation attempt, or off campus topics. The search was stopped and the AI model was never called.",
     ],
+  },
+  // `rejected` punya tiga asal. Menyebut "gerbang JEV" untuk semuanya keliru
+  // saat JEV dimatikan dan cadangannya yang bekerja.
+  rejectedBy: {
+    jev: [
+      "Dihentikan gerbang JEV: pesan tidak bermakna, upaya manipulasi, atau di luar topik kampus. Pencarian dihentikan dan model AI penjawab tidak dipanggil.",
+      "Stopped by the JEV gate: nonsense, a manipulation attempt, or off campus topics. The search was stopped and the answering AI model was never called.",
+    ],
+    rules: [
+      "Dihentikan saringan aturan: pesan tidak bermakna, basa-basi tentang asisten, atau upaya manipulasi. Tanpa pencarian, tanpa JEV, dan tanpa model AI.",
+      "Stopped by the rule filter: nonsense, small talk about the assistant, or a manipulation attempt. No search, no JEV and no AI model.",
+    ],
+    llm: [
+      "Sumber lolos ambang, tetapi model AI menilai pertanyaan ini di luar urusan kampus. Tidak masuk daftar pertanyaan tak terjawab.",
+      "The sources cleared the threshold, but the AI model judged this question to be outside campus matters. It is not added to unanswered questions.",
+    ],
+  },
+  // Sejak model AI boleh menyatakan dokumennya tidak menjawab, penolakan punya
+  // dua asal. Menyebut "model AI tidak dipanggil" untuk keduanya membuat kartu
+  // ini bertentangan dengan kartu ambang yang berbunyi "lolos".
+  refusalByLlm: [
+    "Sumber lolos ambang, tetapi model AI menilai isinya tidak menjawab pertanyaan ini.",
+    "The sources cleared the threshold, but the AI model judged that they do not answer this question.",
+  ],
+  gate: [
+    (sumber: string, label: string, persen: string, blokir: boolean) =>
+      `${sumber}: ${label} (${persen}) · ${blokir ? "diblokir" : "diteruskan"}`,
+    (sumber: string, label: string, persen: string, blokir: boolean) =>
+      `${sumber}: ${label} (${persen}) · ${blokir ? "blocked" : "passed"}`,
+  ],
+  gateSource: {
+    jev: ["Gerbang JEV", "JEV gate"],
+    rules: ["Saringan aturan", "Rule filter"],
+  },
+  gateError: [
+    (galat: string) => `Gerbang JEV gagal atau lewat tenggat, pesan diteruskan: ${galat}`,
+    (galat: string) => `JEV gate failed or missed its deadline, message passed: ${galat}`,
+  ],
+  gateLabel: {
+    academic: ["akademik", "academic"],
+    smalltalk: ["basa-basi", "small talk"],
+    nonsense: ["tidak bermakna", "nonsense"],
+    malicious: ["manipulasi", "manipulation"],
+    out_of_scope: ["di luar topik", "off topic"],
   },
   contactsTitle: ["Kontak yang ditampilkan sebagai banner", "Contacts shown as a banner"],
   latency: [(waktu: string) => `Waktu proses ${waktu}`, (waktu: string) => `Processing time ${waktu}`],
@@ -49,6 +93,14 @@ export const testQuery = {
   decisionSensitive: [
     "Pertanyaan sensitif dialihkan sebelum pencarian dokumen.",
     "A sensitive question is redirected before any document search.",
+  ],
+  decisionSmalltalk: [
+    "Sapaan dibalas sebelum pencarian dokumen, jadi ambang tidak dinilai.",
+    "Small talk is answered before any document search, so no threshold is checked.",
+  ],
+  decisionRejected: [
+    "Diblokir gerbang JEV atau saringan aturan sebelum ambang dinilai.",
+    "Blocked by the JEV gate or the rule filter before the threshold was checked.",
   ],
   reason: {
     ok: [
@@ -75,6 +127,16 @@ export const testQuery = {
   ],
   noChunks: ["Tidak ada potongan yang ditemukan.", "No chunks were found."],
   noSearch: ["Tidak ada pencarian dokumen.", "No document search was run."],
+  searchStopped: [
+    "Pencarian dihentikan karena gerbang JEV memblokir pesan ini.",
+    "The search was stopped because the JEV gate blocked this message.",
+  ],
+  // Potongan lanjutan ikut karena potongan sebelumnya, bukan karena mirip
+  // pertanyaan -- tanpa label ia tampak seperti hasil tanpa skor yang janggal.
+  neighborOf: [
+    (nomor: number) => `Lanjutan dari #${nomor}, dikirim ke model AI tanpa skor sendiri`,
+    (nomor: number) => `Continues #${nomor}; sent to the AI model without a score of its own`,
+  ],
   columns: {
     document: ["Dokumen", "Document"],
     semantic: ["Makna", "Semantic"],

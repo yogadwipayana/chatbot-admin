@@ -116,3 +116,20 @@ export function Spinner({ label, className }: { label: string; className?: strin
     </span>
   )
 }
+
+/**
+ * Jawaban chatbot, ditampilkan sama seperti yang dibaca mahasiswa di widget.
+ *
+ * Model kadang menulis penekanan Markdown (`**Rp675.000**`). Widget
+ * (`RichText` di `client/src/components/chat/chat-message.tsx`) hanya
+ * menerjemahkan tebal; sisanya -- termasuk sitasi `[Judul, hal. 12]` --
+ * tampil apa adanya. Admin yang menelusuri keluhan harus melihat hal yang
+ * sama, bukan tanda bintang mentah. Pembungkusnya tetap `whitespace-pre-wrap`
+ * supaya baris dan daftar bernomor tidak menyatu.
+ */
+export function RichText({ text }: { text: string }) {
+  const bagian = text.split(/\*\*([\s\S]+?)\*\*/g)
+  return (
+    <>{bagian.map((teks, index) => (index % 2 === 1 ? <strong key={index}>{teks}</strong> : teks))}</>
+  )
+}

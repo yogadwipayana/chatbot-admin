@@ -25,6 +25,7 @@ export const logs = {
     sanitize: ["Sanitasi", "Sanitize"],
     sensitive: ["Deteksi sensitif", "Sensitivity check"],
     smalltalk: ["Sapaan", "Small talk"],
+    rule_gate: ["Saringan aturan", "Rule filter"],
     jev_gate: ["Gerbang JEV", "JEV gate"],
     rewrite: ["Tulis ulang query", "Query rewrite"],
     retrieve: ["Pencarian dokumen", "Document search"],
@@ -46,13 +47,17 @@ export const logs = {
     ],
     errors: ["Giliran gagal", "Failed turns"],
     errorsNote: [
-      (jumlah: string) => `${jumlah} log ERROR pada rentang ini`,
-      (jumlah: string) => `${jumlah} ERROR log lines in this range`,
+      (log: string, batal: string) =>
+        `${log} log ERROR · ${batal} giliran dibatalkan mahasiswa pada rentang ini`,
+      (log: string, batal: string) =>
+        `${log} ERROR log lines · ${batal} turns cancelled by students in this range`,
     ],
     blocked: ["Dihentikan gerbang JEV", "Stopped by the JEV gate"],
+    // Pencarian berjalan paralel dengan gerbang, jadi giliran yang diblokir
+    // tetap sempat mencari dokumen -- yang dihemat adalah LLM penjawab.
     blockedNote: [
-      (jumlah: string) => `${jumlah} giliran tidak sampai ke pencarian dokumen`,
-      (jumlah: string) => `${jumlah} turns never reached document search`,
+      (jumlah: string) => `${jumlah} giliran dihentikan sebelum LLM menyusun jawaban`,
+      (jumlah: string) => `${jumlah} turns stopped before the LLM wrote an answer`,
     ],
   },
 

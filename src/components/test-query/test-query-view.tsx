@@ -13,7 +13,7 @@ import {
 } from "lucide-react"
 import { Fragment, useState, type FormEvent } from "react"
 
-import { PageHeader, Spinner } from "@/components/common"
+import { PageHeader, RichText, Spinner } from "@/components/common"
 import { ScoreMeter } from "@/components/test-query/score-meter"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
@@ -169,10 +169,30 @@ function OutcomeCard({ hasil }: { hasil: Result }) {
             {t.labels.kind[hasil.kind]}
           </Badge>
         </div>
-        <CardDescription>{t.testQuery.outcome[hasil.kind]}</CardDescription>
+        <CardDescription>
+          {hasil.kind === "refusal" && hasil.refusal_source === "llm"
+            ? t.testQuery.refusalByLlm
+            : hasil.kind === "rejected" && hasil.rejection_source
+              ? t.testQuery.rejectedBy[hasil.rejection_source]
+              : t.testQuery.outcome[hasil.kind]}
+        </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        <p className="text-sm leading-relaxed break-words whitespace-pre-wrap">{hasil.text}</p>
+        <p className="text-sm leading-relaxed break-words whitespace-pre-wrap">
+          <RichText text={hasil.text} />
+        </p>
+        {hasil.gate ? (
+          <p className="text-xs text-muted-foreground">
+            {hasil.gate.error
+              ? t.testQuery.gateError(hasil.gate.error)
+              : t.testQuery.gate(
+                  t.testQuery.gateSource[hasil.gate.source ?? "jev"],
+                  t.testQuery.gateLabel[hasil.gate.label],
+                  f.percent(hasil.gate.confidence, 0),
+                  hasil.gate.blocked
+                )}
+          </p>
+        ) : null}
         {hasil.escalated && hasil.contacts.length > 0 ? (
           <div className="rounded-lg bg-muted/60 p-3">
             <p className="mb-2 text-xs font-medium text-muted-foreground">
@@ -206,7 +226,13 @@ function DecisionCard({ hasil }: { hasil: Result }) {
       <CardHeader>
         <CardTitle>{t.testQuery.decisionTitle}</CardTitle>
         <CardDescription>
-          {d ? t.testQuery.reason[d.reason] : t.testQuery.decisionSensitive}
+          {d
+            ? t.testQuery.reason[d.reason]
+            : hasil.kind === "rejected"
+              ? t.testQuery.decisionRejected
+              : hasil.kind === "smalltalk"
+                ? t.testQuery.decisionSmalltalk
+                : t.testQuery.decisionSensitive}
         </CardDescription>
       </CardHeader>
       {d ? (
@@ -269,6 +295,8 @@ function RetrievedCard({ hasil }: { hasil: Result }) {
   const t = useT()
   const f = useFormat()
   const [terbuka, setTerbuka] = useState<Set<string>>(new Set())
+  // Nomor baris (1-based) per potongan, untuk label "lanjutan dari #n".
+  const nomor = new Map(hasil.retrieved.map((chunk, i) => [chunk.chunk_id, i + 1]))
 
   function alih(id: string) {
     setTerbuka((prev) => {
@@ -288,7 +316,11 @@ function RetrievedCard({ hasil }: { hasil: Result }) {
       <CardContent>
         {hasil.retrieved.length === 0 ? (
           <p className="text-sm text-muted-foreground">
-            {hasil.decision ? t.testQuery.noChunks : t.testQuery.noSearch}
+            {hasil.decision
+              ? t.testQuery.noChunks
+              : hasil.kind === "rejected" && hasil.rejection_source === "jev"
+                ? t.testQuery.searchStopped
+                : t.testQuery.noSearch}
           </p>
         ) : (
           <div className="rounded-lg border">
@@ -340,25 +372,36 @@ function RetrievedCard({ hasil }: { hasil: Result }) {
                             </span>
                           </button>
                         </TableCell>
-                        <TableCell className="text-right">
-                          <ScoreCell
-                            value={chunk.raw_scores.vector}
-                            threshold={hasil.thresholds.vector}
-                            t={t}
-                            f={f}
-                          />
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <ScoreCell
-                            value={chunk.raw_scores.fulltext}
-                            threshold={hasil.thresholds.fulltext}
-                            t={t}
-                            f={f}
-                          />
-                        </TableCell>
-                        <TableCell className="pr-3 text-right text-muted-foreground tabular-nums">
-                          {chunk.rrf_score.toFixed(4)}
-                        </TableCell>
+                        {chunk.neighbor_of && nomor.has(chunk.neighbor_of) ? (
+                          <TableCell
+                            colSpan={3}
+                            className="pr-3 text-right text-xs whitespace-normal text-muted-foreground"
+                          >
+                            {t.testQuery.neighborOf(nomor.get(chunk.neighbor_of) ?? 0)}
+                          </TableCell>
+                        ) : (
+                          <>
+                            <TableCell className="text-right">
+                              <ScoreCell
+                                value={chunk.raw_scores.vector}
+                                threshold={hasil.thresholds.vector}
+                                t={t}
+                                f={f}
+                              />
+                            </TableCell>
+                            <TableCell className="text-right">
+                              <ScoreCell
+                                value={chunk.raw_scores.fulltext}
+                                threshold={hasil.thresholds.fulltext}
+                                t={t}
+                                f={f}
+                              />
+                            </TableCell>
+                            <TableCell className="pr-3 text-right text-muted-foreground tabular-nums">
+                              {chunk.rrf_score.toFixed(4)}
+                            </TableCell>
+                          </>
+                        )}
                       </TableRow>
                       {buka ? (
                         <TableRow className="hover:bg-transparent">

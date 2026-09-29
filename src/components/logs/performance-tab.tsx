@@ -85,10 +85,19 @@ function KpiRow({ data }: { data: Summary }) {
 
       <StatTile label={t.logs.kpi.errors} value={f.percent(data.error_ratio)}>
         <StatusLabel
-          level={data.error_turn_count === 0 && data.error_log_count === 0 ? "good" : "critical"}
+          level={
+            data.error_turn_count > 0 || data.error_log_count > 0
+              ? "critical"
+              : data.cancelled_turn_count > 0
+                ? "warning"
+                : "good"
+          }
           className="text-xs text-foreground"
         >
-          {t.logs.kpi.errorsNote(f.number(data.error_log_count))}
+          {t.logs.kpi.errorsNote(
+            f.number(data.error_log_count),
+            f.number(data.cancelled_turn_count)
+          )}
         </StatusLabel>
       </StatTile>
 
