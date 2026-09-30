@@ -493,6 +493,11 @@ function periksa(nilai: (key: Key) => string, t: Dict): Partial<Record<Key, stri
   ) {
     hasil.chunk_overlap = t.config.validation.overlap(angka.chunk_size)
   }
+  // Bobot 0 mematikan sumbernya; keduanya 0 berarti tidak ada pencarian sama
+  // sekali dan setiap pertanyaan ditolak.
+  if (angka.rrf_weight_vector === 0 && angka.rrf_weight_fulltext === 0) {
+    hasil.rrf_weight_fulltext = t.config.validation.bothWeightsOff
+  }
 
   return hasil
 }

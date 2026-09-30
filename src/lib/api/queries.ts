@@ -20,12 +20,13 @@ export type DocumentFilters = {
   offset: number
 }
 
-export function useDocuments(filters: DocumentFilters) {
+export function useDocuments(filters: DocumentFilters, options: { enabled?: boolean } = {}) {
   return useQuery({
     queryKey: ["documents", filters],
     queryFn: ({ signal }) =>
       unwrap(api.GET("/api/admin/documents", { params: { query: filters }, signal })),
     placeholderData: keepPreviousData,
+    enabled: options.enabled,
   })
 }
 
@@ -101,12 +102,13 @@ export function useDeleteDocument() {
 
 export type FaqFilters = { include_inactive: boolean; limit: number; offset: number }
 
-export function useFaq(filters: FaqFilters) {
+export function useFaq(filters: FaqFilters, options: { enabled?: boolean } = {}) {
   return useQuery({
     queryKey: ["faq", filters],
     queryFn: ({ signal }) =>
       unwrap(api.GET("/api/admin/faq", { params: { query: filters }, signal })),
     placeholderData: keepPreviousData,
+    enabled: options.enabled,
   })
 }
 

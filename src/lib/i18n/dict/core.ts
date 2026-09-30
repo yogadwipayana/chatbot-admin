@@ -49,6 +49,62 @@ export const api = {
     (pesan: string) => `Isian tidak sah: ${pesan}`,
     (pesan: string) => `Invalid input: ${pesan}`,
   ],
+  invalidField: [
+    (kolom: string, pesan: string) => `${kolom}: ${pesan}.`,
+    (kolom: string, pesan: string) => `${kolom}: ${pesan}.`,
+  ],
+  /**
+   * Galat bawaan Pydantic, per `type`. Kalimat aslinya berbahasa Inggris dan
+   * tanpa nama kolom ("String should have at least 5 characters"); kalimat
+   * dari validator API sendiri ("Value error, …") sudah berbahasa Indonesia
+   * dan tetap ditampilkan apa adanya.
+   */
+  validation: {
+    missing: ["wajib diisi", "is required"],
+    empty: ["tidak boleh kosong", "cannot be empty"],
+    // Skema admin memangkas spasi di awal dan akhir sebelum menghitung panjang:
+    // isian berisi spasi saja ditolak walau kotaknya tampak terisi.
+    tooShort: [
+      (n: number) => `minimal ${n} karakter, tidak termasuk spasi di awal dan akhir`,
+      (n: number) => `must be at least ${n} characters, not counting leading or trailing spaces`,
+    ],
+    tooLong: [
+      (n: number) => `maksimal ${n} karakter`,
+      (n: number) => `must be at most ${n} characters`,
+    ],
+    tooFew: [(n: number) => `minimal ${n} isian`, (n: number) => `needs at least ${n} entries`],
+    tooMany: [(n: number) => `maksimal ${n} isian`, (n: number) => `allows at most ${n} entries`],
+    atLeast: [(n: string) => `minimal ${n}`, (n: string) => `must be at least ${n}`],
+    atMost: [(n: string) => `maksimal ${n}`, (n: string) => `must be at most ${n}`],
+    above: [(n: string) => `harus lebih dari ${n}`, (n: string) => `must be greater than ${n}`],
+    below: [(n: string) => `harus kurang dari ${n}`, (n: string) => `must be less than ${n}`],
+    integer: ["harus bilangan bulat", "must be a whole number"],
+    number: ["harus berupa angka", "must be a number"],
+    date: ["bukan tanggal yang sah", "is not a valid date"],
+    choice: ["bukan pilihan yang tersedia", "is not one of the available options"],
+    unknown: ["tidak dikenal", "is not recognised"],
+    invalid: ["isinya tidak sah", "is not valid"],
+  },
+  /** Nama kolom body permintaan admin. Parameter Konfigurasi memakai `config.fields`. */
+  fields: {
+    email: ["Email", "Email"],
+    password: ["Kata sandi", "Password"],
+    current_password: ["Kata sandi saat ini", "Current password"],
+    new_password: ["Kata sandi baru", "New password"],
+    title: ["Judul resmi", "Official title"],
+    unit: ["Unit", "Unit"],
+    effective_year: ["Tahun berlaku", "Effective year"],
+    valid_until: ["Berlaku sampai", "Valid until"],
+    question: ["Pertanyaan", "Question"],
+    answer: ["Jawaban", "Answer"],
+    reason: ["Alasan", "Reason"],
+    name: ["Nama", "Name"],
+    role: ["Peran", "Role"],
+    description: ["Deskripsi", "Description"],
+    sort_order: ["Urutan", "Order"],
+    allowed_origins: ["Situs yang diizinkan", "Allowed sites"],
+    vector_threshold: ["Ambang", "Threshold"],
+  },
   failed: [
     (status: number) => `Permintaan gagal (kode ${status}).`,
     (status: number) => `Request failed (status ${status}).`,

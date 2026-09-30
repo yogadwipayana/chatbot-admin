@@ -29,6 +29,7 @@ export const labels = {
     label: ["Periode", "Period"],
   },
   testQuery: ["Uji coba", "Test it"],
+  unitTopic: [(unit: string) => ` · Topik ${unit}`, (unit: string) => ` · Topic ${unit}`],
 } as const
 
 export const unanswered = {
@@ -50,6 +51,13 @@ export const unanswered = {
   emptyDoneBody: [
     "Pertanyaan yang sudah ditindaklanjuti pada periode ini akan muncul di sini.",
     "Questions handled during this period will show up here.",
+  ],
+  // Tab "Belum" bisa kosong karena semuanya sudah ditandai selesai, jadi jangan
+  // katakan semua pertanyaan dapat dijawab -- itu hanya benar untuk tab Semua.
+  emptyPending: ["Tidak ada yang perlu ditindaklanjuti", "Nothing left to handle"],
+  emptyPendingBody: [
+    "Tidak ada penolakan pada periode ini yang belum ditandai selesai. Yang sudah ditindaklanjuti ada di tab Sudah.",
+    "No declined question in this period is still waiting to be marked done. Handled ones are under the Handled tab.",
   ],
   emptyOpen: ["Tidak ada pertanyaan tak terjawab", "No unanswered questions"],
   emptyOpenBody: [

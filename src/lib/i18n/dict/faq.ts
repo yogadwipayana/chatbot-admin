@@ -19,6 +19,11 @@ export const faq = {
     "Write down a question that keeps coming in, with its answer. The chatbot uses it the moment you save — no waiting for an official document.",
   ],
   emptyAction: ["Tambah yang pertama", "Add the first one"],
+  allInactive: ["Semua tanya jawab sedang nonaktif", "Every Q&A entry is switched off"],
+  allInactiveBody: [
+    "Chatbot tidak memakai satu pun entri. Tampilkan yang nonaktif untuk mengaktifkan kembali atau menghapusnya.",
+    "The chatbot is not using a single entry. Show the inactive ones to switch them back on or delete them.",
+  ],
   columns: {
     entry: ["Pertanyaan dan jawaban", "Question and answer"],
     unit: ["Unit", "Unit"],

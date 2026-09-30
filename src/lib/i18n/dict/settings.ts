@@ -76,7 +76,7 @@ export const config = {
     },
   },
   limitsNote: [
-    "Batas per IP dan per sesi diatur di .env server (RATE_LIMIT_*), bukan di sini. Bila batas harian menyalakan layanan chat mati, naikkan dulu nilainya di sini sebelum menyalakan layanan lagi — kalau tidak, layanan mati lagi pada pertanyaan berikutnya.",
+    "Batas per IP dan per sesi diatur di .env server (RATE_LIMIT_*), bukan di sini. Bila layanan chat mati karena batas harian terlampaui, naikkan dulu nilainya di sini sebelum menyalakan layanan lagi — kalau tidak, layanan mati lagi pada pertanyaan berikutnya.",
     "Per-IP and per-session limits live in the server's .env (RATE_LIMIT_*), not here. If the daily limit switches the chat service off, raise it here before turning the service back on — otherwise it switches off again on the next question.",
   ],
   thresholdNoteLead: ["Setelah mengubah ambang, buktikan hasilnya di ", "After changing a threshold, prove it in "],
@@ -175,6 +175,10 @@ export const config = {
     overlap: [
       (ukuran: number) => `Harus lebih kecil dari panjang potongan (${ukuran}).`,
       (ukuran: number) => `Must be smaller than the chunk size (${ukuran}).`,
+    ],
+    bothWeightsOff: [
+      "Kedua bobot tidak boleh 0 bersamaan: minimal satu pencarian harus menyala.",
+      "Both weights cannot be 0 at once: at least one search has to stay on.",
     ],
   },
   model: {

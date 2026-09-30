@@ -13,6 +13,7 @@ import { toast } from "sonner"
 
 import { EmptyState, PageHeader, QueryError } from "@/components/common"
 import { StatusLabel } from "@/components/status"
+import { testQueryHref } from "@/components/test-query/href"
 import { Button } from "@/components/ui/button"
 import {
   Select,
@@ -120,9 +121,19 @@ export function UnansweredView() {
       ) : groups.length === 0 ? (
         <EmptyState
           icon={CircleCheckBigIcon}
-          title={tab === "sudah" ? t.unanswered.emptyDone : t.unanswered.emptyOpen}
+          title={
+            tab === "sudah"
+              ? t.unanswered.emptyDone
+              : tab === "belum"
+                ? t.unanswered.emptyPending
+                : t.unanswered.emptyOpen
+          }
           description={
-            tab === "sudah" ? t.unanswered.emptyDoneBody : t.unanswered.emptyOpenBody
+            tab === "sudah"
+              ? t.unanswered.emptyDoneBody
+              : tab === "belum"
+                ? t.unanswered.emptyPendingBody
+                : t.unanswered.emptyOpenBody
           }
         />
       ) : (
@@ -184,6 +195,7 @@ export function UnansweredView() {
                     ) : null}
                     <p className="text-xs text-muted-foreground">
                       {t.unanswered.lastAsked(f.relative(group.last_asked_at, now))}
+                      {group.unit ? t.labels.unitTopic(group.unit) : null}
                       {group.avg_top_score != null
                         ? t.unanswered.avgScore(f.score(group.avg_top_score))
                         : null}
@@ -197,7 +209,7 @@ export function UnansweredView() {
 
                   <div className="flex shrink-0 flex-wrap gap-2">
                     <Button variant="outline" size="sm" asChild>
-                      <Link href={`/uji-coba?q=${encodeURIComponent(group.sample_question)}`}>
+                      <Link href={testQueryHref(group.sample_question, group.unit)}>
                         <FlaskConicalIcon data-icon="inline-start" />
                         {t.labels.testQuery}
                       </Link>

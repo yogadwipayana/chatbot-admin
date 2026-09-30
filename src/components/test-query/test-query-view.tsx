@@ -20,6 +20,13 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { Slider } from "@/components/ui/slider"
 import { Switch } from "@/components/ui/switch"
 import {
@@ -32,7 +39,7 @@ import {
 } from "@/components/ui/table"
 import { Textarea } from "@/components/ui/textarea"
 import type { Schemas } from "@/lib/api/client"
-import { useTestQuery } from "@/lib/api/queries"
+import { useTestQuery, useUnits } from "@/lib/api/queries"
 import { useFormat, useT } from "@/lib/i18n"
 import type { Dict } from "@/lib/i18n/dict"
 import { cn } from "@/lib/utils"
@@ -41,10 +48,26 @@ type Result = Schemas["TestQueryResponse"]
 
 const AMBANG_BAWAAN = 0.35
 
-export function TestQueryView({ initialQuestion }: { initialQuestion: string }) {
+/** Nilai Select untuk "Semua unit": Select tidak menerima string kosong. */
+const SEMUA_UNIT = "__semua__"
+
+export function TestQueryView({
+  initialQuestion,
+  initialUnit,
+}: {
+  initialQuestion: string
+  /** Dari `?unit=`: tautan Uji coba di Tak terjawab dan Umpan balik membawa
+      unit yang dipilih mahasiswa saat bertanya. */
+  initialUnit: string
+}) {
   const t = useT()
   const f = useFormat()
   const [question, setQuestion] = useState(initialQuestion)
+  const [unit, setUnit] = useState(initialUnit)
+  const units = useUnits()
+  // Unit dari tautan tetap dapat dipilih walau tidak ada di daftar (mis. sudah
+  // diganti namanya); server yang memutuskan unit itu sah atau tidak.
+  const pilihanUnit = unit && !units.includes(unit) ? [unit, ...units] : units
   const [pakaiAmbang, setPakaiAmbang] = useState(false)
   // null = ikuti ambang server; nilainya baru diketahui setelah uji coba pertama.
   const [ambang, setAmbang] = useState<number | null>(null)
@@ -58,6 +81,7 @@ export function TestQueryView({ initialQuestion }: { initialQuestion: string }) 
     test.mutate({
       question: question.trim(),
       vector_threshold: pakaiAmbang ? ambangTampil : null,
+      unit: unit || null,
     })
   }
 
@@ -85,6 +109,27 @@ export function TestQueryView({ initialQuestion }: { initialQuestion: string }) 
                   if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) e.currentTarget.form?.requestSubmit()
                 }}
               />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="unit-uji">{t.testQuery.unit}</Label>
+              <Select
+                value={unit || SEMUA_UNIT}
+                onValueChange={(v) => setUnit(v === SEMUA_UNIT ? "" : v)}
+              >
+                <SelectTrigger id="unit-uji" className="w-full sm:w-64">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={SEMUA_UNIT}>{t.testQuery.allUnits}</SelectItem>
+                  {pilihanUnit.map((u) => (
+                    <SelectItem key={u} value={u}>
+                      {u}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">{t.testQuery.unitHint}</p>
             </div>
 
             <div className="flex flex-col gap-4 rounded-lg border p-3 sm:flex-row sm:items-center">
@@ -137,7 +182,8 @@ export function TestQueryView({ initialQuestion }: { initialQuestion: string }) 
       {hasil ? (
         <div className={cn("space-y-6 transition-opacity", test.isPending && "opacity-60")}>
           <div className="grid items-start gap-6 lg:grid-cols-5">
-            <OutcomeCard hasil={hasil} />
+            {/* Unit milik uji coba yang menghasilkan `hasil`, bukan isian saat ini. */}
+            <OutcomeCard hasil={hasil} unit={test.variables?.unit ?? null} />
             <DecisionCard hasil={hasil} />
           </div>
           <RetrievedCard hasil={hasil} />
@@ -155,7 +201,7 @@ const KIND_ICON = {
   rejected: ShieldBanIcon,
 } as const
 
-function OutcomeCard({ hasil }: { hasil: Result }) {
+function OutcomeCard({ hasil, unit }: { hasil: Result; unit: string | null }) {
   const t = useT()
   const f = useFormat()
   const Icon = KIND_ICON[hasil.kind]
@@ -180,6 +226,9 @@ function OutcomeCard({ hasil }: { hasil: Result }) {
       <CardContent className="space-y-4">
         <p className="text-sm leading-relaxed break-words whitespace-pre-wrap">
           <RichText text={hasil.text} />
+        </p>
+        <p className="text-xs text-muted-foreground">
+          {unit ? t.testQuery.searchedUnit(unit) : t.testQuery.searchedAll}
         </p>
         {hasil.gate ? (
           <p className="text-xs text-muted-foreground">

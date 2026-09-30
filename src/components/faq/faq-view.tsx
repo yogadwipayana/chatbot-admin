@@ -96,6 +96,13 @@ export function FaqView() {
   const data = query.data
   const total = data?.total ?? 0
   const halamanTerakhir = Math.max(0, Math.ceil(total / PAGE_SIZE) - 1)
+  // Daftar aktif yang kosong belum tentu berarti belum ada entri: semuanya bisa
+  // sedang nonaktif, dan "Tambah yang pertama" menyesatkan untuk keadaan itu.
+  const cekNonaktif = useFaq(
+    { include_inactive: true, limit: 1, offset: 0 },
+    { enabled: !includeInactive && data?.items.length === 0 }
+  )
+  const semuaNonaktif = !includeInactive && (cekNonaktif.data?.total ?? 0) > 0
 
   /** Dapat dibatalkan lewat toast, jadi tanpa dialog konfirmasi. */
   function alihAktif(entry: Faq) {
@@ -149,15 +156,28 @@ export function FaqView() {
 
       {query.error ? (
         <QueryError error={query.error} onRetry={() => query.refetch()} />
-      ) : query.isLoading ? (
+      ) : query.isLoading || (data?.items.length === 0 && cekNonaktif.isLoading) ? (
         <Skeleton className="h-64 w-full rounded-xl" />
       ) : !data || data.items.length === 0 ? (
-        <EmptyState
-          icon={MessagesSquareIcon}
-          title={t.faq.empty}
-          description={t.faq.emptyBody}
-          action={<Button onClick={() => setForm({ mode: "buat" })}>{t.faq.emptyAction}</Button>}
-        />
+        semuaNonaktif ? (
+          <EmptyState
+            icon={MessagesSquareIcon}
+            title={t.faq.allInactive}
+            description={t.faq.allInactiveBody}
+            action={
+              <Button variant="outline" onClick={() => setIncludeInactive(true)}>
+                {t.documents.showInactive}
+              </Button>
+            }
+          />
+        ) : (
+          <EmptyState
+            icon={MessagesSquareIcon}
+            title={t.faq.empty}
+            description={t.faq.emptyBody}
+            action={<Button onClick={() => setForm({ mode: "buat" })}>{t.faq.emptyAction}</Button>}
+          />
+        )
       ) : (
         <div className={cn("transition-opacity", query.isPlaceholderData && "opacity-60")}>
           <div className="rounded-xl border bg-card">

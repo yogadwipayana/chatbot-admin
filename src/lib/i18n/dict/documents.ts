@@ -68,6 +68,11 @@ export const documents = {
     "The chatbot cannot answer anything until an official document is uploaded.",
   ],
   noneAction: ["Unggah dokumen pertama", "Upload the first document"],
+  allInactive: ["Semua dokumen sedang nonaktif", "Every document is switched off"],
+  allInactiveBody: [
+    "Chatbot tidak punya sumber jawaban dan menolak setiap pertanyaan. Tampilkan yang nonaktif untuk mengaktifkan kembali dokumen yang masih berlaku.",
+    "The chatbot has no source to answer from and declines every question. Show the inactive ones to switch the still-valid documents back on.",
+  ],
   columns: {
     document: ["Dokumen", "Document"],
     status: ["Status", "Status"],
@@ -225,8 +230,8 @@ export const upload = {
   checklist: {
     digitalStrong: ["PDF versi digital asli", "a born-digital PDF"],
     digital: [
-      ", bukan hasil scan. PDF scan terlihat terpasang tetapi isinya tidak pernah bisa ditemukan.",
-      ", not a scan. A scanned PDF looks installed but its contents can never be found.",
+      ", bukan hasil scan. PDF scan ditolak saat diunggah; halaman scan yang terselip di PDF digital tetap terpasang, tetapi isinya tidak pernah bisa ditemukan chatbot.",
+      ", not a scan. Scanned PDFs are rejected on upload; scanned pages tucked inside a digital PDF still install, but the chatbot can never find what is on them.",
     ],
     digitalLead: ["Pakai ", "Use "],
     titleLead: ["Tulis judul ", "Write the title "],

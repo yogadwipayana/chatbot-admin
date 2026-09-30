@@ -13,6 +13,7 @@ import Link from "next/link"
 import { useState } from "react"
 
 import { EmptyState, PageHeader, QueryError, RichText } from "@/components/common"
+import { testQueryHref } from "@/components/test-query/href"
 import { Button } from "@/components/ui/button"
 import {
   Select,
@@ -276,6 +277,7 @@ function Baris({
         <p className="text-xs text-muted-foreground">
           {f.relative(item.created_at, now)}
           {jenis ? ` · ${jenis}` : null}
+          {item.unit ? t.labels.unitTopic(item.unit) : null}
           {item.top_score != null ? t.feedback.score(f.score(item.top_score)) : null}
         </p>
       </div>
@@ -283,7 +285,7 @@ function Baris({
       {item.question ? (
         <div className="shrink-0">
           <Button variant="outline" size="sm" asChild>
-            <Link href={`/uji-coba?q=${encodeURIComponent(item.question)}`}>
+            <Link href={testQueryHref(item.question, item.unit)}>
               <FlaskConicalIcon data-icon="inline-start" />
               {t.labels.testQuery}
             </Link>

@@ -11,6 +11,20 @@ export const testQuery = {
     "Kapan pengisian KRS semester ganjil dibuka?",
     "When does course registration for the odd semester open?",
   ],
+  unit: ["Topik yang dipilih mahasiswa", "Topic the student picked"],
+  allUnits: ["Semua unit", "All units"],
+  unitHint: [
+    "Chatbot hanya mencari di dokumen unit yang dipilih mahasiswa di menu topik. Pilih Semua unit hanya untuk memeriksa apakah jawabannya ada di unit lain.",
+    "The chatbot only searches the documents of the unit the student picked in the topic menu. Choose All units only to check whether the answer lives in another unit.",
+  ],
+  searchedUnit: [
+    (unit: string) => `Dicari di dokumen unit ${unit}, sama seperti mahasiswa yang memilih topik ini.`,
+    (unit: string) => `Searched the ${unit} documents, just like a student who picked this topic.`,
+  ],
+  searchedAll: [
+    "Dicari di dokumen semua unit. Mahasiswa selalu memilih satu topik, jadi yang mereka lihat bisa berbeda.",
+    "Searched the documents of every unit. Students always pick one topic, so what they see may differ.",
+  ],
   tryThreshold: ["Coba ambang lain", "Try a different threshold"],
   thresholdLabel: ["Ambang kemiripan vektor", "Vector similarity threshold"],
   thresholdNote: [

@@ -67,6 +67,14 @@ export function DocumentsView() {
   const data = query.data
   const total = data?.total ?? 0
   const halamanTerakhir = Math.max(0, Math.ceil(total / PAGE_SIZE) - 1)
+  // Tanpa filter, daftar kosong belum tentu berarti belum ada dokumen: semuanya
+  // bisa sedang nonaktif, dan "Unggah dokumen pertama" menyesatkan untuk itu.
+  const tanpaFilter = !onlyStale && !includeInactive
+  const cekNonaktif = useDocuments(
+    { include_inactive: true, only_stale: false, limit: 1, offset: 0 },
+    { enabled: tanpaFilter && data?.items.length === 0 }
+  )
+  const semuaNonaktif = tanpaFilter && (cekNonaktif.data?.total ?? 0) > 0
 
   return (
     <>
@@ -134,7 +142,7 @@ export function DocumentsView() {
 
       {query.error ? (
         <QueryError error={query.error} onRetry={() => query.refetch()} />
-      ) : query.isLoading ? (
+      ) : query.isLoading || (data?.items.length === 0 && cekNonaktif.isLoading) ? (
         <Skeleton className="h-64 w-full rounded-xl" />
       ) : !data || data.items.length === 0 ? (
         onlyStale || includeInactive ? (
@@ -142,6 +150,17 @@ export function DocumentsView() {
             icon={FileTextIcon}
             title={t.documents.noMatch}
             description={t.documents.noMatchBody}
+          />
+        ) : semuaNonaktif ? (
+          <EmptyState
+            icon={FileTextIcon}
+            title={t.documents.allInactive}
+            description={t.documents.allInactiveBody}
+            action={
+              <Button variant="outline" onClick={() => setIncludeInactive(true)}>
+                {t.documents.showInactive}
+              </Button>
+            }
           />
         ) : (
           <EmptyState

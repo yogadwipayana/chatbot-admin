@@ -1411,6 +1411,12 @@ export interface components {
             /** Format: date-time */
             last_asked_at: string;
             resolved: boolean;
+            /**
+             * @description Unit yang dipilih mahasiswa saat menanyakan `sample_question`. Chatbot
+             *     hanya mencari di dokumen unit itu, jadi uji coba ulangnya juga harus
+             *     memakai unit ini. Null bila pesan asalnya sudah terhapus dari log.
+             */
+            unit?: string | null;
         };
         /** @description Satu penilaian FE-5 beserta pasangan pertanyaan-jawaban yang dinilai. */
         FeedbackItem: {
@@ -1444,6 +1450,8 @@ export interface components {
             kind?: string | null;
             /** @description Skor mentah tertinggi saat jawaban itu dibuat. */
             top_score?: number | null;
+            /** @description Unit yang dipilih mahasiswa saat bertanya (`messages.meta.unit`). */
+            unit?: string | null;
         };
         FeedbackPage: {
             items: components["schemas"]["FeedbackItem"][];
