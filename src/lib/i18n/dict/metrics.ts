@@ -83,6 +83,22 @@ export const stats = {
     "Belum ada pertanyaan pada topik berisiko.",
     "No questions on high-risk topics yet.",
   ],
+  programTitle: ["Pertanyaan per prodi", "Questions by study program"],
+  intakeTitle: ["Pertanyaan per angkatan", "Questions by intake year"],
+  profileCoverage: [
+    (dengan: string, total: string) =>
+      `${dengan} dari ${total} pertanyaan menyertakan NIM. Penanya tanpa NIM dan pesan sensitif tidak terhitung di sini.`,
+    (dengan: string, total: string) =>
+      `${dengan} of ${total} questions came with a student ID. Askers without one and sensitive messages are not counted here.`,
+  ],
+  profileEmpty: [
+    "Belum ada pertanyaan yang menyertakan NIM pada periode ini.",
+    "No questions came with a student ID in this period.",
+  ],
+  programColumn: ["Prodi", "Program"],
+  intakeColumn: ["Angkatan", "Intake"],
+  questionsColumn: ["Pertanyaan", "Questions"],
+  unansweredColumn: ["Tak terjawab", "Unanswered"],
 } as const
 
 export const costs = {

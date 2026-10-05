@@ -197,6 +197,31 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/programs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Daftar program studi
+         * @description Untuk mengurai NIM di widget. NIM INSTIKI berformat `aaabbddccc`:
+         *     digit 4-7 (`bbdd`, fakultas lalu prodi) dicocokkan dengan `code` di
+         *     sini, dan hanya kode itu beserta angkatan yang dikirim sebagai
+         *     `profile` pada `/api/chat/stream`. NIM utuh tidak pernah dikirim.
+         *
+         *     Tidak tunduk pada kill switch, sama seperti `GET /api/units`.
+         */
+        get: operations["list_programs"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/embed/keys/{key}": {
         parameters: {
             query?: never;
@@ -1118,6 +1143,34 @@ export interface components {
              *     menyarankan memilih unit lain atau semua unit.
              */
             unit?: string | null;
+            /**
+             * @description Prodi dan angkatan penanya, diurai widget dari NIM. Kosongkan atau
+             *     kirim null bila mahasiswa tidak mengisi NIM.
+             *
+             *     BUKAN filter retrieval: diteruskan ke LLM supaya ketentuan yang di
+             *     dokumen berbeda per prodi atau angkatan (harga sertifikasi per
+             *     prodi, kurikulum per angkatan) dijawab untuk penanya. Dicatat di
+             *     `messages.meta` untuk analitik, kecuali untuk balasan `support`.
+             */
+            profile?: components["schemas"]["StudentProfileIn"] | null;
+        };
+        /**
+         * @description Angkatan dan prodi penanya. JANGAN kirim NIM utuh: NIM INSTIKI
+         *     berformat `aaabbddccc` (angkatan, fakultas, prodi, nomor urut), dan
+         *     nomor urutnya mengenali orang (PRD §11). Contoh: NIM `2401010101`
+         *     menjadi `{program_code: "1010", intake_year: 2024}`.
+         */
+        StudentProfileIn: {
+            /**
+             * @description `code` dari `GET /api/programs` (digit 4-7 NIM). Kode yang tidak
+             *     dikenal dijawab 422.
+             */
+            program_code: string;
+            /**
+             * @description Tahun angkatan: 2000 + dua digit pertama NIM. Tahun yang belum tiba
+             *     dijawab 422.
+             */
+            intake_year: number;
         };
         /**
          * @description Isi kartu sitasi FE-2. Cukup untuk membuka PDF tepat di halamannya:
@@ -1153,6 +1206,15 @@ export interface components {
             name: string;
             /** @description Kepanjangan atau cakupan layanan, untuk teks bantu di menu. */
             description?: string | null;
+        };
+        /** @description Satu program studi, untuk mengurai dan menampilkan NIM di widget. */
+        ProgramOut: {
+            /** @description Digit 4-7 NIM; dikirim sebagai `profile.program_code`. */
+            code: string;
+            name: string;
+            /** @description `S1` atau `S2`. */
+            level: string;
+            faculty: string;
         };
         /** @description Satu pertanyaan siap klik di menu topik chatbot. */
         FaqQuestion: {
@@ -1632,6 +1694,34 @@ export interface components {
              *     token < 3000 ms) diukur di LangSmith; angka ini batas atasnya.
              */
             latency_p95_ms: number | null;
+            /**
+             * @description Pertanyaan yang penanyanya mengisi NIM di widget. Penyebut kedua
+             *     rincian di bawah -- BUKAN `total_questions`, yang juga memuat
+             *     penanya tanpa NIM. Balasan `support` tidak pernah ikut: profilnya
+             *     sengaja tidak dicatat.
+             */
+            questions_with_profile: number;
+            /**
+             * @description Semua prodi terdaftar (`GET /api/programs`), juga yang nol;
+             *     terbanyak lebih dulu.
+             */
+            program_breakdown: components["schemas"]["ProgramStat"][];
+            /** @description Hanya angkatan yang pernah bertanya; terbaru lebih dulu. */
+            intake_year_breakdown: components["schemas"]["IntakeYearStat"][];
+        };
+        ProgramStat: {
+            code: string;
+            /** @description Nama prodi; kodenya sendiri bila prodi itu sudah tidak terdaftar. */
+            name: string;
+            level: string | null;
+            question_count: number;
+            /** @description Yang ditolak (`kind = refusal`) -- celah dokumen untuk prodi ini. */
+            refusal_count: number;
+        };
+        IntakeYearStat: {
+            intake_year: number;
+            question_count: number;
+            refusal_count: number;
         };
         CostByModel: {
             /** @enum {string} */
@@ -2393,6 +2483,42 @@ export interface operations {
                 };
             };
             422: components["responses"]["ValidationError"];
+        };
+    };
+    list_programs: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Program studi */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example [
+                     *       {
+                     *         "code": "1010",
+                     *         "name": "Informatika",
+                     *         "level": "S1",
+                     *         "faculty": "Fakultas Teknik Informatika"
+                     *       },
+                     *       {
+                     *         "code": "0301",
+                     *         "name": "Magister Informatika",
+                     *         "level": "S2",
+                     *         "faculty": "Pascasarjana"
+                     *       }
+                     *     ]
+                     */
+                    "application/json": components["schemas"]["ProgramOut"][];
+                };
+            };
         };
     };
     get_embed_key: {

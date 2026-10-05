@@ -11,6 +11,7 @@ import { StatusLabel } from "@/components/status"
 import { Button } from "@/components/ui/button"
 import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useNow } from "@/hooks/use-now"
 import type { Schemas } from "@/lib/api/client"
@@ -100,6 +101,29 @@ export function StatsView() {
               <KindCard stats={stats.data} />
               <TopicCard stats={stats.data} />
             </div>
+          </div>
+          <div className="grid gap-6 xl:grid-cols-2">
+            <ProfileCard
+              stats={stats.data}
+              title={t.stats.programTitle}
+              column={t.stats.programColumn}
+              rows={stats.data.program_breakdown.map((p) => ({
+                key: p.code,
+                label: p.level ? `${p.name} (${p.level})` : p.name,
+                ...p,
+              }))}
+            />
+            <ProfileCard
+              stats={stats.data}
+              title={t.stats.intakeTitle}
+              column={t.stats.intakeColumn}
+              rows={stats.data.intake_year_breakdown.map((a) => ({
+                // Bukan `f.number`: tahun bukan besaran, "2.024" salah baca.
+                key: String(a.intake_year),
+                label: String(a.intake_year),
+                ...a,
+              }))}
+            />
           </div>
         </div>
       )}
@@ -304,6 +328,87 @@ function TopicCard({ stats }: { stats: Stats }) {
               </li>
             ))}
           </ul>
+        )}
+      </CardContent>
+    </Card>
+  )
+}
+
+type ProfileRow = { key: string; label: string; question_count: number; refusal_count: number }
+
+/**
+ * Pertanyaan per prodi atau per angkatan, dari NIM yang diisi di widget.
+ *
+ * Satu seri, jadi satu warna untuk semua batang; angkanya tertulis di sebelahnya.
+ * Batangnya di bawah nama, bukan di kolom sendiri: kolom batang yang melebar
+ * menekan nama prodi sampai terlipat empat baris dan mendorong angka keluar
+ * kartu di layar sempit.
+ * Tak terjawab ditulis sebagai persentase, bukan batang kedua: dua besaran
+ * berbeda skala tidak berbagi satu sumbu.
+ */
+function ProfileCard({
+  stats,
+  title,
+  column,
+  rows,
+}: {
+  stats: Stats
+  title: string
+  column: string
+  rows: ProfileRow[]
+}) {
+  const t = useT()
+  const f = useFormat()
+  const terbanyak = rows.reduce((max, baris) => Math.max(max, baris.question_count), 0)
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>{title}</CardTitle>
+        <CardDescription>
+          {t.stats.profileCoverage(
+            f.number(stats.questions_with_profile),
+            f.number(stats.total_questions)
+          )}
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        {stats.questions_with_profile === 0 ? (
+          <p className="text-sm text-muted-foreground">{t.stats.profileEmpty}</p>
+        ) : (
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="pl-0">{column}</TableHead>
+                <TableHead className="text-right">{t.stats.questionsColumn}</TableHead>
+                <TableHead className="pr-0 text-right">{t.stats.unansweredColumn}</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {rows.map((baris) => (
+                <TableRow key={baris.key}>
+                  <TableCell className="w-full pl-0 whitespace-normal">
+                    {baris.label}
+                    <div className="mt-1.5 h-1.5" aria-hidden>
+                      {baris.question_count > 0 ? (
+                        <div
+                          className="h-full rounded-r-[4px] bg-series-1"
+                          style={{ width: `${(baris.question_count / terbanyak) * 100}%` }}
+                        />
+                      ) : null}
+                    </div>
+                  </TableCell>
+                  <TableCell className="text-right font-medium tabular-nums">
+                    {f.number(baris.question_count)}
+                  </TableCell>
+                  <TableCell className="pr-0 text-right text-muted-foreground tabular-nums">
+                    {baris.question_count > 0
+                      ? f.percent(baris.refusal_count / baris.question_count, 0)
+                      : "—"}
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
         )}
       </CardContent>
     </Card>
