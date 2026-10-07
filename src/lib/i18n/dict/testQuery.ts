@@ -102,6 +102,10 @@ export const testQuery = {
     out_of_scope: ["di luar topik", "off topic"],
   },
   contactsTitle: ["Kontak yang ditampilkan sebagai banner", "Contacts shown as a banner"],
+  attachmentNote: [
+    "Tampil di bawah jawaban mahasiswa, 10 baris per halaman. Model AI tidak menyalin daftar ini; isinya langsung dari sumbernya.",
+    "Shown below the student's answer, 10 rows per page. The AI model does not copy this list; it comes straight from its source.",
+  ],
   latency: [(waktu: string) => `Waktu proses ${waktu}`, (waktu: string) => `Processing time ${waktu}`],
   decisionTitle: ["Keputusan ambang", "Threshold decision"],
   decisionSensitive: [

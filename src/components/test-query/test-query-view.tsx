@@ -4,6 +4,7 @@ import {
   BanIcon,
   CheckIcon,
   ChevronDownIcon,
+  ChevronLeftIcon,
   ChevronRightIcon,
   HeartHandshakeIcon,
   MessageSquareTextIcon,
@@ -227,6 +228,9 @@ function OutcomeCard({ hasil, unit }: { hasil: Result; unit: string | null }) {
         <p className="text-sm leading-relaxed break-words whitespace-pre-wrap">
           <RichText text={hasil.text} />
         </p>
+        {hasil.attachments.map((lampiran, index) => (
+          <LampiranDaftar key={index} lampiran={lampiran} />
+        ))}
         <p className="text-xs text-muted-foreground">
           {unit ? t.testQuery.searchedUnit(unit) : t.testQuery.searchedAll}
         </p>
@@ -264,6 +268,70 @@ function OutcomeCard({ hasil, unit }: { hasil: Result; unit: string | null }) {
         </p>
       </CardContent>
     </Card>
+  )
+}
+
+/** Sama dengan widget mahasiswa (`BARIS_PER_HALAMAN` di client chat-message.tsx). */
+const BARIS_PER_HALAMAN = 10
+
+/**
+ * Lampiran tool (api/docs/tool-call.md §10a) seperti yang tampil di widget:
+ * daftar dari SADS di bawah jawaban, per 10 baris. Tanpa ini admin hanya
+ * membaca "Ada 25 dosen bergelar Dr." dan tidak dapat memeriksa daftar yang
+ * sebenarnya dilihat mahasiswa.
+ */
+function LampiranDaftar({ lampiran }: { lampiran: Schemas["AttachmentOut"] }) {
+  const t = useT()
+  const f = useFormat()
+  const [pilihan, setHalaman] = useState(0)
+  const total = lampiran.items.length
+  const terakhir = Math.max(0, Math.ceil(total / BARIS_PER_HALAMAN) - 1)
+  // Uji coba berikutnya memakai ulang komponen ini (kunci = indeks): halaman 3
+  // dari 220 nama tidak boleh menjadi daftar kosong untuk hasil 25 nama.
+  const halaman = Math.min(pilihan, terakhir)
+  const awal = halaman * BARIS_PER_HALAMAN
+  const akhir = Math.min(awal + BARIS_PER_HALAMAN, total)
+  return (
+    <div className="rounded-lg border p-3">
+      <div className="mb-2 flex flex-wrap items-baseline justify-between gap-2">
+        <p className="text-sm font-medium">{lampiran.title}</p>
+        <p className="text-xs text-muted-foreground">{lampiran.source}</p>
+      </div>
+      <ol
+        start={awal + 1}
+        className="list-decimal space-y-0.5 pl-10 text-sm break-words marker:text-muted-foreground"
+      >
+        {lampiran.items.slice(awal, akhir).map((item, index) => (
+          <li key={awal + index}>{item}</li>
+        ))}
+      </ol>
+      <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground">
+        <span>{t.testQuery.attachmentNote}</span>
+        {terakhir > 0 ? (
+          <div className="flex items-center gap-2">
+            <span>{t.documents.range(f.number(awal + 1), f.number(akhir), f.number(total))}</span>
+            <Button
+              variant="outline"
+              size="icon-sm"
+              disabled={halaman === 0}
+              onClick={() => setHalaman(halaman - 1)}
+              aria-label={t.documents.previous}
+            >
+              <ChevronLeftIcon />
+            </Button>
+            <Button
+              variant="outline"
+              size="icon-sm"
+              disabled={halaman >= terakhir}
+              onClick={() => setHalaman(halaman + 1)}
+              aria-label={t.documents.next}
+            >
+              <ChevronRightIcon />
+            </Button>
+          </div>
+        ) : null}
+      </div>
+    </div>
   )
 }
 
