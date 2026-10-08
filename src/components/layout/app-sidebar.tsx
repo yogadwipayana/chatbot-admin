@@ -133,13 +133,13 @@ const NAV: { key: keyof Dict["nav"]["groups"]; items: NavItem[] }[] = [
 
 function NavBadge({ kind }: { kind: NonNullable<NavItem["badge"]> }) {
   const t = useT()
-  const unanswered = useUnanswered({ resolved: false })
+  const unanswered = useUnanswered({ resolved: false, limit: 1, offset: 0 })
   // Untuk staf/dosen, server menghitung dokumen usang hanya di unitnya.
   const documents = useDocuments({ include_inactive: false, only_stale: false, limit: 1, offset: 0 })
   const killSwitch = useKillSwitch()
 
   if (kind === "unanswered") {
-    const n = unanswered.data?.length ?? 0
+    const n = unanswered.data?.total ?? 0
     return n > 0 ? (
       <SidebarMenuBadge aria-label={t.nav.badges.unanswered(n)}>{n}</SidebarMenuBadge>
     ) : null

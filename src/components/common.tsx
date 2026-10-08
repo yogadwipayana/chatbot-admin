@@ -1,11 +1,17 @@
 "use client"
 
-import { LoaderCircleIcon, RotateCwIcon, type LucideIcon } from "lucide-react"
+import {
+  ChevronLeftIcon,
+  ChevronRightIcon,
+  LoaderCircleIcon,
+  RotateCwIcon,
+  type LucideIcon,
+} from "lucide-react"
 import { useEffect } from "react"
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
-import { useT } from "@/lib/i18n"
+import { useFormat, useT } from "@/lib/i18n"
 import { cn } from "@/lib/utils"
 
 /**
@@ -114,6 +120,49 @@ export function Spinner({ label, className }: { label: string; className?: strin
       <LoaderCircleIcon className="size-4 animate-spin" aria-hidden />
       {label}
     </span>
+  )
+}
+
+export function Pagination({
+  page,
+  total,
+  pageSize,
+  last,
+  onPage,
+}: {
+  page: number
+  total: number
+  pageSize: number
+  last: number
+  onPage: (page: number) => void
+}) {
+  const t = useT()
+  const f = useFormat()
+  return (
+    <div className="flex items-center justify-between gap-4 pt-1 text-sm text-muted-foreground">
+      <span>
+        {t.documents.range(
+          f.number(page * pageSize + 1),
+          f.number(Math.min((page + 1) * pageSize, total)),
+          f.number(total)
+        )}
+      </span>
+      <div className="flex gap-2">
+        <Button variant="outline" size="sm" disabled={page === 0} onClick={() => onPage(page - 1)}>
+          <ChevronLeftIcon data-icon="inline-start" />
+          {t.documents.previous}
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          disabled={page >= last}
+          onClick={() => onPage(page + 1)}
+        >
+          {t.documents.next}
+          <ChevronRightIcon data-icon="inline-end" />
+        </Button>
+      </div>
+    </div>
   )
 }
 

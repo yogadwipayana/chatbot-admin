@@ -11,7 +11,7 @@ import Link from "next/link"
 import { useState } from "react"
 import { toast } from "sonner"
 
-import { EmptyState, PageHeader, QueryError } from "@/components/common"
+import { EmptyState, PageHeader, Pagination, QueryError } from "@/components/common"
 import { StatusLabel } from "@/components/status"
 import { testQueryHref } from "@/components/test-query/href"
 import { Button } from "@/components/ui/button"
@@ -36,6 +36,7 @@ type Group = Schemas["UnansweredGroup"]
 type Tab = "belum" | "sudah" | "semua"
 
 const PERIODE = ["7", "30", "90", "semua"] as const
+const PAGE_SIZE = 20
 
 export function UnansweredView() {
   const t = useT()
@@ -49,20 +50,43 @@ export function UnansweredView() {
   const now = useNow()
   const [tab, setTab] = useState<Tab>("belum")
   const [periode, setPeriode] = useState<string>("30")
+  const [page, setPage] = useState(0)
   const [terbuka, setTerbuka] = useState<string | null>(null)
 
   const sejak =
     periode === "semua" ? undefined : toDateInput(addDays(new Date(now), -(Number(periode) - 1)))
   const resolved = tab === "semua" ? undefined : tab === "sudah"
-  const query = useUnanswered({ resolved, since: sejak })
+  const query = useUnanswered({
+    resolved,
+    since: sejak,
+    limit: PAGE_SIZE,
+    offset: page * PAGE_SIZE,
+  })
   const setResolved = useSetResolved()
   // Staf/dosen boleh melihat (supaya tahu dokumen apa yang dicari mahasiswa),
   // hanya admin ke atas yang menandai selesai.
   const bolehTandai = atLeast(useMe().data, "admin")
 
-  const groups = query.data ?? []
-  const totalPertanyaan = groups.reduce((sum, g) => sum + g.count, 0)
-  const terbanyak = groups.reduce((max, g) => Math.max(max, g.count), 0)
+  const data = query.data
+  const groups = data?.items ?? []
+  const total = data?.total ?? 0
+  const totalPertanyaan = data?.question_count ?? 0
+  // Dari seluruh kelompok, bukan halaman ini: batang di halaman 2 tetap
+  // sebanding dengan kelompok terbesar di halaman 1.
+  const terbanyak = data?.max_count ?? 0
+  const halamanTerakhir = Math.max(0, Math.ceil(total / PAGE_SIZE) - 1)
+
+  // Menandai selesai di tab "Belum" mengeluarkan kelompok dari daftar. Bila itu
+  // isi terakhir halaman terakhir, mundur satu halaman alih-alih menampilkan
+  // halaman kosong. Disetel saat render, bukan di effect, seperti tab Log.
+  if (data && !query.isPlaceholderData && page > halamanTerakhir) {
+    setPage(halamanTerakhir)
+  }
+
+  function ganti(ubah: () => void) {
+    ubah()
+    setPage(0)
+  }
 
   function tandai(group: Group, value: boolean) {
     setResolved.mutate(
@@ -93,14 +117,14 @@ export function UnansweredView() {
       )}
 
       <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <Tabs value={tab} onValueChange={(v) => setTab(v as Tab)}>
+        <Tabs value={tab} onValueChange={(v) => ganti(() => setTab(v as Tab))}>
           <TabsList>
             <TabsTrigger value="belum">{t.unanswered.tabs.open}</TabsTrigger>
             <TabsTrigger value="sudah">{t.unanswered.tabs.done}</TabsTrigger>
             <TabsTrigger value="semua">{t.unanswered.tabs.all}</TabsTrigger>
           </TabsList>
         </Tabs>
-        <Select value={periode} onValueChange={setPeriode}>
+        <Select value={periode} onValueChange={(v) => ganti(() => setPeriode(v))}>
           <SelectTrigger className="w-full sm:w-48" aria-label={t.labels.periods.label}>
             <SelectValue />
           </SelectTrigger>
@@ -118,7 +142,7 @@ export function UnansweredView() {
         <QueryError error={query.error} onRetry={() => query.refetch()} />
       ) : query.isLoading ? (
         <GroupListSkeleton />
-      ) : groups.length === 0 ? (
+      ) : total === 0 ? (
         <EmptyState
           icon={CircleCheckBigIcon}
           title={
@@ -139,7 +163,7 @@ export function UnansweredView() {
       ) : (
         <div className={cn("space-y-3 transition-opacity", query.isPlaceholderData && "opacity-60")}>
           <p className="text-sm text-muted-foreground">
-            {t.unanswered.summary(f.number(totalPertanyaan), f.number(groups.length))}
+            {t.unanswered.summary(f.number(totalPertanyaan), f.number(total))}
           </p>
           <ul className="divide-y rounded-xl border bg-card">
             {groups.map((group) => {
@@ -235,6 +259,17 @@ export function UnansweredView() {
               )
             })}
           </ul>
+
+          {total > PAGE_SIZE ? (
+            <Pagination
+              page={page}
+              total={total}
+              pageSize={PAGE_SIZE}
+              onPage={setPage}
+              last={halamanTerakhir}
+            />
+          ) : null}
+
           <p className="flex gap-2 pt-2 text-xs text-pretty text-muted-foreground">
             <InfoIcon className="mt-px size-3.5 shrink-0" aria-hidden />
             <span>{t.unanswered.scoreHint}</span>

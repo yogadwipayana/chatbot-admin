@@ -237,18 +237,18 @@ export function useDeleteEmbedKey() {
 
 // --- Pertanyaan tak terjawab (AD-4) --------------------------------------------
 
-export type UnansweredFilters = { resolved?: boolean; since?: string }
+export type UnansweredFilters = {
+  resolved?: boolean
+  since?: string
+  limit: number
+  offset: number
+}
 
 export function useUnanswered(filters: UnansweredFilters) {
   return useQuery({
     queryKey: ["unanswered", filters],
     queryFn: ({ signal }) =>
-      unwrap(
-        api.GET("/api/admin/unanswered", {
-          params: { query: { ...filters, limit: 200 } },
-          signal,
-        })
-      ),
+      unwrap(api.GET("/api/admin/unanswered", { params: { query: filters }, signal })),
     placeholderData: keepPreviousData,
   })
 }

@@ -1,12 +1,11 @@
 "use client"
 
-import { ChevronLeftIcon, ChevronRightIcon, MessagesSquareIcon } from "lucide-react"
+import { MessagesSquareIcon } from "lucide-react"
 import { useState } from "react"
 
-import { EmptyState, QueryError } from "@/components/common"
+import { EmptyState, Pagination, QueryError } from "@/components/common"
 import { durasi, kindLabel, nodeLabel, TurnStatus, useLogTime } from "@/components/logs/shared"
 import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
 import {
   Select,
   SelectContent,
@@ -214,49 +213,6 @@ export function TurnsTab({
           ) : null}
         </div>
       )}
-    </div>
-  )
-}
-
-export function Pagination({
-  page,
-  total,
-  pageSize,
-  last,
-  onPage,
-}: {
-  page: number
-  total: number
-  pageSize: number
-  last: number
-  onPage: (page: number) => void
-}) {
-  const t = useT()
-  const f = useFormat()
-  return (
-    <div className="flex items-center justify-between gap-4 pt-1 text-sm text-muted-foreground">
-      <span>
-        {t.documents.range(
-          f.number(page * pageSize + 1),
-          f.number(Math.min((page + 1) * pageSize, total)),
-          f.number(total)
-        )}
-      </span>
-      <div className="flex gap-2">
-        <Button variant="outline" size="sm" disabled={page === 0} onClick={() => onPage(page - 1)}>
-          <ChevronLeftIcon data-icon="inline-start" />
-          {t.documents.previous}
-        </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          disabled={page >= last}
-          onClick={() => onPage(page + 1)}
-        >
-          {t.documents.next}
-          <ChevronRightIcon data-icon="inline-end" />
-        </Button>
-      </div>
     </div>
   )
 }

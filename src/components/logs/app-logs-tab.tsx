@@ -3,9 +3,8 @@
 import { ChevronDownIcon, ScrollTextIcon, SearchIcon, ShieldIcon, TriangleAlertIcon } from "lucide-react"
 import { useEffect, useState } from "react"
 
-import { EmptyState, QueryError } from "@/components/common"
+import { EmptyState, Pagination, QueryError } from "@/components/common"
 import { LevelLabel, useLogTime } from "@/components/logs/shared"
-import { Pagination } from "@/components/logs/turns-tab"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import {

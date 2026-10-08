@@ -1544,6 +1544,19 @@ export interface components {
              */
             unit?: string | null;
         };
+        UnansweredPage: {
+            items: components["schemas"]["UnansweredGroup"][];
+            /** @description Jumlah kelompok yang cocok dengan seluruh filter, untuk penomoran halaman. */
+            total: number;
+            /** @description Jumlah pertanyaan di seluruh kelompok itu, bukan hanya di halaman ini. */
+            question_count: number;
+            /**
+             * @description `count` kelompok terbesar di seluruh halaman. Batang frekuensi diskalakan
+             *     terhadap angka ini, supaya kelompok kecil di halaman berikutnya tidak tampak
+             *     sama besar dengan kelompok terbesar.
+             */
+            max_count: number;
+        };
         /** @description Satu penilaian FE-5 beserta pasangan pertanyaan-jawaban yang dinilai. */
         FeedbackItem: {
             /** Format: uuid */
@@ -3139,28 +3152,33 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description Kelompok pertanyaan */
+            /** @description Satu halaman kelompok pertanyaan */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
                     /**
-                     * @example [
-                     *       {
-                     *         "ids": [
-                     *           "0b6f2c1e-3a4d-4e5f-9a8b-7c6d5e4f3a2b",
-                     *           "1c7a3d2f-4b5e-4f60-8b9c-8d7e6f5a4b3c"
-                     *         ],
-                     *         "sample_question": "Bagaimana cara mengurus surat keterangan lulus?",
-                     *         "count": 12,
-                     *         "avg_top_score": 0.21,
-                     *         "last_asked_at": "2026-09-09T14:22:11Z",
-                     *         "resolved": false
-                     *       }
-                     *     ]
+                     * @example {
+                     *       "items": [
+                     *         {
+                     *           "ids": [
+                     *             "0b6f2c1e-3a4d-4e5f-9a8b-7c6d5e4f3a2b",
+                     *             "1c7a3d2f-4b5e-4f60-8b9c-8d7e6f5a4b3c"
+                     *           ],
+                     *           "sample_question": "Bagaimana cara mengurus surat keterangan lulus?",
+                     *           "count": 12,
+                     *           "avg_top_score": 0.21,
+                     *           "last_asked_at": "2026-09-09T14:22:11Z",
+                     *           "resolved": false
+                     *         }
+                     *       ],
+                     *       "total": 1,
+                     *       "question_count": 12,
+                     *       "max_count": 12
+                     *     }
                      */
-                    "application/json": components["schemas"]["UnansweredGroup"][];
+                    "application/json": components["schemas"]["UnansweredPage"];
                 };
             };
             401: components["responses"]["Unauthorized"];
