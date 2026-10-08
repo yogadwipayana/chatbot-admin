@@ -731,7 +731,9 @@ export interface paths {
         };
         /**
          * Daftar giliran chat
-         * @description Terbaru lebih dulu. Tanpa teks pertanyaan/jawaban; buka lewat `message_id`.
+         * @description Terbaru lebih dulu, termasuk giliran uji coba admin (`endpoint=uji_coba`). `question`
+         *     berisi teks pertanyaan bila LOG_NODE_IO menyala saat giliran itu berjalan
+         *     (pertanyaan sensitif FR-7 disamarkan); jawaban dan NIM ada di detail giliran.
          */
         get: operations["list_turns"];
         put?: never;
@@ -754,6 +756,50 @@ export interface paths {
          * @description Node yang berjalan beserta durasi dan detailnya, plus log selama giliran itu.
          */
         get: operations["get_turn"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/logs/turns/{turn_id}/trace": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Rekaman input/output satu giliran (tab Graf)
+         * @description State yang diterima dan dikembalikan setiap node, rute sesudahnya, dan pohon
+         *     panggilan di dalam node (LLM, retriever, tool, JEV) -- pengganti trace LangSmith.
+         *     404 bila giliran tidak ada, sudah lewat masa simpan, atau berjalan saat
+         *     LOG_NODE_IO mati. Waktu dan status node ada di `GET /api/admin/logs/turns/{turn_id}`.
+         */
+        get: operations["get_turn_trace"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/logs/graph": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Node dan sisi pipeline chat
+         * @description Bentuk graf LangGraph (`get_graph(xray=True)`) untuk diagram tab Graf. Node di dalam
+         *     subgraph diberi `group` (mis. `cari` untuk rewrite dan retrieve).
+         */
+        get: operations["get_pipeline_graph"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1650,6 +1696,8 @@ export interface components {
             latency_ms: number;
             /** @description Akar trace LangSmith untuk uji coba ini -- mencakup penulisan ulang query, retrieval, dan penyusunan jawaban sekaligus. Null bila tracing mati (LANGSMITH_TRACING=false atau LANGSMITH_API_KEY kosong). */
             langsmith_run_id?: string | null;
+            /** @description Giliran uji coba ini di halaman Log (jalur `uji_coba`), untuk membuka langkah dan panggilan LLM/tool-nya di tab Graf. Null bila log SQLite mati. */
+            turn_id?: string | null;
         };
         DailyVolume: {
             /** Format: date */
@@ -1825,9 +1873,9 @@ export interface components {
             turn_id: string;
             timestamp: string;
             /** @enum {string} */
-            endpoint: "chat" | "chat_stream";
+            endpoint: "chat" | "chat_stream" | "uji_coba";
             session_id: string | null;
-            /** @description Tautan ke `messages` di Postgres; teks percakapan hanya ada di sana. */
+            /** @description Tautan ke `messages` di Postgres. */
             message_id: string | null;
             unit: string | null;
             outcome: string | null;
@@ -1838,6 +1886,10 @@ export interface components {
             /** @enum {string} */
             status: "ok" | "error" | "dibatalkan";
             langsmith_run_id: string | null;
+            /** @description Teks pertanyaan; penanda samaran untuk FR-7. Null bila LOG_NODE_IO mati. */
+            question: string | null;
+            /** @description Ada rekaman input/output untuk tab Graf. */
+            has_trace: boolean;
         };
         TurnPage: {
             total: number;
@@ -1866,14 +1918,14 @@ export interface components {
             traceback: string | null;
             turn_id: string | null;
         };
-        /** @description TurnOut ditambah node dan log giliran itu. */
+        /** @description TurnOut ditambah NIM, jawaban, node, dan log giliran itu. */
         TurnDetail: {
             turn_id: string;
             timestamp: string;
             /** @enum {string} */
-            endpoint: "chat" | "chat_stream";
+            endpoint: "chat" | "chat_stream" | "uji_coba";
             session_id: string | null;
-            /** @description Tautan ke `messages` di Postgres; teks percakapan hanya ada di sana. */
+            /** @description Tautan ke `messages` di Postgres. */
             message_id: string | null;
             unit: string | null;
             outcome: string | null;
@@ -1884,9 +1936,75 @@ export interface components {
             /** @enum {string} */
             status: "ok" | "error" | "dibatalkan";
             langsmith_run_id: string | null;
+            /** @description Teks pertanyaan; penanda samaran untuk FR-7. Null bila LOG_NODE_IO mati. */
+            question: string | null;
+            /** @description Ada rekaman input/output untuk tab Graf. */
+            has_trace: boolean;
+            nim: string | null;
+            /** @description Jawaban yang dikirim; null bila gagal, dibatalkan, atau LOG_NODE_IO mati. */
+            answer: string | null;
             nodes: components["schemas"]["NodeRunOut"][];
             /** @description Log yang muncul selama giliran ini berjalan. */
             logs: components["schemas"]["AppLogOut"][];
+        };
+        NodeTrace: {
+            /** @description Sama dengan `NodeRunOut.position`. */
+            position: number;
+            node: string;
+            /** @description State yang diterima node. */
+            input?: unknown;
+            /** @description Perubahan state yang dikembalikan node; null bila node gagal. */
+            output?: unknown;
+            /** @description Keluaran router sesudah node: nama node berikutnya, daftar nama (paralel), atau `selesai`. Null bila node tidak diikuti sisi bersyarat. */
+            route?: unknown;
+        };
+        CallTrace: {
+            id: string;
+            /** @description Panggilan induk; null bila langsung di bawah node. */
+            parent_id: string | null;
+            /** @description Posisi node pemiliknya. */
+            position: number;
+            name: string;
+            /** @enum {string} */
+            kind: "llm" | "retriever" | "tool" | "jev" | "chain";
+            started_at: string;
+            duration_ms: number | null;
+            /** @enum {string} */
+            status: "ok" | "error" | "berjalan";
+            error: string | null;
+            model: string | null;
+            usage: {
+                [key: string]: unknown;
+            } | null;
+            cost_usd: number | null;
+            input?: unknown;
+            output?: unknown;
+        };
+        TurnTrace: {
+            turn_id: string;
+            /** @description Masukan graf: pertanyaan, riwayat, unit, profil. */
+            input?: unknown;
+            /** @description `outcome` akhir; null bila giliran gagal atau dibatalkan. */
+            output?: unknown;
+            nodes: components["schemas"]["NodeTrace"][];
+            calls: components["schemas"]["CallTrace"][];
+        };
+        GraphNode: {
+            /** @description Nama node (`node_runs.node`), atau `__start__`/`__end__`. */
+            id: string;
+            /** @description Subgraph pembungkusnya, mis. `cari`. */
+            group: string | null;
+        };
+        GraphEdge: {
+            source: string;
+            target: string;
+            conditional: boolean;
+            /** @description Nama cabang router, mis. `selesai`. */
+            label: string | null;
+        };
+        PipelineGraph: {
+            nodes: components["schemas"]["GraphNode"][];
+            edges: components["schemas"]["GraphEdge"][];
         };
         AppLogPage: {
             total: number;
@@ -3275,6 +3393,8 @@ export interface operations {
                 status?: "ok" | "error" | "dibatalkan";
                 unit?: string;
                 last_node?: string;
+                /** @description Jalur giliran. `uji_coba` = kotak uji coba admin. */
+                endpoint?: "chat" | "chat_stream" | "uji_coba";
                 limit?: components["parameters"]["Limit"];
                 offset?: components["parameters"]["Offset"];
             };
@@ -3329,6 +3449,53 @@ export interface operations {
             401: components["responses"]["Unauthorized"];
             403: components["responses"]["Forbidden"];
             404: components["responses"]["NotFound"];
+        };
+    };
+    get_turn_trace: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                turn_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Rekaman giliran */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TurnTrace"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+        };
+    };
+    get_pipeline_graph: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Graf pipeline */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PipelineGraph"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
         };
     };
     list_app_logs: {

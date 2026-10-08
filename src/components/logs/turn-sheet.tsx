@@ -1,6 +1,7 @@
 "use client"
 
-import { InfoIcon } from "lucide-react"
+import { InfoIcon, WorkflowIcon } from "lucide-react"
+import { useState } from "react"
 
 import { QueryError } from "@/components/common"
 import {
@@ -8,10 +9,12 @@ import {
   durasi,
   kindLabel,
   LevelLabel,
+  NodeDetail,
   nodeLabel,
   TurnStatus,
   useLogTime,
 } from "@/components/logs/shared"
+import { Button } from "@/components/ui/button"
 import {
   Sheet,
   SheetContent,
@@ -24,20 +27,20 @@ import { useNow } from "@/hooks/use-now"
 import type { Schemas } from "@/lib/api/client"
 import { ApiError } from "@/lib/api/client"
 import { useLogTurn } from "@/lib/api/queries"
-import { formatUsdPrecise } from "@/lib/format"
 import { useFormat, useT } from "@/lib/i18n"
 import type { Dict } from "@/lib/i18n/dict"
 import { cn } from "@/lib/utils"
 
 type Turn = Schemas["TurnDetail"]
-type NodeRun = Schemas["NodeRunOut"]
 
 export function TurnSheet({
   turnId,
   onOpenChange,
+  onOpenGraph,
 }: {
   turnId: string | null
   onOpenChange: (open: boolean) => void
+  onOpenGraph: (turnId: string) => void
 }) {
   const t = useT()
   const turn = useLogTurn(turnId)
@@ -62,7 +65,7 @@ export function TurnSheet({
               <Skeleton className="h-64 rounded-lg" />
             </div>
           ) : (
-            <TurnBody turn={turn.data} />
+            <TurnBody turn={turn.data} onOpenGraph={onOpenGraph} />
           )}
         </div>
       </SheetContent>
@@ -70,14 +73,52 @@ export function TurnSheet({
   )
 }
 
-function TurnBody({ turn }: { turn: Turn }) {
+function TurnBody({ turn, onOpenGraph }: { turn: Turn; onOpenGraph: (turnId: string) => void }) {
   const t = useT()
   const f = useFormat()
   const waktu = useLogTime()
   const now = useNow()
+  const [jawabanPenuh, setJawabanPenuh] = useState(false)
 
   return (
     <div className="space-y-6">
+      <section className="space-y-3">
+        {turn.question ? (
+          <div className="space-y-1">
+            <h3 className="text-xs font-medium text-muted-foreground">{t.logs.turn.question}</h3>
+            <p className="border-l-2 pl-3 text-sm break-words">{turn.question}</p>
+          </div>
+        ) : (
+          <p className="text-sm text-muted-foreground">{t.logs.turn.noText}</p>
+        )}
+        {turn.answer ? (
+          <div className="space-y-1">
+            <h3 className="text-xs font-medium text-muted-foreground">{t.logs.turn.answer}</h3>
+            <p
+              className={cn(
+                "text-sm whitespace-pre-wrap break-words",
+                !jawabanPenuh && "line-clamp-6"
+              )}
+            >
+              {turn.answer}
+            </p>
+            {turn.answer.length > 400 ? (
+              <button
+                type="button"
+                onClick={() => setJawabanPenuh((b) => !b)}
+                className="text-xs text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
+              >
+                {jawabanPenuh ? t.logs.turn.showLess : t.logs.turn.showMore}
+              </button>
+            ) : null}
+          </div>
+        ) : null}
+        <Button variant="outline" size="sm" onClick={() => onOpenGraph(turn.turn_id)}>
+          <WorkflowIcon data-icon="inline-start" />
+          {t.logs.turn.openGraph}
+        </Button>
+      </section>
+
       <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 text-sm">
         <dt className="text-muted-foreground">{t.logs.turns.columns.time}</dt>
         <dd>{waktu.waktu(turn.timestamp, now)}</dd>
@@ -105,6 +146,13 @@ function TurnBody({ turn }: { turn: Turn }) {
           {t.logs.endpoint[turn.endpoint as keyof Dict["logs"]["endpoint"]] ?? turn.endpoint}
           {turn.unit ? <span className="text-muted-foreground"> · {turn.unit}</span> : null}
         </dd>
+
+        {turn.nim ? (
+          <>
+            <dt className="text-muted-foreground">{t.logs.turn.nim}</dt>
+            <dd className="tabular-nums">{turn.nim}</dd>
+          </>
+        ) : null}
 
         {turn.message_id ? (
           <>
@@ -154,13 +202,15 @@ function TurnBody({ turn }: { turn: Turn }) {
         )}
       </section>
 
-      <p className="flex gap-2 text-xs text-pretty text-muted-foreground">
-        <InfoIcon className="mt-px size-3.5 shrink-0" aria-hidden />
-        <span>
-          {turn.message_id ? `${t.logs.turn.messageIdHint} ` : ""}
-          {turn.langsmith_run_id ? t.logs.turn.runIdHint : ""}
-        </span>
-      </p>
+      {turn.message_id || turn.langsmith_run_id ? (
+        <p className="flex gap-2 text-xs text-pretty text-muted-foreground">
+          <InfoIcon className="mt-px size-3.5 shrink-0" aria-hidden />
+          <span>
+            {turn.message_id ? `${t.logs.turn.messageIdHint} ` : ""}
+            {turn.langsmith_run_id ? t.logs.turn.runIdHint : ""}
+          </span>
+        </p>
+      ) : null}
     </div>
   )
 }
@@ -212,46 +262,4 @@ function Waterfall({ turn }: { turn: Turn }) {
       })}
     </ul>
   )
-}
-
-function NodeDetail({ node }: { node: NodeRun }) {
-  const t = useT()
-  const f = useFormat()
-  const entri = Object.entries(node.detail ?? {}).filter(([, v]) => v !== null && v !== undefined)
-
-  if (node.status === "error") {
-    return (
-      <p className="text-xs break-words text-status-critical">
-        {node.error_type}
-        {node.error_message ? `: ${node.error_message}` : ""}
-      </p>
-    )
-  }
-  if (entri.length === 0) return null
-
-  return (
-    <p className="flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-muted-foreground">
-      {entri.map(([k, v]) => (
-        <span key={k}>
-          {t.logs.detailKeys[k as keyof Dict["logs"]["detailKeys"]] ?? k}:{" "}
-          <span className="text-foreground">{nilaiDetail(t, f, k, v)}</span>
-        </span>
-      ))}
-    </p>
-  )
-}
-
-function nilaiDetail(
-  t: Dict,
-  f: ReturnType<typeof useFormat>,
-  kunci: string,
-  nilai: unknown
-): string {
-  if (typeof nilai === "boolean") return nilai ? t.logs.yes : t.logs.no
-  if (typeof nilai === "number") {
-    if (kunci === "cost_usd") return formatUsdPrecise(nilai)
-    if (Number.isInteger(nilai)) return f.number(nilai)
-    return f.score(nilai)
-  }
-  return String(nilai)
 }

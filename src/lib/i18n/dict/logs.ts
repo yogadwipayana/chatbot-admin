@@ -1,4 +1,4 @@
-/** Halaman Log: performa pipeline chat, giliran, dan log aplikasi (`logs.md`). */
+/** Halaman Log: performa pipeline chat, giliran, graf, dan log aplikasi (`logs.md`). */
 
 export const logs = {
   title: ["Log", "Logs"],
@@ -14,6 +14,7 @@ export const logs = {
   tabs: {
     performance: ["Performa", "Performance"],
     turns: ["Giliran chat", "Chat turns"],
+    graph: ["Graf", "Graph"],
     app: ["Log aplikasi", "Application log"],
   },
   refreshNote: [
@@ -32,6 +33,8 @@ export const logs = {
     validate_context: ["Validasi konteks", "Context check"],
     refuse: ["Penolakan", "Refusal"],
     generate: ["Menyusun jawaban", "Writing the answer"],
+    // Subgraph rewrite -> retrieve; hanya muncul sebagai tujuan rute, bukan langkah.
+    cari: ["Pencarian", "Search"],
   },
 
   kpi: {
@@ -96,8 +99,8 @@ export const logs = {
   },
   emptyPerformance: ["Belum ada giliran chat pada rentang ini", "No chat turns in this range yet"],
   emptyPerformanceBody: [
-    "Angka muncul setelah mahasiswa bertanya lewat chatbot. Kotak uji coba di dashboard tidak ikut tercatat.",
-    "Numbers appear once students ask through the chatbot. The dashboard's test box is not recorded.",
+    "Angka muncul setelah mahasiswa bertanya lewat chatbot. Kotak uji coba di dashboard tidak dihitung di sini; gilirannya ada di tab Giliran chat dan Graf.",
+    "Numbers appear once students ask through the chatbot. The dashboard's test box is not counted here; its turns are in the Chat turns and Graph tabs.",
   ],
 
   turns: {
@@ -108,11 +111,15 @@ export const logs = {
       total: ["Total", "Total"],
       unit: ["Unit", "Unit"],
       status: ["Status", "Status"],
+      question: ["Pertanyaan", "Question"],
     },
     resultFilter: ["Hasil", "Result"],
     statusFilter: ["Status", "Status"],
+    endpointFilter: ["Jalur", "Source"],
     allResults: ["Semua hasil", "All results"],
     allStatuses: ["Semua status", "All statuses"],
+    allEndpoints: ["Semua jalur", "All sources"],
+    testBadge: ["Uji coba", "Test"],
     empty: ["Tidak ada giliran yang cocok", "No matching turns"],
     emptyBody: [
       "Coba ubah filter atau perlebar rentang waktu.",
@@ -129,6 +136,7 @@ export const logs = {
   endpoint: {
     chat: ["Sekali kirim", "Single response"],
     chat_stream: ["Streaming", "Streaming"],
+    uji_coba: ["Uji coba admin", "Admin test"],
   },
 
   turn: {
@@ -147,9 +155,19 @@ export const logs = {
     session: ["Sesi", "Session"],
     messageId: ["ID pesan", "Message ID"],
     messageIdHint: [
-      "Teks pertanyaan dan jawaban tidak disimpan di log ini. Cari ID ini di tabel messages untuk membacanya.",
-      "Question and answer text is not kept in this log. Look this ID up in the messages table to read it.",
+      "ID pesan menautkan giliran ini ke tabel messages di Postgres.",
+      "The message ID links this turn to the messages table in Postgres.",
     ],
+    question: ["Pertanyaan", "Question"],
+    answer: ["Jawaban", "Answer"],
+    nim: ["NIM", "Student ID"],
+    noText: [
+      "Teks giliran ini tidak tersimpan di log: LOG_NODE_IO mati saat giliran ini berjalan.",
+      "This turn's text was not kept in the log: LOG_NODE_IO was off when it ran.",
+    ],
+    openGraph: ["Lihat di graf", "Open in graph"],
+    showMore: ["Tampilkan semua", "Show all"],
+    showLess: ["Ringkas", "Show less"],
     runId: ["ID trace LangSmith", "LangSmith trace ID"],
     runIdHint: [
       "Tempel di kolom pencarian proyek LangSmith untuk membuka trace lengkapnya.",
@@ -165,6 +183,92 @@ export const logs = {
       "Giliran ini tidak ditemukan. Log yang lebih tua dari masa simpan sudah dihapus.",
       "This turn was not found. Logs older than the retention period have been deleted.",
     ],
+  },
+
+  graph: {
+    picker: ["Giliran yang ditampilkan", "Turn shown"],
+    summary: ["Semua giliran (ringkasan)", "All turns (summary)"],
+    newer: ["Giliran lebih baru", "Newer turn"],
+    older: ["Giliran lebih lama", "Older turn"],
+    openDetail: ["Rincian giliran", "Turn details"],
+    empty: ["Belum ada giliran pada rentang ini", "No turns in this range yet"],
+    emptyBody: [
+      "Graf muncul setelah mahasiswa bertanya lewat chatbot atau admin menjalankan uji coba jawaban.",
+      "The graph appears once students ask through the chatbot or an admin runs a test query.",
+    ],
+    diagram: ["Diagram alur pipeline chat", "Chat pipeline flow diagram"],
+    start: ["mulai", "start"],
+    end: ["selesai", "end"],
+    skipped: ["tidak berjalan", "did not run"],
+    group: {
+      // Pendek: ditulis di pojok kotak, dan kalimat panjang tertimpa sisi keluarnya.
+      cari: ["paralel", "parallel"],
+    },
+    runs: [
+      (jumlah: string, median: string) => `${jumlah}× · ${median}`,
+      (jumlah: string, median: string) => `${jumlah}× · ${median}`,
+    ],
+    exits: [(jumlah: string) => `${jumlah}×`, (jumlah: string) => `${jumlah}×`],
+    legend: {
+      ran: ["berjalan", "ran"],
+      error: ["gagal", "failed"],
+      skipped: ["tidak berjalan", "did not run"],
+      conditional: ["sisi bersyarat", "conditional edge"],
+    },
+    summaryHint: [
+      "Angka di tiap langkah: berapa kali berjalan dan median durasinya pada rentang ini, tanpa uji coba admin. Pilih satu giliran untuk melihat input, output, dan panggilan LLM-nya.",
+      "Numbers on each step: how often it ran and its median duration in this range, excluding admin tests. Pick one turn to see its inputs, outputs, and LLM calls.",
+    ],
+    noTrace: [
+      "Rekaman input/output tidak ada untuk giliran ini: ia berjalan sebelum rekaman dinyalakan atau saat LOG_NODE_IO mati. Durasi tiap langkah tetap tampil di diagram.",
+      "There is no input/output recording for this turn: it ran before recording was enabled or while LOG_NODE_IO was off. Step durations still show in the diagram.",
+    ],
+    selectNode: [
+      "Klik sebuah langkah di diagram untuk melihat input, output, dan panggilan di dalamnya.",
+      "Click a step in the diagram to see its input, output, and the calls inside it.",
+    ],
+    notRun: [
+      "Langkah ini tidak berjalan pada giliran ini.",
+      "This step did not run in this turn.",
+    ],
+    tabs: {
+      input: ["Input", "Input"],
+      output: ["Output", "Output"],
+      calls: ["Panggilan", "Calls"],
+    },
+    next: ["Lanjut ke", "Next"],
+    parallel: ["paralel", "parallel"],
+    noOutput: [
+      "Tidak ada output: langkah ini gagal atau dihentikan sebelum selesai.",
+      "No output: this step failed or was stopped before it finished.",
+    ],
+    noCalls: [
+      "Langkah ini tidak memanggil LLM, retriever, tool, maupun JEV.",
+      "This step made no LLM, retriever, tool, or JEV calls.",
+    ],
+    kind: {
+      llm: ["LLM", "LLM"],
+      retriever: ["Retriever", "Retriever"],
+      tool: ["Tool", "Tool"],
+      jev: ["JEV", "JEV"],
+      chain: ["Rantai", "Chain"],
+    },
+    cutOff: ["terputus", "cut off"],
+    tokens: [
+      (masuk: string, keluar: string) => `${masuk} → ${keluar} token`,
+      (masuk: string, keluar: string) => `${masuk} → ${keluar} tokens`,
+    ],
+    stats: [
+      (jumlah: string, p50: string, p95: string) =>
+        `Berjalan ${jumlah} kali. Median ${p50}, p95 ${p95}.`,
+      (jumlah: string, p50: string, p95: string) => `Ran ${jumlah} times. Median ${p50}, p95 ${p95}.`,
+    ],
+    statsErrors: [(jumlah: string) => `${jumlah} gagal.`, (jumlah: string) => `${jumlah} failed.`],
+    empty_value: ["(kosong)", "(empty)"],
+    items: [(jumlah: string) => `${jumlah} butir`, (jumlah: string) => `${jumlah} items`],
+    keys: [(jumlah: string) => `${jumlah} kunci`, (jumlah: string) => `${jumlah} keys`],
+    copyJson: ["Salin JSON", "Copy JSON"],
+    page: ["hal.", "p."],
   },
 
   app: {
@@ -217,6 +321,7 @@ export const logs = {
     model: ["model", "model"],
     input_tokens: ["token masuk", "input tokens"],
     output_tokens: ["token keluar", "output tokens"],
+    tools: ["tool", "tools"],
   },
   yes: ["ya", "yes"],
   no: ["tidak", "no"],

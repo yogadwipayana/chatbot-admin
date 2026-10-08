@@ -5,6 +5,7 @@ import { useState } from "react"
 
 import { EmptyState, QueryError } from "@/components/common"
 import { durasi, kindLabel, nodeLabel, TurnStatus, useLogTime } from "@/components/logs/shared"
+import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
   Select,
@@ -23,7 +24,12 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { useNow } from "@/hooks/use-now"
-import { useLogTurns, type LogRange, type TurnFilters } from "@/lib/api/queries"
+import {
+  useLogTurns,
+  type LogRange,
+  type TurnEndpoint,
+  type TurnFilters,
+} from "@/lib/api/queries"
 import { useFormat, useT } from "@/lib/i18n"
 import { cn } from "@/lib/utils"
 
@@ -31,6 +37,7 @@ const PAGE_SIZE = 50
 const SEMUA = "semua"
 const HASIL = ["answer", "refusal", "support", "smalltalk", "rejected"] as const
 const STATUS = ["ok", "error", "dibatalkan"] as const
+const JALUR: readonly TurnEndpoint[] = ["chat_stream", "chat", "uji_coba"]
 
 export function TurnsTab({
   range,
@@ -45,6 +52,7 @@ export function TurnsTab({
   const waktu = useLogTime()
   const [hasil, setHasil] = useState<string>(SEMUA)
   const [status, setStatus] = useState<string>(SEMUA)
+  const [jalur, setJalur] = useState<string>(SEMUA)
   const [page, setPage] = useState(0)
 
   // Ganti rentang: filter tetap, halaman kembali ke awal. Disetel saat render,
@@ -59,6 +67,7 @@ export function TurnsTab({
     range,
     outcome: hasil === SEMUA ? undefined : hasil,
     status: status === SEMUA ? undefined : (status as TurnFilters["status"]),
+    endpoint: jalur === SEMUA ? undefined : (jalur as TurnEndpoint),
     limit: PAGE_SIZE,
     offset: page * PAGE_SIZE,
   })
@@ -100,6 +109,19 @@ export function TurnsTab({
             ))}
           </SelectContent>
         </Select>
+        <Select value={jalur} onValueChange={(v) => ganti(() => setJalur(v))}>
+          <SelectTrigger className="w-full sm:w-48" aria-label={t.logs.turns.endpointFilter}>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value={SEMUA}>{t.logs.turns.allEndpoints}</SelectItem>
+            {JALUR.map((j) => (
+              <SelectItem key={j} value={j}>
+                {t.logs.endpoint[j]}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       {query.error ? (
@@ -119,6 +141,7 @@ export function TurnsTab({
               <TableHeader>
                 <TableRow>
                   <TableHead className="pl-3">{t.logs.turns.columns.time}</TableHead>
+                  <TableHead>{t.logs.turns.columns.question}</TableHead>
                   <TableHead>{t.logs.turns.columns.result}</TableHead>
                   <TableHead>{t.logs.turns.columns.stoppedAt}</TableHead>
                   <TableHead className="text-right">{t.logs.turns.columns.total}</TableHead>
@@ -147,6 +170,21 @@ export function TurnsTab({
                       >
                         {waktu.waktu(turn.timestamp, now)}
                       </button>
+                    </TableCell>
+                    <TableCell className="max-w-72">
+                      <span className="flex min-w-0 items-center gap-2">
+                        {turn.endpoint === "uji_coba" ? (
+                          <Badge variant="secondary" className="shrink-0">
+                            {t.logs.turns.testBadge}
+                          </Badge>
+                        ) : null}
+                        <span
+                          className={cn("truncate", !turn.question && "text-muted-foreground")}
+                          title={turn.question ?? undefined}
+                        >
+                          {turn.question ?? "—"}
+                        </span>
+                      </span>
                     </TableCell>
                     <TableCell>{kindLabel(t, turn.outcome)}</TableCell>
                     <TableCell className="text-muted-foreground">

@@ -332,10 +332,13 @@ export function useLogSummary(range: LogRange) {
   })
 }
 
+export type TurnEndpoint = "chat" | "chat_stream" | "uji_coba"
+
 export type TurnFilters = {
   range: LogRange
   outcome?: string
   status?: "ok" | "error" | "dibatalkan"
+  endpoint?: TurnEndpoint
   limit: number
   offset: number
 }
@@ -362,6 +365,31 @@ export function useLogTurn(turnId: string | null) {
       ),
     enabled: turnId !== null,
     // Giliran yang sudah tercatat tidak berubah lagi.
+    staleTime: Infinity,
+  })
+}
+
+/** Input/output tiap node dan panggilan di dalamnya (tab Graf). 404 = tidak direkam. */
+export function useLogTrace(turnId: string | null) {
+  return useQuery({
+    queryKey: ["logs", "trace", turnId],
+    queryFn: ({ signal }) =>
+      unwrap(
+        api.GET("/api/admin/logs/turns/{turn_id}/trace", {
+          params: { path: { turn_id: turnId ?? "" } },
+          signal,
+        })
+      ),
+    enabled: turnId !== null,
+    staleTime: Infinity,
+  })
+}
+
+/** Bentuk graf pipeline; hanya berubah saat API di-deploy ulang. */
+export function usePipelineGraph() {
+  return useQuery({
+    queryKey: ["logs", "graph"],
+    queryFn: ({ signal }) => unwrap(api.GET("/api/admin/logs/graph", { signal })),
     staleTime: Infinity,
   })
 }

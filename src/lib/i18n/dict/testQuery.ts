@@ -107,6 +107,7 @@ export const testQuery = {
     "Shown below the student's answer, 10 rows per page. The AI model does not copy this list; it comes straight from its source.",
   ],
   latency: [(waktu: string) => `Waktu proses ${waktu}`, (waktu: string) => `Processing time ${waktu}`],
+  openLog: ["Lihat langkah dan panggilan LLM-nya di Log", "See its steps and LLM calls in Logs"],
   decisionTitle: ["Keputusan ambang", "Threshold decision"],
   decisionSensitive: [
     "Pertanyaan sensitif dialihkan sebelum pencarian dokumen.",

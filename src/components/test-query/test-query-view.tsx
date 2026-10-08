@@ -11,7 +11,9 @@ import {
   SearchIcon,
   ShieldBanIcon,
   SmileIcon,
+  WorkflowIcon,
 } from "lucide-react"
+import Link from "next/link"
 import { Fragment, useState, type FormEvent } from "react"
 
 import { PageHeader, RichText, Spinner } from "@/components/common"
@@ -40,8 +42,9 @@ import {
 } from "@/components/ui/table"
 import { Textarea } from "@/components/ui/textarea"
 import type { Schemas } from "@/lib/api/client"
-import { useTestQuery, useUnits } from "@/lib/api/queries"
+import { useMe, useTestQuery, useUnits } from "@/lib/api/queries"
 import { useFormat, useT } from "@/lib/i18n"
+import { atLeast } from "@/lib/roles"
 import type { Dict } from "@/lib/i18n/dict"
 import { cn } from "@/lib/utils"
 
@@ -204,6 +207,7 @@ const KIND_ICON = {
 
 function OutcomeCard({ hasil, unit }: { hasil: Result; unit: string | null }) {
   const t = useT()
+  const me = useMe().data
   const f = useFormat()
   const Icon = KIND_ICON[hasil.kind]
   return (
@@ -263,9 +267,20 @@ function OutcomeCard({ hasil, unit }: { hasil: Result; unit: string | null }) {
             </ul>
           </div>
         ) : null}
-        <p className="text-xs text-muted-foreground">
-          {t.testQuery.latency(f.duration(hasil.latency_ms))}
-        </p>
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <p className="text-xs text-muted-foreground">
+            {t.testQuery.latency(f.duration(hasil.latency_ms))}
+          </p>
+          {/* Halaman Log minimal admin; staf tidak diberi tautan yang berujung 403. */}
+          {hasil.turn_id && atLeast(me, "admin") ? (
+            <Button asChild variant="link" size="sm" className="h-auto px-0">
+              <Link href={`/log?tab=graf&giliran=${encodeURIComponent(hasil.turn_id)}`}>
+                <WorkflowIcon data-icon="inline-start" />
+                {t.testQuery.openLog}
+              </Link>
+            </Button>
+          ) : null}
+        </div>
       </CardContent>
     </Card>
   )

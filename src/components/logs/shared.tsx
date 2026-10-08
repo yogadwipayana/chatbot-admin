@@ -5,8 +5,9 @@ import { useMemo, useState } from "react"
 
 import { StatusLabel, type StatusLevel } from "@/components/status"
 import { Button } from "@/components/ui/button"
-import type { Format } from "@/lib/format"
-import { useLang, useT } from "@/lib/i18n"
+import type { Schemas } from "@/lib/api/client"
+import { formatUsdPrecise, type Format } from "@/lib/format"
+import { useFormat, useLang, useT } from "@/lib/i18n"
 import type { Dict } from "@/lib/i18n/dict"
 import { LOCALES } from "@/lib/i18n/lang"
 
@@ -138,4 +139,47 @@ export function CopyValue({ value }: { value: string }) {
       </Button>
     </span>
   )
+}
+
+/** Detail ringkas satu langkah (`node_runs.detail`), atau galatnya. */
+export function NodeDetail({ node }: { node: Schemas["NodeRunOut"] }) {
+  const t = useT()
+  const f = useFormat()
+  const entri = Object.entries(node.detail ?? {}).filter(([, v]) => v !== null && v !== undefined)
+
+  if (node.status === "error") {
+    return (
+      <p className="text-xs break-words text-status-critical">
+        {node.error_type}
+        {node.error_message ? `: ${node.error_message}` : ""}
+      </p>
+    )
+  }
+  if (entri.length === 0) return null
+
+  return (
+    <p className="flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-muted-foreground">
+      {entri.map(([k, v]) => (
+        <span key={k}>
+          {t.logs.detailKeys[k as keyof Dict["logs"]["detailKeys"]] ?? k}:{" "}
+          <span className="text-foreground">{nilaiDetail(t, f, k, v)}</span>
+        </span>
+      ))}
+    </p>
+  )
+}
+
+function nilaiDetail(
+  t: Dict,
+  f: ReturnType<typeof useFormat>,
+  kunci: string,
+  nilai: unknown
+): string {
+  if (typeof nilai === "boolean") return nilai ? t.logs.yes : t.logs.no
+  if (typeof nilai === "number") {
+    if (kunci === "cost_usd") return formatUsdPrecise(nilai)
+    if (Number.isInteger(nilai)) return f.number(nilai)
+    return f.score(nilai)
+  }
+  return String(nilai)
 }
