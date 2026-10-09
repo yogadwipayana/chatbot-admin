@@ -36,7 +36,7 @@ type Group = Schemas["UnansweredGroup"]
 type Tab = "belum" | "sudah" | "semua"
 
 const PERIODE = ["7", "30", "90", "semua"] as const
-const PAGE_SIZE = 20
+const PAGE_SIZE = 10
 
 export function UnansweredView() {
   const t = useT()

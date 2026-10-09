@@ -1,8 +1,6 @@
 "use client"
 
 import {
-  ChevronLeftIcon,
-  ChevronRightIcon,
   FlaskConicalIcon,
   InfoIcon,
   MessageSquareHeartIcon,
@@ -12,7 +10,7 @@ import {
 import Link from "next/link"
 import { useState } from "react"
 
-import { EmptyState, PageHeader, QueryError, RichText } from "@/components/common"
+import { EmptyState, PageHeader, Pagination, QueryError, RichText } from "@/components/common"
 import { testQueryHref } from "@/components/test-query/href"
 import { Button } from "@/components/ui/button"
 import {
@@ -35,7 +33,7 @@ import { cn } from "@/lib/utils"
 type Item = Schemas["FeedbackItem"]
 type Tab = "tidak" | "membantu" | "semua"
 
-const PAGE_SIZE = 20
+const PAGE_SIZE = 10
 
 const PERIODE = ["7", "30", "90", "semua"] as const
 
@@ -160,35 +158,13 @@ export function FeedbackView() {
           </ul>
 
           {total > PAGE_SIZE ? (
-            <div className="flex items-center justify-between gap-4 pt-1 text-sm text-muted-foreground">
-              <span>
-                {t.documents.range(
-                  f.number(page * PAGE_SIZE + 1),
-                  f.number(Math.min((page + 1) * PAGE_SIZE, total)),
-                  f.number(total)
-                )}
-              </span>
-              <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  disabled={page === 0}
-                  onClick={() => setPage((p) => p - 1)}
-                >
-                  <ChevronLeftIcon data-icon="inline-start" />
-                  {t.documents.previous}
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  disabled={page >= halamanTerakhir}
-                  onClick={() => setPage((p) => p + 1)}
-                >
-                  {t.documents.next}
-                  <ChevronRightIcon data-icon="inline-end" />
-                </Button>
-              </div>
-            </div>
+            <Pagination
+              page={page}
+              total={total}
+              pageSize={PAGE_SIZE}
+              onPage={setPage}
+              last={halamanTerakhir}
+            />
           ) : null}
 
           <p className="flex gap-2 pt-2 text-xs text-pretty text-muted-foreground">
