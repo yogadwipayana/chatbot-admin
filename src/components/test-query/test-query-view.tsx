@@ -260,7 +260,8 @@ function OutcomeCard({ hasil, unit }: { hasil: Result; unit: string | null }) {
                 <li key={`${c.unit}-${c.contact}`}>
                   <span className="font-medium">{c.unit}</span>{" "}
                   <span className="text-muted-foreground">
-                    · {c.service_hours} · {c.contact}
+                    · {c.service_hours ? `${c.service_hours} · ` : ""}
+                    {c.contact}
                   </span>
                 </li>
               ))}
