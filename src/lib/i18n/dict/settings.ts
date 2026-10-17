@@ -3,8 +3,8 @@
 export const config = {
   title: ["Konfigurasi", "Configuration"],
   description: [
-    "Setelan pencarian dokumen dan pemecahan dokumen yang dipakai chatbot. Perubahan langsung berlaku tanpa menjalankan ulang server, dan selalu dapat dikembalikan ke nilai yang tertulis di server.",
-    "Retrieval and chunking settings the chatbot runs on. Changes take effect immediately without restarting the server, and can always be reverted to the values written on the server.",
+    "Setelan chatbot. Perubahan langsung berlaku dan selalu dapat dikembalikan ke nilai server.",
+    "Chatbot settings. Changes apply immediately and can always be reverted to the server values.",
   ],
   resetAll: ["Kembalikan semua", "Reset all"],
   saveChanges: ["Simpan perubahan", "Save changes"],
@@ -70,15 +70,26 @@ export const config = {
     limits: {
       title: ["Batas pemakaian", "Usage limits"],
       description: [
-        "Jaring pengaman kuota model AI. Chat mahasiswa dapat dipanggil siapa pun tanpa login, termasuk lewat skrip; batas ini membatasi kerugian satu hari.",
-        "A safety net for the AI model quota. Anyone can call the student chat without logging in, including from scripts; this caps the damage of a single day.",
+        "Jaring pengaman kuota model AI bila chat disalahgunakan.",
+        "A safety net for the AI model quota if the chat is abused.",
       ],
     },
   },
   limitsNote: [
-    "Batas per IP dan per sesi diatur di .env server (RATE_LIMIT_*), bukan di sini. Bila layanan chat mati karena batas harian terlampaui, naikkan dulu nilainya di sini sebelum menyalakan layanan lagi — kalau tidak, layanan mati lagi pada pertanyaan berikutnya.",
-    "Per-IP and per-session limits live in the server's .env (RATE_LIMIT_*), not here. If the daily limit switches the chat service off, raise it here before turning the service back on — otherwise it switches off again on the next question.",
+    "Bila layanan chat mati karena batas harian terlampaui, naikkan dulu nilainya sebelum menyalakan layanan lagi; kalau tidak, layanan mati lagi pada pertanyaan berikutnya.",
+    "If the daily limit switches the chat service off, raise it before turning the service back on; otherwise it switches off again on the next question.",
   ],
+  advanced: {
+    title: ["Lanjutan", "Advanced"],
+    description: [
+      "Setelan teknis pencarian, ambang, pemecahan dokumen, dan model AI. Ubah hanya bila paham dampaknya.",
+      "Technical settings for retrieval, thresholds, chunking, and the AI model. Change them only if you know the impact.",
+    ],
+    changedCount: [
+      (jumlah: number) => `${jumlah} diubah`,
+      (jumlah: number) => `${jumlah} changed`,
+    ],
+  },
   thresholdNoteLead: ["Setelah mengubah ambang, buktikan hasilnya di ", "After changing a threshold, prove it in "],
   chunkingNote: [
     "Hanya berlaku untuk dokumen yang diproses setelah ini. Dokumen yang sudah ada baru mengikuti setelan baru bila diunggah ulang.",
@@ -261,14 +272,14 @@ export const killSwitch = {
   notesTitle: ["Catatan", "Notes"],
   notes: {
     test: [
-      "Kill switch wajib diuji sebelum rilis (PRD §14): matikan layanan, buka chatbot mahasiswa dan pastikan pesan penutupan muncul, lalu nyalakan kembali.",
-      "The kill switch must be tested before release (PRD §14): switch it off, open the student chatbot and confirm the closure message appears, then switch it back on.",
+      "Uji sebelum rilis: matikan layanan, buka chatbot mahasiswa dan pastikan pesan penutupan muncul, lalu nyalakan kembali.",
+      "Test it before release: switch it off, open the student chatbot and confirm the closure message appears, then switch it back on.",
     ],
-    memoryLead: [
-      "Status ini tersimpan di memori server. Bila server dijalankan ulang, status kembali mengikuti pengaturan ",
-      "This status lives in the server's memory. If the server restarts, it falls back to the ",
+    persistLead: [
+      "Status ini tersimpan di database, jadi tetap berlaku walau server dijalankan ulang. Bila dashboard tidak dapat dibuka, layanan juga dapat dimatikan lewat ",
+      "This status is stored in the database, so it survives a server restart. If the dashboard cannot be opened, the service can also be switched off with ",
     ],
-    memoryTail: [".", " setting."],
+    persistTail: ["=true di server.", "=true on the server."],
   },
   confirmOffTitle: ["Matikan layanan chat sekarang?", "Switch the chat service off now?"],
   confirmOnTitle: ["Nyalakan kembali layanan chat?", "Switch the chat service back on?"],

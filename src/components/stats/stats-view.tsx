@@ -246,12 +246,13 @@ function VolumeCard({ stats }: { stats: Stats }) {
   )
 }
 
-// Sapaan memakai warna netral, bukan warna seri: ia bukan hasil penanganan
-// pertanyaan, jadi tidak setara dengan tiga jenis lainnya.
+// Sapaan dan pesan di luar topik memakai warna netral, bukan warna seri:
+// keduanya bukan hasil penanganan pertanyaan administrasi.
 const KIND_SEGMENTS = [
   { key: "answer", swatch: "bg-series-1" },
   { key: "refusal", swatch: "bg-series-2" },
   { key: "support", swatch: "bg-series-3" },
+  { key: "rejected", swatch: "bg-muted-foreground/70" },
   { key: "smalltalk", swatch: "bg-muted-foreground/40" },
 ] as const satisfies readonly { key: keyof Dict["labels"]["kind"]; swatch: string }[]
 
@@ -276,7 +277,8 @@ function KindCard({ stats }: { stats: Stats }) {
           ))}
         </div>
         <ul className="space-y-2 text-sm">
-          {KIND_SEGMENTS.map((s) => {
+          {/* Jenis yang nol tidak ditampilkan; jumlah yang tampil tetap sama dengan total pertanyaan. */}
+          {KIND_SEGMENTS.filter((s) => stats.kind_breakdown[s.key] > 0).map((s) => {
             const n = stats.kind_breakdown[s.key]
             return (
               <li key={s.key} className="flex items-center gap-2">

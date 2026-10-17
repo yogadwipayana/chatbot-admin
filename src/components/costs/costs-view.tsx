@@ -120,10 +120,16 @@ export function CostsView() {
       ) : (
         <div className={cn("space-y-6 transition-opacity", costs.isPlaceholderData && "opacity-60")}>
           <KpiRow costs={costs.data} sebelumnya={sebelumnya.data} hari={hari} />
-          <div className="grid gap-6 lg:grid-cols-3">
+          {embeddingTampil(costs.data) ? (
+            <div className="grid gap-6 lg:grid-cols-3">
+              <DailyCard costs={costs.data} range={range} hari={hari} className="lg:col-span-2" />
+              <SourceCard costs={costs.data} />
+            </div>
+          ) : (
+            // Satu-satunya jalur berbiaya: kartu "Sumber biaya" hanya akan
+            // berbunyi "LLM chat 100%".
             <DailyCard costs={costs.data} range={range} hari={hari} />
-            <SourceCard costs={costs.data} />
-          </div>
+          )}
           <ModelCard costs={costs.data} />
         </div>
       )}
@@ -155,7 +161,12 @@ function KpiRow({
   const perJawaban = costs.llm_call_count ? biayaChat / costs.llm_call_count : null
 
   return (
-    <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+    <div
+      className={cn(
+        "grid gap-4 sm:grid-cols-2",
+        tanpaBiaya > 0 ? "xl:grid-cols-4" : "lg:grid-cols-3"
+      )}
+    >
       <StatTile label={t.costs.total} value={formatUsd(costs.cost_usd)}>
         <Delta sekarang={costs.cost_usd} sebelum={sebelumnya?.cost_usd} hari={hari} />
       </StatTile>
@@ -171,21 +182,21 @@ function KpiRow({
         {perJawaban == null ? (
           <p>{t.costs.perAnswerNone}</p>
         ) : (
-          <p>{t.costs.perAnswerNote(f.number(costs.llm_call_count))}</p>
+          <p>
+            {t.costs.perAnswerNote(f.number(costs.llm_call_count))}
+            {costs.chat_embed_cost_usd > 0 ? t.costs.perAnswerEmbedNote : null}
+          </p>
         )}
       </StatTile>
 
-      <StatTile label={t.costs.coverage} value={f.percent(cakupan)}>
-        {tanpaBiaya === 0 ? (
-          <StatusLabel level="good" className="text-xs text-foreground">
-            {t.costs.coverageFull(f.number(panggilan))}
-          </StatusLabel>
-        ) : (
+      {/* Hanya saat ada yang perlu diperbaiki: "100%" setiap hari tidak memberi tahu apa pun. */}
+      {tanpaBiaya > 0 ? (
+        <StatTile label={t.costs.coverage} value={f.percent(cakupan)}>
           <StatusLabel level="warning" className="text-xs text-foreground">
             {t.costs.coveragePartial(f.number(tanpaBiaya), f.number(panggilan))}
           </StatusLabel>
-        )}
-      </StatTile>
+        </StatTile>
+      ) : null}
     </div>
   )
 }
@@ -242,15 +253,26 @@ function Delta({
 
 // --- Tren harian -----------------------------------------------------------
 
-function DailyCard({ costs, range, hari }: { costs: Costs; range: StatsRange; hari: number }) {
+function DailyCard({
+  costs,
+  range,
+  hari,
+  className,
+}: {
+  costs: Costs
+  range: StatsRange
+  hari: number
+  className?: string
+}) {
   const t = useT()
   const f = useFormat()
   const [tabel, setTabel] = useState(false)
   const data = lengkapiHari(costs.daily_costs, range)
   const puncak = data.reduce((max, row) => (row.cost_usd > max.cost_usd ? row : max), data[0])
+  const legenda = SERIES.filter((s) => s.source === "llm" || embeddingTampil(costs))
 
   return (
-    <Card className="lg:col-span-2">
+    <Card className={className}>
       <CardHeader>
         <CardTitle>{t.costs.dailyTitle}</CardTitle>
         <CardDescription>
@@ -273,7 +295,7 @@ function DailyCard({ costs, range, hari }: { costs: Costs; range: StatsRange; ha
       <CardContent className="space-y-3">
         {tabel ? <CostDailyTable data={data} /> : <CostDailyChart data={data} />}
         <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
-          {SERIES.map((s) => (
+          {legenda.map((s) => (
             <span key={s.key} className="inline-flex items-center gap-1.5">
               <span className={cn("size-2 rounded-[2px]", s.swatch)} aria-hidden />
               {t.costs.sources[s.source]}
@@ -355,8 +377,6 @@ function SourceCard({ costs }: { costs: Costs }) {
             </li>
           ))}
         </ul>
-
-        <p className="border-t pt-3 text-xs text-muted-foreground">{t.costs.embeddingNote}</p>
       </CardContent>
     </Card>
   )
@@ -370,12 +390,17 @@ function ModelCard({ costs }: { costs: Costs }) {
   const t = useT()
   const f = useFormat()
   const total = costs.cost_usd
+  const jenisTampil = JENIS.filter((jenis) => jenis === "llm_chat" || embeddingTampil(costs))
+  // Baris Total menjumlah baris yang tampil, supaya angkanya cocok dengan tabel.
+  const tampil = costs.model_breakdown.filter((row) => jenisTampil.includes(row.type))
 
   return (
     <Card>
       <CardHeader>
         <CardTitle>{t.costs.modelTitle}</CardTitle>
-        <CardDescription>{t.costs.modelDescription}</CardDescription>
+        {jenisTampil.length > 1 ? (
+          <CardDescription>{t.costs.modelDescription}</CardDescription>
+        ) : null}
       </CardHeader>
       <CardContent>
         <div className="overflow-x-auto rounded-lg border">
@@ -390,7 +415,7 @@ function ModelCard({ costs }: { costs: Costs }) {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {JENIS.map((jenis) => {
+              {jenisTampil.map((jenis) => {
                 const rows = costs.model_breakdown.filter((row) => row.type === jenis)
                 if (rows.length === 0) return null
                 return <ModelGroup key={jenis} jenis={jenis} rows={rows} total={total} t={t} f={f} />
@@ -400,10 +425,10 @@ function ModelCard({ costs }: { costs: Costs }) {
               <TableRow>
                 <TableCell className="pl-3 font-medium">{t.costs.dailyTotal}</TableCell>
                 <TableCell className="text-right tabular-nums">
-                  {f.number(jumlahPanggilan(costs))}
+                  {f.number(tampil.reduce((n, row) => n + row.call_count, 0))}
                 </TableCell>
                 <TableCell className="text-right tabular-nums">
-                  {f.number(costs.total_tokens)}
+                  {f.number(tampil.reduce((n, row) => n + row.tokens, 0))}
                 </TableCell>
                 <TableCell className="text-right font-medium tabular-nums">
                   {formatUsd(total)}
@@ -478,6 +503,15 @@ function jumlahPanggilan(costs: Costs): number {
   return costs.llm_call_count + costs.chat_embed_count
 }
 
+/**
+ * Embedding ditampilkan hanya bila berbiaya atau ada panggilan yang belum
+ * berbiaya. Model embedding yang di-host sendiri selalu $0, dan baris "$0,00 ·
+ * 0%" di setiap kartu hanya derau di halaman biaya.
+ */
+function embeddingTampil(costs: Costs): boolean {
+  return costs.chat_embed_cost_usd > 0 || costs.chat_embeds_without_cost > 0
+}
+
 /** Rentang inklusif: 1–30 September berarti 30 hari, bukan 29. */
 function jumlahHari(range: StatsRange): number {
   const jarak = parseDateOnly(range.until).getTime() - parseDateOnly(range.since).getTime()
@@ -522,8 +556,8 @@ function lengkapiHari(data: Daily[], range: StatsRange): Daily[] {
 function CostsSkeleton() {
   return (
     <div className="space-y-6">
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        {Array.from({ length: 4 }, (_, i) => (
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {Array.from({ length: 3 }, (_, i) => (
           <Skeleton key={i} className="h-32 rounded-xl" />
         ))}
       </div>

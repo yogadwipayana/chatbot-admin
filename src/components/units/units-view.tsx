@@ -124,8 +124,15 @@ export function UnitsView() {
                   </TableCell>
                   <TableCell className="text-right tabular-nums">{unit.document_count}</TableCell>
                   <TableCell className="text-right tabular-nums">{unit.account_count}</TableCell>
-                  <TableCell>
-                    {unit.is_active ? (
+                  <TableCell className="whitespace-normal">
+                    {unit.is_active && unit.document_count === 0 ? (
+                      // Tampil di menu mahasiswa tanpa satu dokumen pun: pertanyaan
+                      // di topik ini hampir pasti ditolak.
+                      <div className="space-y-0.5">
+                        <StatusLabel level="warning">{t.units.activeEmpty}</StatusLabel>
+                        <p className="text-xs text-muted-foreground">{t.units.activeEmptyHint}</p>
+                      </div>
+                    ) : unit.is_active ? (
                       <StatusLabel level="good">{t.units.active}</StatusLabel>
                     ) : (
                       <span className="inline-flex items-center gap-1.5 text-sm">

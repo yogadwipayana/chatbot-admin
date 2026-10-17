@@ -272,8 +272,8 @@ function OutcomeCard({ hasil, unit }: { hasil: Result; unit: string | null }) {
           <p className="text-xs text-muted-foreground">
             {t.testQuery.latency(f.duration(hasil.latency_ms))}
           </p>
-          {/* Halaman Log minimal admin; staf tidak diberi tautan yang berujung 403. */}
-          {hasil.turn_id && atLeast(me, "admin") ? (
+          {/* Halaman Log hanya superadmin; level lain tidak diberi tautan yang berujung 403. */}
+          {hasil.turn_id && atLeast(me, "superadmin") ? (
             <Button asChild variant="link" size="sm" className="h-auto px-0">
               <Link href={`/log?tab=graf&giliran=${encodeURIComponent(hasil.turn_id)}`}>
                 <WorkflowIcon data-icon="inline-start" />
@@ -463,10 +463,7 @@ function RetrievedCard({ hasil }: { hasil: Result }) {
                   <TableHead className="w-10 pl-3">#</TableHead>
                   <TableHead className="min-w-56">{t.testQuery.columns.document}</TableHead>
                   <TableHead className="text-right">{t.testQuery.columns.semantic}</TableHead>
-                  <TableHead className="text-right">{t.testQuery.columns.keyword}</TableHead>
-                  <TableHead className="pr-3 text-right text-muted-foreground">
-                    {t.testQuery.columns.fused}
-                  </TableHead>
+                  <TableHead className="pr-3 text-right">{t.testQuery.columns.keyword}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -507,7 +504,7 @@ function RetrievedCard({ hasil }: { hasil: Result }) {
                         </TableCell>
                         {chunk.neighbor_of && nomor.has(chunk.neighbor_of) ? (
                           <TableCell
-                            colSpan={3}
+                            colSpan={2}
                             className="pr-3 text-right text-xs whitespace-normal text-muted-foreground"
                           >
                             {t.testQuery.neighborOf(nomor.get(chunk.neighbor_of) ?? 0)}
@@ -522,7 +519,7 @@ function RetrievedCard({ hasil }: { hasil: Result }) {
                                 f={f}
                               />
                             </TableCell>
-                            <TableCell className="text-right">
+                            <TableCell className="pr-3 text-right">
                               <ScoreCell
                                 value={chunk.raw_scores.fulltext}
                                 threshold={hasil.thresholds.fulltext}
@@ -530,15 +527,12 @@ function RetrievedCard({ hasil }: { hasil: Result }) {
                                 f={f}
                               />
                             </TableCell>
-                            <TableCell className="pr-3 text-right text-muted-foreground tabular-nums">
-                              {chunk.rrf_score.toFixed(4)}
-                            </TableCell>
                           </>
                         )}
                       </TableRow>
                       {buka ? (
                         <TableRow className="hover:bg-transparent">
-                          <TableCell colSpan={5} className="bg-muted/40 px-4 py-3 whitespace-normal">
+                          <TableCell colSpan={4} className="bg-muted/40 px-4 py-3 whitespace-normal">
                             <p className="text-sm leading-relaxed break-words whitespace-pre-wrap">
                               {chunk.content}
                             </p>

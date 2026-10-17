@@ -1,6 +1,7 @@
 "use client"
 
 import {
+  ChevronRightIcon,
   FlaskConicalIcon,
   InfoIcon,
   RotateCcwIcon,
@@ -79,6 +80,9 @@ const POTONGAN: Field[] = [
 const BATAS: Field[] = [{ key: "chat_daily_limit", min: 0, max: 1_000_000, step: 1 }]
 
 const SEMUA = [...PENCARIAN, ...AMBANG, ...POTONGAN, ...BATAS]
+
+/** Disembunyikan di bagian "Lanjutan": salah ubah merusak jawaban chatbot. */
+const LANJUTAN = new Set<string>([...PENCARIAN, ...AMBANG, ...POTONGAN].map((f) => f.key))
 
 export function ConfigView() {
   const t = useT()
@@ -175,6 +179,32 @@ export function ConfigView() {
           ) : null}
 
           <Kelompok
+            judul={t.config.groups.limits.title}
+            keterangan={t.config.groups.limits.description}
+            fields={BATAS}
+            data={data}
+            nilai={nilai}
+            keluhan={keluhan}
+            disabled={sibuk}
+            onChange={(key, v) => setDraft((d) => ({ ...d, [key]: v }))}
+            catatan={
+              <p className="flex items-start gap-1.5 text-sm text-pretty text-muted-foreground">
+                <InfoIcon className="mt-0.5 size-4 shrink-0" aria-hidden />
+                {t.config.limitsNote}
+              </p>
+            }
+          />
+          </>
+        )}
+
+        <KillSwitchView embedded />
+
+        {data ? (
+          <>
+          <Lanjutan
+            jumlahDiubah={data.overridden.filter((key) => LANJUTAN.has(key)).length}
+          >
+          <Kelompok
             judul={t.config.groups.retrieval.title}
             keterangan={t.config.groups.retrieval.description}
             fields={PENCARIAN}
@@ -223,24 +253,8 @@ export function ConfigView() {
             }
           />
 
-          <Kelompok
-            judul={t.config.groups.limits.title}
-            keterangan={t.config.groups.limits.description}
-            fields={BATAS}
-            data={data}
-            nilai={nilai}
-            keluhan={keluhan}
-            disabled={sibuk}
-            onChange={(key, v) => setDraft((d) => ({ ...d, [key]: v }))}
-            catatan={
-              <p className="flex items-start gap-1.5 text-sm text-pretty text-muted-foreground">
-                <InfoIcon className="mt-0.5 size-4 shrink-0" aria-hidden />
-                {t.config.limitsNote}
-              </p>
-            }
-          />
-
           <ModelCard data={data} />
+          </Lanjutan>
 
           {data.updated_at ? (
             <p className="text-sm text-muted-foreground">
@@ -252,9 +266,7 @@ export function ConfigView() {
           )}
 
           </>
-        )}
-
-        <KillSwitchView embedded />
+        ) : null}
       </div>
 
       <AlertDialog open={konfirmasi} onOpenChange={(open) => !open && !sibuk && setKonfirmasi(false)}>
@@ -272,6 +284,44 @@ export function ConfigView() {
         </AlertDialogContent>
       </AlertDialog>
     </>
+  )
+}
+
+/**
+ * Pengaturan teknis, tertutup secara bawaan. `<details>` bawaan peramban:
+ * dapat dibuka dengan papan ketik dan dibaca pembaca layar tanpa skrip.
+ * Lencana "N diubah" memberi tahu ada nilai yang menyimpang dari server
+ * walau bagiannya tertutup.
+ */
+function Lanjutan({
+  jumlahDiubah,
+  children,
+}: {
+  jumlahDiubah: number
+  children: React.ReactNode
+}) {
+  const t = useT()
+  return (
+    <details className="group">
+      <summary className="flex cursor-pointer list-none items-center gap-3 rounded-xl bg-card px-4 py-4 text-sm ring-1 ring-foreground/10 hover:bg-muted/50 [&::-webkit-details-marker]:hidden">
+        <ChevronRightIcon
+          className="size-4 shrink-0 text-muted-foreground transition-transform group-open:rotate-90"
+          aria-hidden
+        />
+        <span className="min-w-0 flex-1 space-y-1">
+          <span className="block font-heading text-base leading-snug font-medium">
+            {t.config.advanced.title}
+          </span>
+          <span className="block text-pretty text-muted-foreground">
+            {t.config.advanced.description}
+          </span>
+        </span>
+        {jumlahDiubah > 0 ? (
+          <Badge variant="secondary">{t.config.advanced.changedCount(jumlahDiubah)}</Badge>
+        ) : null}
+      </summary>
+      <div className="mt-6 grid gap-6">{children}</div>
+    </details>
   )
 }
 

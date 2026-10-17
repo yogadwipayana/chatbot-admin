@@ -223,9 +223,9 @@ export function KillSwitchView({ embedded = false }: { embedded?: boolean }) {
               <ul className="list-disc space-y-2 pl-4 text-sm text-pretty text-muted-foreground">
                 <li>{t.killSwitch.notes.test}</li>
                 <li>
-                  {t.killSwitch.notes.memoryLead}
+                  {t.killSwitch.notes.persistLead}
                   <code className="text-foreground">KILL_SWITCH_ENABLED</code>
-                  {t.killSwitch.notes.memoryTail}
+                  {t.killSwitch.notes.persistTail}
                 </li>
               </ul>
             </CardContent>

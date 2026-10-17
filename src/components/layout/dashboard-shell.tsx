@@ -8,7 +8,6 @@ import { Spinner } from "@/components/common"
 import { AppSidebar } from "@/components/layout/app-sidebar"
 import { KillSwitchBanner } from "@/components/layout/kill-switch-banner"
 import { Button } from "@/components/ui/button"
-import { Separator } from "@/components/ui/separator"
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
 import { useNow } from "@/hooks/use-now"
 import { useToken } from "@/hooks/use-token"
@@ -70,9 +69,8 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
       <AppSidebar />
       <SidebarInset>
         <header className="sticky top-0 z-20 flex h-12 shrink-0 items-center gap-2 border-b bg-background/95 px-4 backdrop-blur supports-backdrop-filter:bg-background/80">
+          {/* Tanpa judul: nama aplikasi sudah ada di kepala sidebar. */}
           <SidebarTrigger className="-ml-1" />
-          <Separator orientation="vertical" className="mr-1 data-vertical:h-4" />
-          <span className="truncate text-sm text-muted-foreground">{t.app.header}</span>
         </header>
         <KillSwitchBanner />
         <div className="flex-1 px-4 py-6 md:px-6 lg:px-8 lg:py-8">

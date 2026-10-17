@@ -134,10 +134,6 @@ export const upload = {
     "Seret satu atau beberapa PDF ke sini, atau klik untuk memilih",
     "Drop one or more PDFs here, or click to choose",
   ],
-  dropzoneHint: [
-    "Hanya PDF digital. PDF tanpa lapisan teks (hasil scan atau Print to PDF) akan ditolak.",
-    "Digital PDFs only. PDFs without a text layer (scans or Print to PDF output) are rejected.",
-  ],
   notPdf: [
     (nama: string) => `'${nama}' bukan berkas PDF. Unggah dokumen dalam format PDF.`,
     (nama: string) => `'${nama}' is not a PDF. Upload the document as a PDF.`,

@@ -711,7 +711,7 @@ export interface paths {
          * Ringkasan performa pipeline chat
          * @description Dibaca dari SQLite log (`LOG_DB_PATH`), bukan Postgres. KPI giliran, p50/p95
          *     durasi per node LangGraph, distribusi titik keluar, dan tren per jam (UTC).
-         *     Untuk role admin, log `app.audit` tidak ikut dihitung di `error_log_count`.
+         *     Hanya superadmin: isinya alat debug (langkah pipeline, system prompt, log server).
          */
         get: operations["log_summary"];
         put?: never;
@@ -817,8 +817,9 @@ export interface paths {
         };
         /**
          * Log aplikasi
-         * @description Log Python logger `app.*`. Log `app.audit` hanya untuk superadmin; role admin
-         *     yang memfilter `logger=app.audit` mendapat daftar kosong, bukan 403.
+         * @description Log Python logger `app.*`. Log `app.audit` tetap disaring per level: bila level
+         *     halaman Log kelak diturunkan, level di bawah superadmin yang memfilter
+         *     `logger=app.audit` mendapat daftar kosong, bukan 403.
          */
         get: operations["list_app_logs"];
         put?: never;
@@ -1521,6 +1522,14 @@ export interface components {
         UnansweredUpdate: {
             resolved: boolean;
         };
+        /**
+         * @description Alasan penolakan untuk admin. `no_documents` = ambang menolak tanpa satu pun
+         *     potongan ditemukan (unit belum punya dokumen yang dapat dicari);
+         *     `below_threshold` = potongan ditemukan tetapi skornya di bawah ambang;
+         *     `llm` = potongan lolos ambang, tetapi model AI menilai isinya tidak menjawab.
+         * @enum {string}
+         */
+        RefusalReason: "no_documents" | "below_threshold" | "llm";
         UnansweredGroup: {
             /**
              * @description Seluruh baris `unanswered_questions` dalam kelompok. Menandai kelompok selesai
@@ -1531,9 +1540,9 @@ export interface components {
             sample_question: string;
             count: number;
             /**
-             * @description Rata-rata skor tertinggi kelompok ini. Nilai yang mendekati ambang
-             *     menandakan dokumennya mungkin sudah ada tetapi retrieval-nya meleset;
-             *     nilai sangat rendah menandakan dokumennya memang belum ada.
+             * @description Rata-rata skor tertinggi kelompok ini. Tidak lagi ditampilkan dashboard:
+             *     dengan model e5 skornya hampir selalu 0,77-0,93, jadi tidak membedakan
+             *     apa pun. Pakai `refusal_reason`.
              */
             avg_top_score?: number | null;
             /** Format: date-time */
@@ -1545,6 +1554,8 @@ export interface components {
              *     memakai unit ini. Null bila pesan asalnya sudah terhapus dari log.
              */
             unit?: string | null;
+            /** @description Alasan penolakan `sample_question` (pertanyaan terbaru di kelompok). */
+            refusal_reason?: components["schemas"]["RefusalReason"] | null;
         };
         UnansweredPage: {
             items: components["schemas"]["UnansweredGroup"][];
@@ -1593,6 +1604,8 @@ export interface components {
             top_score?: number | null;
             /** @description Unit yang dipilih mahasiswa saat bertanya (`messages.meta.unit`). */
             unit?: string | null;
+            /** @description Hanya untuk `kind = refusal`; null untuk jenis balasan lain. */
+            refusal_reason?: components["schemas"]["RefusalReason"] | null;
         };
         FeedbackPage: {
             items: components["schemas"]["FeedbackItem"][];
@@ -1763,7 +1776,11 @@ export interface components {
             /** @description Satu entri per hari dalam rentang, termasuk hari tanpa pertanyaan. */
             daily_volume: components["schemas"]["DailyVolume"][];
             top_topics: components["schemas"]["TopicCount"][];
-            /** @description Estimasi dari token terpakai, bukan dari API penagihan. */
+            /**
+             * @description Estimasi dari token terpakai, bukan dari API penagihan. LLM chat + embedding,
+             *     sama dengan total `GET /api/admin/costs`. Gerbang JEV tidak dihitung: ia
+             *     berjalan di Laya yang di-host sendiri.
+             */
             running_cost_usd: number;
             /**
              * @description Jawaban yang memanggil LLM tetapi modelnya belum punya tarif di

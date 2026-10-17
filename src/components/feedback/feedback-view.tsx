@@ -254,7 +254,7 @@ function Baris({
           {f.relative(item.created_at, now)}
           {jenis ? ` · ${jenis}` : null}
           {item.unit ? t.labels.unitTopic(item.unit) : null}
-          {item.top_score != null ? t.feedback.score(f.score(item.top_score)) : null}
+          {item.refusal_reason ? ` · ${t.labels.refusalReason[item.refusal_reason]}` : null}
         </p>
       </div>
 

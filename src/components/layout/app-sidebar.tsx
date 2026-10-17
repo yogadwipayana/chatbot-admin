@@ -84,6 +84,14 @@ const NAV: { key: keyof Dict["nav"]["groups"]; items: NavItem[] }[] = [
         min: "staf",
         badge: "unanswered",
       },
+      // Isi percakapan, jadi levelnya sama dengan statistik: admin ke atas.
+      // Di sini, bukan di Pengaturan: isinya bahan perbaikan, sama seperti AD-4.
+      {
+        href: "/umpan-balik",
+        key: "feedback",
+        icon: MessageSquareHeartIcon,
+        min: "admin",
+      },
     ],
   },
   {
@@ -99,8 +107,9 @@ const NAV: { key: keyof Dict["nav"]["groups"]; items: NavItem[] }[] = [
     items: [
       { href: "/statistik", key: "stats", icon: ChartColumnIcon, min: "admin" },
       { href: "/biaya", key: "costs", icon: CircleDollarSignIcon, min: "admin" },
-      // Log audit di dalamnya disaring API untuk role admin; lihat `logs.md`.
-      { href: "/log", key: "logs", icon: ScrollTextIcon, min: "admin" },
+      // Alat debug developer (langkah pipeline, system prompt, log server):
+      // superadmin saja, sama dengan `x-min-role` endpoint-nya.
+      { href: "/log", key: "logs", icon: ScrollTextIcon, min: "superadmin" },
     ],
   },
   {
@@ -111,13 +120,6 @@ const NAV: { key: keyof Dict["nav"]["groups"]; items: NavItem[] }[] = [
       { href: "/unit", key: "units", icon: Building2Icon, min: "superadmin" },
       // Siapa yang boleh memakai kuota model dari situs lain: superadmin saja.
       { href: "/sematan", key: "embed", icon: CodeXmlIcon, min: "superadmin" },
-      // Isi percakapan, jadi levelnya sama dengan statistik: admin ke atas.
-      {
-        href: "/umpan-balik",
-        key: "feedback",
-        icon: MessageSquareHeartIcon,
-        min: "admin",
-      },
       // Setelan ambang dan chunking berlaku untuk setiap pertanyaan mahasiswa,
       // jadi setara kill switch: superadmin saja.
       {

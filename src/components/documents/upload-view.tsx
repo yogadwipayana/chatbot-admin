@@ -314,7 +314,6 @@ export function UploadView() {
               >
                 <UploadIcon className="size-6 text-muted-foreground" aria-hidden />
                 <p className="font-medium">{t.upload.dropzone}</p>
-                <p className="text-xs text-muted-foreground">{t.upload.dropzoneHint}</p>
               </div>
               <input
                 ref={inputRef}

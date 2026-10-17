@@ -6,7 +6,7 @@ export const labels = {
     refusal: ["Ditolak", "Declined"],
     support: ["Dialihkan ke konseling", "Referred to counselling"],
     smalltalk: ["Sapaan", "Small talk"],
-    rejected: ["Ditolak gerbang", "Rejected by gate"],
+    rejected: ["Di luar topik", "Off-topic"],
   },
   topic: {
     deadline: ["Tenggat waktu", "Deadlines"],
@@ -30,13 +30,23 @@ export const labels = {
   },
   testQuery: ["Uji coba", "Test it"],
   unitTopic: [(unit: string) => ` · Topik ${unit}`, (unit: string) => ` · Topic ${unit}`],
+  /** Alasan penolakan (`RefusalReason`), menggantikan skor kemiripan: skor e5
+      hampir selalu 0,77–0,93 sehingga tidak membedakan apa pun. */
+  refusalReason: {
+    no_documents: ["Unit belum punya dokumen", "Unit has no documents yet"],
+    below_threshold: [
+      "Dokumen yang ditemukan kurang relevan",
+      "Documents found were not relevant enough",
+    ],
+    llm: ["Model AI menilai dokumen tidak cukup", "AI model judged the documents insufficient"],
+  },
 } as const
 
 export const unanswered = {
   title: ["Pertanyaan tak terjawab", "Unanswered questions"],
   description: [
-    "Pertanyaan yang ditolak chatbot karena dokumen resmi tidak cukup mendukung jawabannya. Tindak lanjuti kelompok terbesar lebih dulu: unggah atau perbarui dokumen yang menjawabnya, uji ulang, lalu tandai selesai.",
-    "Questions the chatbot declined because the official documents did not support an answer. Start with the largest group: upload or update the document that answers it, test again, then mark it done.",
+    "Pertanyaan yang ditolak chatbot. Mulai dari kelompok terbesar: lengkapi dokumennya, uji ulang, lalu tandai selesai.",
+    "Questions the chatbot declined. Start with the largest group: fix the documents, test again, then mark it done.",
   ],
   staffNote: [
     "Akun Staf/Dosen dapat melihat dan menguji pertanyaan ini. Menandai selesai dilakukan oleh Admin.",
@@ -68,14 +78,15 @@ export const unanswered = {
     (pertanyaan: string, kelompok: string) => `${pertanyaan} pertanyaan dalam ${kelompok} kelompok`,
     (pertanyaan: string, kelompok: string) => `${pertanyaan} questions in ${kelompok} groups`,
   ],
+  /** Setiap kelompok berisi satu pertanyaan: jumlah kelompok hanya mengulang angka yang sama. */
+  summaryUngrouped: [
+    (pertanyaan: string) => `${pertanyaan} pertanyaan`,
+    (pertanyaan: string) => `${pertanyaan} questions`,
+  ],
   times: ["kali", "times"],
   lastAsked: [
     (kapan: string) => `Terakhir ditanyakan ${kapan}`,
     (kapan: string) => `Last asked ${kapan}`,
-  ],
-  avgScore: [
-    (skor: string) => ` · Skor kemiripan rata-rata ${skor}`,
-    (skor: string) => ` · Average similarity score ${skor}`,
   ],
   handled: ["Sudah ditindaklanjuti", "Handled"],
   collapse: ["Ringkas pertanyaan", "Collapse question"],
@@ -84,17 +95,17 @@ export const unanswered = {
   markDone: ["Tandai selesai", "Mark done"],
   markedDone: ["Ditandai sudah ditindaklanjuti", "Marked as handled"],
   reopened: ["Dibuka kembali", "Reopened"],
-  scoreHint: [
-    "Skor kemiripan (0–1) menunjukkan seberapa dekat pertanyaan dengan isi dokumen terbaik. Skor yang mendekati ambang berarti dokumennya mungkin sudah ada tetapi kalimatnya tidak cocok: periksa lewat Uji coba. Skor sangat rendah berarti informasinya memang belum ada di dokumen mana pun.",
-    "The similarity score (0–1) shows how close a question is to the best matching document. A score near the threshold means the document may exist but the wording does not match: check with Test answers. A very low score means the information is not in any document yet.",
+  reasonHint: [
+    "“Unit belum punya dokumen”: unggah dokumen untuk unit itu. “Model AI menilai dokumen tidak cukup”: dokumennya ada tetapi tidak memuat jawabannya; perbarui dokumennya atau tambahkan tanya jawab.",
+    "“Unit has no documents yet”: upload documents for that unit. “AI model judged the documents insufficient”: the documents exist but do not contain the answer; update them or add a Q&A entry.",
   ],
 } as const
 
 export const feedback = {
   title: ["Umpan balik", "Feedback"],
   description: [
-    "Penilaian mahasiswa atas jawaban chatbot. Rasio kepuasan di Statistik memberi tahu ada yang salah; halaman ini memberi tahu apanya — pertanyaan yang memicunya, jawaban yang diberikan, dan catatan mahasiswa bila ada. Telusuri jawaban yang ditandai tidak membantu, lalu uji ulang setelah dokumennya diperbaiki.",
-    "How students rated the chatbot's answers. The satisfaction ratio on Statistics tells you something is wrong; this page tells you what — the question behind it, the answer given, and the student's note where there is one. Work through the answers marked unhelpful, then test again once the document is fixed.",
+    "Penilaian 👍/👎 mahasiswa beserta pertanyaan, jawaban, dan catatannya. Telusuri yang tidak membantu, perbaiki dokumennya, lalu uji ulang.",
+    "Students' 👍/👎 ratings with the question, the answer, and their note. Work through the unhelpful ones, fix the documents, then test again.",
   ],
   tabs: {
     unhelpful: ["Tidak membantu", "Unhelpful"],
@@ -127,9 +138,8 @@ export const feedback = {
   questionGone: ["Pertanyaannya sudah tidak ada di log", "The question is no longer in the log"],
   collapse: ["Ringkas jawaban", "Collapse answer"],
   expand: ["Lihat jawaban lengkap", "See the full answer"],
-  score: [(skor: string) => ` · Skor kemiripan ${skor}`, (skor: string) => ` · Similarity score ${skor}`],
   note: [
-    "Umpan balik dikirim satu klik tanpa kotak isian wajib, jadi sebagian besar tidak disertai catatan. Pertanyaan sensitif tidak pernah disimpan apa adanya: yang tampil adalah penanda tetap, dan jawabannya memang berupa pengalihan ke layanan konseling.",
-    "Feedback is one click with no required text box, so most of it carries no note. Sensitive questions are never stored as written: what you see is a fixed placeholder, and the answer really was a referral to counselling.",
+    "Pertanyaan sensitif tampil sebagai penanda tetap, bukan kalimat aslinya; jawabannya berupa pengalihan ke layanan konseling.",
+    "Sensitive questions show as a fixed placeholder, not as written; their answer is a referral to counselling.",
   ],
 } as const

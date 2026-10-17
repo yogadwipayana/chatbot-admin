@@ -74,6 +74,9 @@ export function UnansweredView() {
   // Dari seluruh kelompok, bukan halaman ini: batang di halaman 2 tetap
   // sebanding dengan kelompok terbesar di halaman 1.
   const terbanyak = data?.max_count ?? 0
+  // Bila setiap kelompok hanya berisi satu pertanyaan, angka "1 kali" dan
+  // batang penuh di setiap baris hanya derau.
+  const adaKelompok = terbanyak > 1
   const halamanTerakhir = Math.max(0, Math.ceil(total / PAGE_SIZE) - 1)
 
   // Menandai selesai di tab "Belum" mengeluarkan kelompok dari daftar. Bila itu
@@ -163,7 +166,9 @@ export function UnansweredView() {
       ) : (
         <div className={cn("space-y-3 transition-opacity", query.isPlaceholderData && "opacity-60")}>
           <p className="text-sm text-muted-foreground">
-            {t.unanswered.summary(f.number(totalPertanyaan), f.number(total))}
+            {totalPertanyaan === total
+              ? t.unanswered.summaryUngrouped(f.number(totalPertanyaan))
+              : t.unanswered.summary(f.number(totalPertanyaan), f.number(total))}
           </p>
           <ul className="divide-y rounded-xl border bg-card">
             {groups.map((group) => {
@@ -180,20 +185,22 @@ export function UnansweredView() {
                   key={group.ids[0]}
                   className="flex flex-col gap-4 p-4 sm:flex-row sm:items-center"
                 >
-                  <div className="flex w-full shrink-0 items-center gap-3 sm:w-24 sm:flex-col sm:items-start sm:gap-1.5">
-                    <p className="leading-none">
-                      <span className="text-2xl font-semibold">{group.count}</span>
-                      <span className="ml-1 text-xs text-muted-foreground">
-                        {t.unanswered.times}
-                      </span>
-                    </p>
-                    <div className="h-1.5 flex-1 sm:w-full sm:flex-none" aria-hidden>
-                      <div
-                        className="h-full rounded-r-[4px] bg-series-1"
-                        style={{ width: `${(group.count / terbanyak) * 100}%` }}
-                      />
+                  {adaKelompok ? (
+                    <div className="flex w-full shrink-0 items-center gap-3 sm:w-24 sm:flex-col sm:items-start sm:gap-1.5">
+                      <p className="leading-none">
+                        <span className="text-2xl font-semibold">{group.count}</span>
+                        <span className="ml-1 text-xs text-muted-foreground">
+                          {t.unanswered.times}
+                        </span>
+                      </p>
+                      <div className="h-1.5 flex-1 sm:w-full sm:flex-none" aria-hidden>
+                        <div
+                          className="h-full rounded-r-[4px] bg-series-1"
+                          style={{ width: `${(group.count / terbanyak) * 100}%` }}
+                        />
+                      </div>
                     </div>
-                  </div>
+                  ) : null}
 
                   <div className="min-w-0 flex-1 space-y-1.5">
                     <p
@@ -220,9 +227,14 @@ export function UnansweredView() {
                     <p className="text-xs text-muted-foreground">
                       {t.unanswered.lastAsked(f.relative(group.last_asked_at, now))}
                       {group.unit ? t.labels.unitTopic(group.unit) : null}
-                      {group.avg_top_score != null
-                        ? t.unanswered.avgScore(f.score(group.avg_top_score))
-                        : null}
+                      {group.refusal_reason ? (
+                        <>
+                          {" · "}
+                          <span className="text-foreground/80">
+                            {t.labels.refusalReason[group.refusal_reason]}
+                          </span>
+                        </>
+                      ) : null}
                     </p>
                     {tab === "semua" && group.resolved ? (
                       <StatusLabel level="good" className="text-xs">
@@ -272,7 +284,7 @@ export function UnansweredView() {
 
           <p className="flex gap-2 pt-2 text-xs text-pretty text-muted-foreground">
             <InfoIcon className="mt-px size-3.5 shrink-0" aria-hidden />
-            <span>{t.unanswered.scoreHint}</span>
+            <span>{t.unanswered.reasonHint}</span>
           </p>
         </div>
       )}

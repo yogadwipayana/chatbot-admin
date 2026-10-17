@@ -15,7 +15,7 @@ export default async function LogsPage({ searchParams }: PageProps<"/log">) {
   const awal = TABS.find((t) => t === tab)
   const turnId = typeof giliran === "string" ? giliran.slice(0, 64) : null
   return (
-    <RequireRole min="admin">
+    <RequireRole min="superadmin">
       {/* Kunci: navigasi ke giliran lain di halaman yang sama membuat ulang
           state tab, bukan mempertahankan pilihan sebelumnya. */}
       <LogsView

@@ -16,6 +16,12 @@ export const units = {
     status: ["Status", "Status"],
   },
   active: ["Aktif", "Active"],
+  /** Unit aktif tanpa dokumen: tampil di menu mahasiswa, tetapi pertanyaannya hampir pasti ditolak. */
+  activeEmpty: ["Aktif, belum ada dokumen", "Active, no documents yet"],
+  activeEmptyHint: [
+    "Tambahkan dokumen atau nonaktifkan unit ini.",
+    "Add documents or deactivate this unit.",
+  ],
   inactive: ["Nonaktif", "Inactive"],
   rowActions: [(nama: string) => `Aksi untuk ${nama}`, (nama: string) => `Actions for ${nama}`],
   edit: ["Ubah", "Edit"],

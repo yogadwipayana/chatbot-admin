@@ -3,8 +3,8 @@
 export const testQuery = {
   title: ["Uji coba jawaban", "Test answers"],
   description: [
-    "Ajukan pertanyaan seperti mahasiswa, lalu lihat potongan dokumen yang ditemukan beserta skornya. Alat utama saat ada laporan “jawabannya salah”. Uji coba tidak dicatat ke statistik.",
-    "Ask a question the way a student would, then see which chunks came back and how they scored. The first tool to reach for when someone reports a wrong answer. Test runs are never recorded in the statistics.",
+    "Ajukan pertanyaan seperti mahasiswa, lalu lihat jawabannya dan potongan dokumen yang ditemukan. Uji coba tidak dicatat ke statistik.",
+    "Ask a question the way a student would, then see the answer and the chunks that came back. Test runs are not recorded in the statistics.",
   ],
   question: ["Pertanyaan", "Question"],
   questionPlaceholder: [
@@ -141,8 +141,8 @@ export const testQuery = {
   lexicalHint: ["Pencarian teks penuh", "Full-text search"],
   retrievedTitle: ["Potongan yang ditemukan", "Chunks retrieved"],
   retrievedDescription: [
-    "Urutan hasil penggabungan dua pencarian. Yang menentukan penolakan adalah skor mentah per sumber, bukan skor gabungan: skor gabungan hanya mencerminkan peringkat, jadi potongan terbaik dari sekumpulan potongan yang tidak relevan tetap mendapat nilai tertinggi.",
-    "Ordered by fusing the two searches. What decides a refusal is the raw score per source, not the fused score: the fused score only reflects rank, so the best chunk out of a pile of irrelevant ones still comes top.",
+    "Urutan hasil gabungan pencarian makna dan pencarian kata. Klik baris untuk melihat isinya.",
+    "Ordered by fusing the meaning and keyword searches. Click a row to see its text.",
   ],
   noChunks: ["Tidak ada potongan yang ditemukan.", "No chunks were found."],
   noSearch: ["Tidak ada pencarian dokumen.", "No document search was run."],
@@ -160,7 +160,6 @@ export const testQuery = {
     document: ["Dokumen", "Document"],
     semantic: ["Makna", "Semantic"],
     keyword: ["Kata", "Keyword"],
-    fused: ["Gabungan", "Fused"],
   },
   faqSource: [" · Tanya jawab", " · Q&A entry"],
   pageSource: [(halaman: number) => ` · hal. ${halaman}`, (halaman: number) => ` · p. ${halaman}`],

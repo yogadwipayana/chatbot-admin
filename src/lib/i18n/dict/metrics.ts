@@ -18,8 +18,8 @@ export const range = {
 export const stats = {
   title: ["Statistik", "Statistics"],
   description: [
-    "Seberapa membantu chatbot bagi mahasiswa, dan berapa biayanya. Target mengikuti PRD §3.",
-    "How much the chatbot helps students, and what it costs. Targets follow PRD §3.",
+    "Seberapa membantu chatbot bagi mahasiswa, dan berapa biayanya.",
+    "How much the chatbot helps students, and what it costs.",
   ],
   empty: ["Belum ada pertanyaan pada periode ini", "No questions in this period"],
   feedbackRatio: ["Umpan balik positif", "Positive feedback"],
@@ -61,8 +61,8 @@ export const stats = {
   ],
   latency: ["Waktu proses (p95)", "Processing time (p95)"],
   latencyNote: [
-    "95% jawaban selesai dalam waktu ini. Target kemunculan kata pertama < 3 dtk.",
-    "95% of answers finish within this. The target for the first word is under 3 s.",
+    "95% jawaban selesai dalam waktu ini.",
+    "95% of answers finish within this.",
   ],
   volumeTitle: ["Pertanyaan per hari", "Questions per day"],
   volumeDescription: [
@@ -104,8 +104,8 @@ export const stats = {
 export const costs = {
   title: ["Biaya", "Costs"],
   description: [
-    "Estimasi belanja model dari messages.meta: LLM chat dan embedding pertanyaan. Bukan tagihan resmi penyedia.",
-    "Estimated model spend from messages.meta: chat LLM and question embedding. Not the provider's official invoice.",
+    "Estimasi biaya model AI dari token terpakai. Bukan tagihan resmi penyedia.",
+    "Estimated AI model spend from tokens used. Not the provider's official invoice.",
   ],
   empty: ["Belum ada pemanggilan model pada periode ini", "No model calls in this period"],
   sources: {
@@ -131,16 +131,15 @@ export const costs = {
   perAnswer: ["Biaya per jawaban", "Cost per answer"],
   perAnswerNone: ["Belum ada jawaban LLM pada periode ini.", "No LLM answers in this period."],
   perAnswerNote: [
-    (jawaban: string) =>
-      `Biaya chat dibagi ${jawaban} jawaban LLM. Termasuk embedding pertanyaan yang ditolak sebelum LLM dipanggil.`,
-    (jawaban: string) =>
-      `Chat cost divided by ${jawaban} LLM answers. Includes embedding questions that were declined before the LLM ran.`,
+    (jawaban: string) => `Biaya chat dibagi ${jawaban} jawaban LLM.`,
+    (jawaban: string) => `Chat cost divided by ${jawaban} LLM answers.`,
+  ],
+  /** Hanya bila embedding berbiaya: penolakan sebelum LLM tetap berbiaya embedding. */
+  perAnswerEmbedNote: [
+    " Termasuk embedding pertanyaan yang ditolak sebelum LLM dipanggil.",
+    " Includes embedding questions that were declined before the LLM ran.",
   ],
   coverage: ["Cakupan estimasi", "Estimate coverage"],
-  coverageFull: [
-    (panggilan: string) => `Seluruh ${panggilan} panggilan punya angka biaya`,
-    (panggilan: string) => `All ${panggilan} calls carry a cost figure`,
-  ],
   coveragePartial: [
     (tanpa: string, panggilan: string) =>
       `${tanpa} dari ${panggilan} panggilan tanpa biaya: tarif modelnya belum didaftarkan, jadi total di atas terlalu rendah`,
@@ -188,10 +187,6 @@ export const costs = {
     (jumlah: string) => ` · ${jumlah} tanpa biaya`,
     (jumlah: string) => ` · ${jumlah} without cost`,
   ],
-  embeddingNote: [
-    "Biaya embedding berdiri sendiri, tidak dijumlahkan ke dalam biaya LLM tiap pesan. Totalnya dihitung saat disajikan.",
-    "Embedding cost stands on its own and is not folded into each message's LLM cost. The total is worked out at display time.",
-  ],
   modelTitle: ["Rincian per model", "Breakdown by model"],
   modelDescription: [
     "Dikelompokkan menurut jalur pemakaian: token LLM dan token embedding tidak sebanding.",
@@ -204,10 +199,7 @@ export const costs = {
     },
     embedding_chat: {
       label: ["Embedding pertanyaan", "Question embedding"],
-      note: [
-        "Model yang diminta, bukan yang dilaporkan gateway.",
-        "The model requested, not the one the gateway reports.",
-      ],
+      note: ["Untuk mencari dokumen yang cocok.", "Used to find matching documents."],
     },
   },
   columns: {
