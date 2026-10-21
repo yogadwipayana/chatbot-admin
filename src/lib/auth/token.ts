@@ -4,8 +4,10 @@
  * API memakai bearer token, bukan cookie, sehingga token harus dapat dibaca
  * JavaScript dan disimpan di localStorage. Konsekuensinya: celah XSS di
  * dashboard berarti token bocor. Mitigasinya masa berlaku token yang pendek
- * (ADMIN_TOKEN_TTL_MINUTES) dan tidak ada teks dari API yang dirender sebagai
- * HTML mentah.
+ * (ADMIN_IDLE_TIMEOUT_MINUTES, diperpanjang selama admin aktif lewat
+ * `use-session-keepalive.ts`; paling lama ADMIN_TOKEN_TTL_MINUTES sejak login),
+ * CSP yang hanya mengizinkan koneksi ke API, dan tidak ada teks dari API yang
+ * dirender sebagai HTML mentah.
  */
 
 const KUNCI = "chatbot-admin:token"
@@ -16,6 +18,9 @@ export type TokenPayload = {
   sub: string
   role?: string
   exp?: number
+  iat?: number
+  /** Saat admin memasukkan kata sandi; perpanjangan tidak mengubahnya. */
+  auth_time?: number
 }
 
 export function readToken(): string | null {

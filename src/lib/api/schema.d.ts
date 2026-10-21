@@ -335,13 +335,44 @@ export interface paths {
         put?: never;
         /**
          * Login admin
-         * @description AD-1. Mengembalikan JWT berumur `ADMIN_TOKEN_TTL_MINUTES` (default 8 jam).
+         * @description AD-1. Mengembalikan JWT berumur `ADMIN_IDLE_TIMEOUT_MINUTES` (default 30
+         *     menit). Dashboard memperpanjangnya lewat `POST /api/admin/token/refresh`
+         *     selama admin berinteraksi, sampai paling lama `ADMIN_TOKEN_TTL_MINUTES`
+         *     (default 8 jam) sejak login. Token membawa `iss`, `aud`, dan `auth_time`
+         *     (waktu login); token tanpa klaim itu ditolak.
          *
          *     Balasan gagal sengaja tidak membedakan "email tidak terdaftar" dari
          *     "kata sandi salah", supaya tidak bisa dipakai memetakan siapa saja yang
-         *     punya akun admin.
+         *     punya akun admin. Setiap login berhasil, gagal, dan terkunci dicatat ke
+         *     log audit beserta IP-nya.
          */
         post: operations["admin_login"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/token/refresh": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Perpanjang token sesi dashboard
+         * @description Token baru untuk sesi yang sama, berumur `ADMIN_IDLE_TIMEOUT_MINUTES`.
+         *     Dipanggil dashboard selama admin masih berinteraksi, sehingga sesi
+         *     yang ditinggal berakhir sendiri. `auth_time` login aslinya ikut
+         *     terbawa: sesi tidak pernah melewati `ADMIN_TOKEN_TTL_MINUTES` sejak
+         *     login, berapa kali pun diperpanjang. Akun nonaktif, token yang terbit
+         *     sebelum kata sandi diganti, dan sesi yang sudah melewati batas umurnya
+         *     ditolak 401.
+         */
+        post: operations["refresh_token"];
         delete?: never;
         options?: never;
         head?: never;
@@ -645,6 +676,8 @@ export interface paths {
          *     Tidak tunduk pada kill switch (admin perlu mendiagnosis justru saat
          *     layanan dimatikan) dan TIDAK dicatat ke log percakapan, supaya uji coba
          *     tidak mencemari AD-4 maupun AD-5. LLM tetap dipanggil bila lolos ambang.
+         *     Karena itu dibatasi per akun dashboard (`RATE_LIMIT_PER_ADMIN`, bawaan
+         *     20/menit).
          */
         post: operations["admin_test_query"];
         delete?: never;
@@ -2838,6 +2871,27 @@ export interface operations {
             429: components["responses"]["RateLimited"];
         };
     };
+    refresh_token: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Token baru */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TokenResponse"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+        };
+    };
     list_documents: {
         parameters: {
             query?: {
@@ -3304,6 +3358,7 @@ export interface operations {
             401: components["responses"]["Unauthorized"];
             403: components["responses"]["Forbidden"];
             422: components["responses"]["ValidationError"];
+            429: components["responses"]["RateLimited"];
             /**
              * @description Layanan AI gagal (LLM, gateway, atau embedding pertanyaan). `detail`
              *     berisi kalimat siap tampil yang menyarankan mencoba lagi; rinciannya
@@ -3748,7 +3803,12 @@ export interface operations {
                     "application/json": components["schemas"]["TokenResponse"];
                 };
             };
-            /** @description Kata sandi lama salah, atau kata sandi baru sama dengan yang lama */
+            /**
+             * @description Kata sandi lama salah, kata sandi baru sama dengan yang lama, atau
+             *     kata sandi baru terlalu mudah ditebak (sandi umum, kata seperti
+             *     "instiki" atau "password" ditambah angka, urutan, pengulangan, atau
+             *     sebagian besar berisi email akun). `detail` menyebut alasannya.
+             */
             400: {
                 headers: {
                     [name: string]: unknown;
