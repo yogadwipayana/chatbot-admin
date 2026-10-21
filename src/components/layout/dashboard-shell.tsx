@@ -10,6 +10,7 @@ import { KillSwitchBanner } from "@/components/layout/kill-switch-banner"
 import { Button } from "@/components/ui/button"
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
 import { useNow } from "@/hooks/use-now"
+import { useSessionKeepalive } from "@/hooks/use-session-keepalive"
 import { useToken } from "@/hooks/use-token"
 import { useMe } from "@/lib/api/queries"
 import { useT } from "@/lib/i18n"
@@ -25,6 +26,8 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
   const usable = isTokenUsable(token, now)
   // Level dan unit datang dari server; seluruh menu dan halaman bergantung padanya.
   const me = useMe(usable)
+  // Token berumur pendek; diperpanjang hanya selama admin berinteraksi (H27).
+  useSessionKeepalive(usable)
 
   useEffect(() => {
     // undefined = localStorage belum terbaca (render server / sebelum hidrasi).

@@ -4,13 +4,26 @@ import { LoginForm } from "@/components/auth/login-form"
 
 export const metadata: Metadata = { title: "Masuk" }
 
-/** Hanya lintasan internal; `//situs-lain` dan URL absolut ditolak (open redirect). */
+const ASAL_PEMBANDING = "https://dasbor.invalid"
+
+/**
+ * Hanya lintasan internal dashboard ini; selain itu `/` (open redirect, H20).
+ *
+ * Diperiksa dengan pengurai URL yang sama dengan peramban, bukan dengan awalan
+ * teks. Peramban membuang tab dan baris baru dari URL, jadi `?lanjut=/%09/situs-lain`
+ * lolos cek awalan `//` tetapi dibuka sebagai `//situs-lain`, yaitu situs lain.
+ * Hasilnya disusun ulang dari bagian URL yang sudah diurai, supaya yang dipakai
+ * `router.replace` persis yang sudah diperiksa.
+ */
 function tujuanAman(value: string | string[] | undefined): string {
-  if (typeof value !== "string") return "/"
-  if (!value.startsWith("/") || value.startsWith("//") || value.startsWith("/\\")) {
+  if (typeof value !== "string" || !value.startsWith("/")) return "/"
+  try {
+    const tujuan = new URL(value, ASAL_PEMBANDING)
+    if (tujuan.origin !== ASAL_PEMBANDING) return "/"
+    return `${tujuan.pathname}${tujuan.search}${tujuan.hash}`
+  } catch {
     return "/"
   }
-  return value
 }
 
 export default async function LoginPage({ searchParams }: PageProps<"/masuk">) {
