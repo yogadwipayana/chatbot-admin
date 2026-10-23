@@ -24,7 +24,7 @@ import { cn } from "@/lib/utils"
 function useDocumentTitle(judul: string | undefined) {
   const t = useT()
   useEffect(() => {
-    if (judul) document.title = `${judul} · ${t.app.name}`
+    if (judul) document.title = `${judul} | ${t.app.name}`
   }, [judul, t])
 }
 

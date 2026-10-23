@@ -20,7 +20,7 @@ import { useChangePassword } from "@/lib/api/queries"
 import { useT } from "@/lib/i18n"
 import { setToken } from "@/lib/auth/token"
 
-const PANJANG_MINIMUM = 12
+const PANJANG_MINIMUM = 8
 
 export function ChangePasswordDialog({
   open,

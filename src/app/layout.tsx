@@ -17,7 +17,7 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: {
     default: "Dashboard Admin Chatbot",
-    template: "%s · Dashboard Admin Chatbot",
+    template: "%s | Dashboard Admin Chatbot",
   },
   description:
     "Kelola dokumen sumber, pertanyaan tak terjawab, dan layanan chatbot administrasi mahasiswa.",

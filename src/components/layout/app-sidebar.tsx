@@ -2,7 +2,6 @@
 
 import { useQueryClient } from "@tanstack/react-query"
 import {
-  BotIcon,
   Building2Icon,
   CircleDollarSignIcon,
   ChartColumnIcon,
@@ -30,6 +29,7 @@ import { useTheme } from "next-themes"
 import { useState } from "react"
 
 import { ChangePasswordDialog } from "@/components/auth/change-password-dialog"
+import { AppLogo } from "@/components/layout/app-logo"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -193,9 +193,7 @@ export function AppSidebar() {
     <Sidebar>
       <SidebarHeader>
         <div className="flex items-center gap-2 px-2 py-1.5">
-          <div className="flex size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-            <BotIcon className="size-4" aria-hidden />
-          </div>
+          <AppLogo />
           <div className="grid leading-tight">
             <span className="text-sm font-semibold">{t.app.short}</span>
             <span className="text-xs text-muted-foreground">{t.app.tagline}</span>

@@ -68,7 +68,7 @@ export function LoginForm({
   const [capsLock, setCapsLock] = useState(false)
 
   useEffect(() => {
-    document.title = `${t.auth.pageTitle} · ${t.app.name}`
+    document.title = `${t.auth.pageTitle} | ${t.app.name}`
   }, [t])
 
   // Sudah punya sesi yang masih berlaku: tidak perlu masuk lagi.
