@@ -1,12 +1,16 @@
 import { cn } from "@/lib/utils"
 
 /**
- * Logo dashboard: topi wisuda yang bagian bawahnya menjadi balon obrolan.
+ * Logo dashboard: balon obrolan bergaris tebal dengan bayangan padat
+ * (gaya neo-brutalis) dan dua baris teks.
  *
  * Hitam putih: warnanya ikut `primary` tema, jadi terbalik di mode gelap.
  * Gambarnya sama dengan `src/app/icon.svg` (ikon tab peramban) dan
- * `favicon.ico`; bila salah satu diubah, samakan yang lain.
+ * `favicon.ico`; bila salah satu diubah, samakan yang lain. Arsip logo
+ * lain dan cara menggantinya: `client/docs/logo/README.md`.
  */
+const BALON = "M8 4h12a5 5 0 0 1 5 5v7a5 5 0 0 1-5 5h-7.5l-4.6 3.8c-.6.5-1.4.1-1.4-.7V20.6A5 5 0 0 1 3 16V9a5 5 0 0 1 5-5z"
+
 export function AppLogo({ className, ...props }: React.ComponentProps<"svg">) {
   return (
     <svg
@@ -16,19 +20,20 @@ export function AppLogo({ className, ...props }: React.ComponentProps<"svg">) {
       className={cn("size-8 shrink-0", className)}
       {...props}
     >
-      <rect width="32" height="32" rx="8" className="fill-primary" />
-      <path d="M16 5 27.5 10 16 15 4.5 10z" className="fill-primary-foreground" />
+      <path className="fill-primary" transform="translate(3.5 3.5)" d={BALON} />
       <path
-        d="M8.5 13.5 16 16.8l7.5-3.3V20a3.5 3.5 0 0 1-3.5 3.5h-6.4l-3.9 3.2c-.5.4-1.2.1-1.2-.6z"
-        className="fill-primary-foreground"
+        className="fill-primary-foreground stroke-primary"
+        strokeWidth="2.4"
+        strokeLinejoin="round"
+        d={BALON}
       />
       <path
-        d="M25.6 10.9v5.2"
-        className="stroke-primary-foreground"
-        strokeWidth="1.4"
+        className="stroke-primary"
+        fill="none"
+        strokeWidth="2.4"
         strokeLinecap="round"
+        d="M8.5 10.5h11M8.5 15h6.5"
       />
-      <circle cx="25.6" cy="16.8" r="1.3" className="fill-primary-foreground" />
     </svg>
   )
 }

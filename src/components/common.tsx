@@ -7,7 +7,7 @@ import {
   RotateCwIcon,
   type LucideIcon,
 } from "lucide-react"
-import { useEffect } from "react"
+import { Fragment, useEffect } from "react"
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
@@ -169,31 +169,62 @@ export function Pagination({
 /**
  * Jawaban chatbot, ditampilkan sama seperti yang dibaca mahasiswa di widget.
  *
- * Model kadang menulis penekanan Markdown: tebal (`**Rp675.000**`) dan kode
- * sebaris (`` `TRANSFER NomorVA NOMINAL` ``). Widget (`RichText` di
- * `client/src/components/chat/chat-message.tsx`) hanya menerjemahkan dua itu;
+ * Model kadang menulis penekanan Markdown: tebal (`**Rp675.000**`), miring
+ * (`*Artificial Intelligence*`), dan kode sebaris
+ * (`` `TRANSFER NomorVA NOMINAL` ``). Widget hanya menerjemahkan tiga itu;
  * sisanya -- termasuk sitasi `[Judul, hal. 12]` -- tampil apa adanya. Admin
  * yang menelusuri keluhan harus melihat hal yang sama, bukan tanda bintang
  * atau backtick mentah. Pembungkusnya tetap `whitespace-pre-wrap` supaya baris
  * dan daftar bernomor tidak menyatu.
  */
 export function RichText({ text }: { text: string }) {
-  const bagian = text.split(/(\*\*[\s\S]+?\*\*|`[^`\n]+`)/g)
   return (
     <>
-      {bagian.map((teks, index) =>
-        index % 2 === 0 ? (
-          teks
-        ) : teks.startsWith("`") ? (
+      {potongMarkdown(text).map(({ jenis, isi }, index) =>
+        jenis === "teks" ? (
+          <Fragment key={index}>{isi}</Fragment>
+        ) : jenis === "kode" ? (
           <code key={index} className="rounded border bg-muted px-1 font-mono text-[0.9em]">
-            {teks.slice(1, -1)}
+            {isi}
           </code>
-        ) : (
+        ) : jenis === "tebal" ? (
           <strong key={index}>
-            <RichText text={teks.slice(2, -2)} />
+            <RichText text={isi} />
           </strong>
+        ) : (
+          <em key={index}>
+            <RichText text={isi} />
+          </em>
         )
       )}
     </>
   )
+}
+
+/**
+ * Salinan `potongMarkdown` widget (`client/src/components/chat/markdown.ts`);
+ * ubah keduanya bersamaan. Miring hanya di batas kata, satu baris, tanpa spasi
+ * tepat di dalam bintang, jadi `2*3*4` dan butir `* teks` tetap apa adanya.
+ */
+const PENANDA_MARKDOWN =
+  /\*\*\*[^\s*][^*\n]*?\*\*\*|\*\*[\s\S]+?\*\*|`[^`\n]+`|\*[^\s*](?:[^*\n]*?[^\s*])?\*(?![\w*])/g
+const KARAKTER_KATA = /[\w*]/
+
+type PotonganMarkdown = { jenis: "teks" | "tebal" | "kode" | "miring"; isi: string }
+
+function potongMarkdown(text: string): PotonganMarkdown[] {
+  const hasil: PotonganMarkdown[] = []
+  let awal = 0
+  for (const cocok of text.matchAll(PENANDA_MARKDOWN)) {
+    const penanda = cocok[0]
+    const posisi = cocok.index
+    const jenis = penanda.startsWith("**") ? "tebal" : penanda.startsWith("`") ? "kode" : "miring"
+    if (jenis === "miring" && posisi > 0 && KARAKTER_KATA.test(text[posisi - 1])) continue
+    if (posisi > awal) hasil.push({ jenis: "teks", isi: text.slice(awal, posisi) })
+    const lebar = jenis === "tebal" ? 2 : 1
+    hasil.push({ jenis, isi: penanda.slice(lebar, -lebar) })
+    awal = posisi + penanda.length
+  }
+  if (awal < text.length) hasil.push({ jenis: "teks", isi: text.slice(awal) })
+  return hasil
 }
