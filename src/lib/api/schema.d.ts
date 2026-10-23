@@ -345,6 +345,11 @@ export interface paths {
          *     "kata sandi salah", supaya tidak bisa dipakai memetakan siapa saja yang
          *     punya akun admin. Setiap login berhasil, gagal, dan terkunci dicatat ke
          *     log audit beserta IP-nya.
+         *
+         *     Setelah 10 kali gagal dalam 15 menit untuk satu email, dari IP mana pun,
+         *     email itu dikunci sementara (429 + `Retry-After`); login berhasil
+         *     mengosongkan hitungannya. Tidak dihitung per IP: IP kampus dipakai
+         *     bersama, dan tebakan satu orang tidak boleh mengunci admin lain.
          */
         post: operations["admin_login"];
         delete?: never;
@@ -1240,6 +1245,9 @@ export interface components {
              *     penanya. BUKAN filter retrieval. NIM utuh dicatat di
              *     `messages.meta` bersama prodi dan angkatannya; untuk balasan
              *     `support` hanya NIM-nya (PRD §11).
+             *
+             *     Juga kunci batas laju utama (`RATE_LIMIT_PER_NIM`): satu jatah
+             *     per NIM, di tab, perangkat, dan jaringan mana pun.
              */
             nim: string;
         };
@@ -2315,10 +2323,13 @@ export interface components {
             };
         };
         /**
-         * @description Melebihi batas laju (FR-9): per IP, per `X-Session-Id`, atau per kunci
-         *     sematan -- mana pun yang lebih dulu penuh (`RATE_LIMIT_*` di `.env`).
-         *     Permintaan yang ditolak tidak ikut menghabiskan jatah. Menilai jawaban
-         *     (`/api/feedback`) punya jatah sendiri, terpisah dari bertanya.
+         * @description Melebihi batas laju (FR-9): per NIM penanya (`RATE_LIMIT_PER_NIM`) atau
+         *     per IP (`RATE_LIMIT_PER_IP`, penahan skrip yang sengaja jauh di atas
+         *     beban kampus). Batas per `X-Session-Id` dan per kunci sematan hanya
+         *     berlaku bila dinyalakan di `.env` (bawaan mati) -- mana pun yang lebih
+         *     dulu penuh. Permintaan yang ditolak tidak ikut menghabiskan jatah.
+         *     Menilai jawaban (`/api/feedback`) punya jatah sendiri, terpisah dari
+         *     bertanya, dihitung atas NIM penanya jawaban yang dinilai.
          */
         RateLimited: {
             headers: {
@@ -2407,10 +2418,10 @@ export interface components {
     };
     parameters: {
         /**
-         * @description Pembatasan laju per sesi (FR-9). Bila tidak dikirim, sistem jatuh ke
-         *     pembatasan per IP -- yang di jaringan kampus dipakai bersama ratusan
-         *     mahasiswa, sehingga jauh lebih mudah kena batas. Kirimkan nilai yang
-         *     sama dengan `session_id` di body.
+         * @description Kunci batas laju per sesi (FR-9), yang mati secara bawaan: batas utama
+         *     dihitung per NIM di body. Tetap kirimkan nilai yang sama dengan
+         *     `session_id` di body, supaya batas per sesi berlaku bila dinyalakan
+         *     (`RATE_LIMIT_PER_SESSION`).
          */
         SessionIdHeader: string;
         /**
@@ -2435,10 +2446,10 @@ export interface operations {
             query?: never;
             header?: {
                 /**
-                 * @description Pembatasan laju per sesi (FR-9). Bila tidak dikirim, sistem jatuh ke
-                 *     pembatasan per IP -- yang di jaringan kampus dipakai bersama ratusan
-                 *     mahasiswa, sehingga jauh lebih mudah kena batas. Kirimkan nilai yang
-                 *     sama dengan `session_id` di body.
+                 * @description Kunci batas laju per sesi (FR-9), yang mati secara bawaan: batas utama
+                 *     dihitung per NIM di body. Tetap kirimkan nilai yang sama dengan
+                 *     `session_id` di body, supaya batas per sesi berlaku bila dinyalakan
+                 *     (`RATE_LIMIT_PER_SESSION`).
                  */
                 "X-Session-Id"?: components["parameters"]["SessionIdHeader"];
                 /**
@@ -2480,10 +2491,10 @@ export interface operations {
             query?: never;
             header?: {
                 /**
-                 * @description Pembatasan laju per sesi (FR-9). Bila tidak dikirim, sistem jatuh ke
-                 *     pembatasan per IP -- yang di jaringan kampus dipakai bersama ratusan
-                 *     mahasiswa, sehingga jauh lebih mudah kena batas. Kirimkan nilai yang
-                 *     sama dengan `session_id` di body.
+                 * @description Kunci batas laju per sesi (FR-9), yang mati secara bawaan: batas utama
+                 *     dihitung per NIM di body. Tetap kirimkan nilai yang sama dengan
+                 *     `session_id` di body, supaya batas per sesi berlaku bila dinyalakan
+                 *     (`RATE_LIMIT_PER_SESSION`).
                  */
                 "X-Session-Id"?: components["parameters"]["SessionIdHeader"];
                 /**
@@ -2544,10 +2555,10 @@ export interface operations {
             query?: never;
             header?: {
                 /**
-                 * @description Pembatasan laju per sesi (FR-9). Bila tidak dikirim, sistem jatuh ke
-                 *     pembatasan per IP -- yang di jaringan kampus dipakai bersama ratusan
-                 *     mahasiswa, sehingga jauh lebih mudah kena batas. Kirimkan nilai yang
-                 *     sama dengan `session_id` di body.
+                 * @description Kunci batas laju per sesi (FR-9), yang mati secara bawaan: batas utama
+                 *     dihitung per NIM di body. Tetap kirimkan nilai yang sama dengan
+                 *     `session_id` di body, supaya batas per sesi berlaku bila dinyalakan
+                 *     (`RATE_LIMIT_PER_SESSION`).
                  */
                 "X-Session-Id"?: components["parameters"]["SessionIdHeader"];
                 /**

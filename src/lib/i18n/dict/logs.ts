@@ -316,7 +316,6 @@ export const logs = {
     decision: ["keputusan", "decision"],
     reason: ["alasan", "reason"],
     top_score: ["skor teratas", "top score"],
-    top_rerank_score: ["skor rerank", "rerank score"],
     contact_count: ["kontak", "contacts"],
     model: ["model", "model"],
     input_tokens: ["token masuk", "input tokens"],

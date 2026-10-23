@@ -1,10 +1,11 @@
 "use client"
 
-import { ArrowBigUpIcon, BotIcon, CircleAlertIcon, EyeIcon, EyeOffIcon, LoaderCircleIcon } from "lucide-react"
+import { ArrowBigUpIcon, CircleAlertIcon, EyeIcon, EyeOffIcon, LoaderCircleIcon } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useEffect, useState, type FormEvent, type KeyboardEvent } from "react"
 
 import { LoginShowcase } from "@/components/auth/login-showcase"
+import { AppLogo } from "@/components/layout/app-logo"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
@@ -100,9 +101,7 @@ export function LoginForm({
           <form onSubmit={onSubmit} className="p-6 md:p-8">
             <FieldGroup>
               <div className="flex flex-col items-center gap-2 text-center">
-                <div className="mb-2 flex size-10 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-                  <BotIcon className="size-5" aria-hidden />
-                </div>
+                <AppLogo className="mb-2 size-10" />
                 <h1 className="text-2xl font-bold">{t.auth.heading}</h1>
                 <p className="text-balance text-muted-foreground">{t.auth.intro}</p>
               </div>
