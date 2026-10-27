@@ -53,20 +53,20 @@ export const testQuery = {
       "A greeting or small talk: answered briefly with no retrieval.",
     ],
     rejected: [
-      "Dihentikan gerbang JEV: pesan tidak bermakna, upaya manipulasi, atau di luar topik kampus. Pencarian dihentikan dan model AI tidak dipanggil.",
-      "Stopped by the JEV gate: nonsense, a manipulation attempt, or off campus topics. The search was stopped and the AI model was never called.",
+      "Dihentikan gerbang Laya: pesan tidak bermakna, upaya manipulasi, atau di luar topik kampus. Pencarian dihentikan dan model AI tidak dipanggil.",
+      "Stopped by the Laya gate: nonsense, a manipulation attempt, or off campus topics. The search was stopped and the AI model was never called.",
     ],
   },
-  // `rejected` punya tiga asal. Menyebut "gerbang JEV" untuk semuanya keliru
-  // saat JEV dimatikan dan cadangannya yang bekerja.
+  // `rejected` punya tiga asal. Menyebut "gerbang Laya" untuk semuanya keliru
+  // saat Laya dimatikan dan cadangannya yang bekerja.
   rejectedBy: {
-    jev: [
-      "Dihentikan gerbang JEV: pesan tidak bermakna, upaya manipulasi, atau di luar topik kampus. Pencarian dihentikan dan model AI penjawab tidak dipanggil.",
-      "Stopped by the JEV gate: nonsense, a manipulation attempt, or off campus topics. The search was stopped and the answering AI model was never called.",
+    laya: [
+      "Dihentikan gerbang Laya: pesan tidak bermakna, upaya manipulasi, atau di luar topik kampus. Pencarian dihentikan dan model AI penjawab tidak dipanggil.",
+      "Stopped by the Laya gate: nonsense, a manipulation attempt, or off campus topics. The search was stopped and the answering AI model was never called.",
     ],
     rules: [
-      "Dihentikan saringan aturan: pesan tidak bermakna, basa-basi tentang asisten, atau upaya manipulasi. Tanpa pencarian, tanpa JEV, dan tanpa model AI.",
-      "Stopped by the rule filter: nonsense, small talk about the assistant, or a manipulation attempt. No search, no JEV and no AI model.",
+      "Dihentikan saringan aturan: pesan tidak bermakna, basa-basi tentang asisten, atau upaya manipulasi. Tanpa pencarian, tanpa Laya, dan tanpa model AI.",
+      "Stopped by the rule filter: nonsense, small talk about the assistant, or a manipulation attempt. No search, no Laya and no AI model.",
     ],
     llm: [
       "Sumber lolos ambang, tetapi model AI menilai pertanyaan ini di luar urusan kampus. Tidak masuk daftar pertanyaan tak terjawab.",
@@ -87,12 +87,12 @@ export const testQuery = {
       `${sumber}: ${label} (${persen}) · ${blokir ? "blocked" : "passed"}`,
   ],
   gateSource: {
-    jev: ["Gerbang JEV", "JEV gate"],
+    laya: ["Gerbang Laya", "Laya gate"],
     rules: ["Saringan aturan", "Rule filter"],
   },
   gateError: [
-    (galat: string) => `Gerbang JEV gagal atau lewat tenggat, pesan diteruskan: ${galat}`,
-    (galat: string) => `JEV gate failed or missed its deadline, message passed: ${galat}`,
+    (galat: string) => `Gerbang Laya gagal atau lewat tenggat, pesan diteruskan: ${galat}`,
+    (galat: string) => `Laya gate failed or missed its deadline, message passed: ${galat}`,
   ],
   gateLabel: {
     academic: ["akademik", "academic"],
@@ -118,8 +118,8 @@ export const testQuery = {
     "Small talk is answered before any document search, so no threshold is checked.",
   ],
   decisionRejected: [
-    "Diblokir gerbang JEV atau saringan aturan sebelum ambang dinilai.",
-    "Blocked by the JEV gate or the rule filter before the threshold was checked.",
+    "Diblokir gerbang Laya atau saringan aturan sebelum ambang dinilai.",
+    "Blocked by the Laya gate or the rule filter before the threshold was checked.",
   ],
   reason: {
     ok: [
@@ -147,8 +147,8 @@ export const testQuery = {
   noChunks: ["Tidak ada potongan yang ditemukan.", "No chunks were found."],
   noSearch: ["Tidak ada pencarian dokumen.", "No document search was run."],
   searchStopped: [
-    "Pencarian dihentikan karena gerbang JEV memblokir pesan ini.",
-    "The search was stopped because the JEV gate blocked this message.",
+    "Pencarian dihentikan karena gerbang Laya memblokir pesan ini.",
+    "The search was stopped because the Laya gate blocked this message.",
   ],
   // Potongan lanjutan ikut karena potongan sebelumnya, bukan karena mirip
   // pertanyaan -- tanpa label ia tampak seperti hasil tanpa skor yang janggal.

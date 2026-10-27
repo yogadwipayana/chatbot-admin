@@ -27,7 +27,7 @@ export const logs = {
     sensitive: ["Deteksi sensitif", "Sensitivity check"],
     smalltalk: ["Sapaan", "Small talk"],
     rule_gate: ["Saringan aturan", "Rule filter"],
-    jev_gate: ["Gerbang JEV", "JEV gate"],
+    laya_gate: ["Gerbang Laya", "Laya gate"],
     rewrite: ["Tulis ulang query", "Query rewrite"],
     retrieve: ["Pencarian dokumen", "Document search"],
     validate_context: ["Validasi konteks", "Context check"],
@@ -55,7 +55,7 @@ export const logs = {
       (log: string, batal: string) =>
         `${log} ERROR log lines · ${batal} turns cancelled by students in this range`,
     ],
-    blocked: ["Dihentikan gerbang JEV", "Stopped by the JEV gate"],
+    blocked: ["Dihentikan gerbang Laya", "Stopped by the Laya gate"],
     // Pencarian berjalan paralel dengan gerbang, jadi giliran yang diblokir
     // tetap sempat mencari dokumen -- yang dihemat adalah LLM penjawab.
     blockedNote: [
@@ -243,14 +243,14 @@ export const logs = {
       "No output: this step failed or was stopped before it finished.",
     ],
     noCalls: [
-      "Langkah ini tidak memanggil LLM, retriever, tool, maupun JEV.",
-      "This step made no LLM, retriever, tool, or JEV calls.",
+      "Langkah ini tidak memanggil LLM, retriever, tool, maupun Laya.",
+      "This step made no LLM, retriever, tool, or Laya calls.",
     ],
     kind: {
       llm: ["LLM", "LLM"],
       retriever: ["Retriever", "Retriever"],
       tool: ["Tool", "Tool"],
-      jev: ["JEV", "JEV"],
+      laya: ["Laya", "Laya"],
       chain: ["Rantai", "Chain"],
     },
     cutOff: ["terputus", "cut off"],

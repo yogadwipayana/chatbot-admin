@@ -243,7 +243,7 @@ function OutcomeCard({ hasil, unit }: { hasil: Result; unit: string | null }) {
             {hasil.gate.error
               ? t.testQuery.gateError(hasil.gate.error)
               : t.testQuery.gate(
-                  t.testQuery.gateSource[hasil.gate.source ?? "jev"],
+                  t.testQuery.gateSource[hasil.gate.source ?? "laya"],
                   t.testQuery.gateLabel[hasil.gate.label],
                   f.percent(hasil.gate.confidence, 0),
                   hasil.gate.blocked
@@ -451,7 +451,7 @@ function RetrievedCard({ hasil }: { hasil: Result }) {
           <p className="text-sm text-muted-foreground">
             {hasil.decision
               ? t.testQuery.noChunks
-              : hasil.kind === "rejected" && hasil.rejection_source === "jev"
+              : hasil.kind === "rejected" && hasil.rejection_source === "laya"
                 ? t.testQuery.searchStopped
                 : t.testQuery.noSearch}
           </p>

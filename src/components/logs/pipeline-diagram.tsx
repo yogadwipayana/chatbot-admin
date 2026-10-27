@@ -40,7 +40,7 @@ type Pos = { x: number; y: number; w: number; h: number }
 
 /**
  * Tata letak berlapis dari atas ke bawah. Lapisan = jalur terpanjang dari
- * START, jadi cabang paralel (gerbang JEV ∥ rewrite → retrieve) berdampingan
+ * START, jadi cabang paralel (gerbang Laya ∥ rewrite → retrieve) berdampingan
  * dan titik temunya (`validate_context`) turun di bawah keduanya. Posisi
  * mendatar = rata-rata induknya, lalu langkah selapis disebar di sekitarnya.
  *

@@ -101,8 +101,8 @@ function KpiRow({ data }: { data: Summary }) {
         </StatusLabel>
       </StatTile>
 
-      <StatTile label={t.logs.kpi.blocked} value={f.percent(data.jev_blocked_ratio)}>
-        <p>{t.logs.kpi.blockedNote(f.number(data.jev_blocked_count))}</p>
+      <StatTile label={t.logs.kpi.blocked} value={f.percent(data.laya_blocked_ratio)}>
+        <p>{t.logs.kpi.blockedNote(f.number(data.laya_blocked_count))}</p>
       </StatTile>
     </div>
   )

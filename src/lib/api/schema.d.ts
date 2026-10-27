@@ -812,7 +812,7 @@ export interface paths {
         /**
          * Rekaman input/output satu giliran (tab Graf)
          * @description State yang diterima dan dikembalikan setiap node, rute sesudahnya, dan pohon
-         *     panggilan di dalam node (LLM, retriever, tool, JEV) -- pengganti trace LangSmith.
+         *     panggilan di dalam node (LLM, retriever, tool, Laya) -- pengganti trace LangSmith.
          *     404 bila giliran tidak ada, sudah lewat masa simpan, atau berjalan saat
          *     LOG_NODE_IO mati. Waktu dan status node ada di `GET /api/admin/logs/turns/{turn_id}`.
          */
@@ -1694,7 +1694,7 @@ export interface components {
              */
             neighbor_of?: string | null;
         };
-        /** @description Vonis gerbang (JEV atau saringan aturan) pada uji coba ini. */
+        /** @description Vonis gerbang (Laya atau saringan aturan) pada uji coba ini. */
         GateVerdictOut: {
             /** @enum {string} */
             label: "academic" | "smalltalk" | "nonsense" | "malicious" | "out_of_scope";
@@ -1704,10 +1704,10 @@ export interface components {
             error?: string | null;
             /**
              * @description `rules` = saringan aturan tanpa model (pesan acak, tawa, basa-basi tentang PANDU, upaya manipulasi); keyakinannya selalu 1.
-             * @default jev
+             * @default laya
              * @enum {string}
              */
-            source: "jev" | "rules";
+            source: "laya" | "rules";
         };
         TestQueryRequest: {
             question: string;
@@ -1731,9 +1731,9 @@ export interface components {
             kind: components["schemas"]["OutcomeKind"];
             text: string;
             rewritten_query?: string | null;
-            /** @description Tetap terisi saat ditolak ambang atau LLM -- justru itu yang perlu dilihat saat diagnosa. Kosong bila diblokir gerbang JEV: pencariannya dihentikan. */
+            /** @description Tetap terisi saat ditolak ambang atau LLM -- justru itu yang perlu dilihat saat diagnosa. Kosong bila diblokir gerbang Laya: pencariannya dihentikan. */
             retrieved: components["schemas"]["RetrievedChunk"][];
-            /** @description null bila alur berhenti sebelum ambang dinilai: konseling (FR-7), sapaan, atau diblokir gerbang JEV. */
+            /** @description null bila alur berhenti sebelum ambang dinilai: konseling (FR-7), sapaan, atau diblokir gerbang Laya. */
             decision: {
                 /** @enum {string} */
                 decision: "proceed" | "refuse";
@@ -1751,11 +1751,11 @@ export interface components {
              */
             refusal_source?: "threshold" | "llm" | null;
             /**
-             * @description Hanya untuk `rejected`: gerbang JEV, saringan aturan, atau LLM penjawab yang membalas `[DI_LUAR_TOPIK]` (pertanyaan di luar urusan kampus).
+             * @description Hanya untuk `rejected`: gerbang Laya, saringan aturan, atau LLM penjawab yang membalas `[DI_LUAR_TOPIK]` (pertanyaan di luar urusan kampus).
              * @enum {string|null}
              */
-            rejection_source?: "jev" | "rules" | "llm" | null;
-            /** @description Vonis gerbang JEV atau saringan aturan; null bila JEV mati dan aturan meloloskan pesan, atau alur berhenti sebelumnya. */
+            rejection_source?: "laya" | "rules" | "llm" | null;
+            /** @description Vonis gerbang Laya atau saringan aturan; null bila Laya mati dan aturan meloloskan pesan, atau alur berhenti sebelumnya. */
             gate?: components["schemas"]["GateVerdictOut"] | null;
             /** @description Kontak yang akan dilihat mahasiswa untuk pertanyaan yang sama (FE-3, FE-4). */
             contacts: components["schemas"]["ContactOut"][];
@@ -1792,7 +1792,7 @@ export interface components {
              *     disandingkan dengan `answer` seolah keduanya setara.
              */
             smalltalk: number;
-            /** @description Dihentikan gerbang JEV (nonsense, manipulasi, di luar topik). */
+            /** @description Dihentikan gerbang Laya (nonsense, manipulasi, di luar topik). */
             rejected: number;
         };
         Stats: {
@@ -1819,7 +1819,7 @@ export interface components {
             top_topics: components["schemas"]["TopicCount"][];
             /**
              * @description Estimasi dari token terpakai, bukan dari API penagihan. LLM chat + embedding,
-             *     sama dengan total `GET /api/admin/costs`. Gerbang JEV tidak dihitung: ia
+             *     sama dengan total `GET /api/admin/costs`. Gerbang Laya tidak dihitung: ia
              *     berjalan di Laya yang di-host sendiri.
              */
             running_cost_usd: number;
@@ -1914,8 +1914,8 @@ export interface components {
             error_ratio: number;
             /** @description Giliran `dibatalkan` (mahasiswa menghentikan jawaban atau menutup panel). Tidak termasuk `error_turn_count`. */
             cancelled_turn_count: number;
-            jev_blocked_count: number;
-            jev_blocked_ratio: number;
+            laya_blocked_count: number;
+            laya_blocked_ratio: number;
             /** @description Log ERROR ke atas. Untuk role admin, log audit tidak dihitung. */
             error_log_count: number;
             per_node: components["schemas"]["NodeStat"][];
@@ -2039,7 +2039,7 @@ export interface components {
             position: number;
             name: string;
             /** @enum {string} */
-            kind: "llm" | "retriever" | "tool" | "jev" | "chain";
+            kind: "llm" | "retriever" | "tool" | "laya" | "chain";
             started_at: string;
             duration_ms: number | null;
             /** @enum {string} */

@@ -147,7 +147,7 @@ function CallItem({ call }: { call: CallTrace }) {
           aria-hidden
           className={cn("size-4 shrink-0 text-muted-foreground transition-transform", buka && "rotate-90")}
         />
-        <Badge variant="secondary">{t.logs.graph.kind[call.kind]}</Badge>
+        <Badge variant="secondary">{t.logs.graph.kind[call.kind] ?? call.kind}</Badge>
         <span className="font-medium break-all">{call.name}</span>
         {call.model ? (
           <code className="font-mono text-xs text-muted-foreground">{call.model}</code>

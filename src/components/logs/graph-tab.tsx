@@ -52,7 +52,7 @@ const POTONG_PERTANYAAN = 70
 
 /**
  * Tab Graf: alur pipeline chat sebagai diagram, dengan input/output setiap
- * langkah dan panggilan di dalamnya (LLM, retriever, tool, JEV) dari rekaman
+ * langkah dan panggilan di dalamnya (LLM, retriever, tool, Laya) dari rekaman
  * SQLite -- pengganti tampilan trace LangSmith (`logs.md` tahap 4).
  *
  * `turnId` null berarti giliran terbaru; `RINGKASAN` berarti angka agregat
@@ -432,10 +432,10 @@ function stubKosong(graph: Graph): Record<string, EndStub> {
   return stubs
 }
 
-/** Pesan yang dihentikan gerbang JEV berakhir lewat `validate_context`: titik
-    temu itu yang mengarahkannya ke `selesai`, walau penentunya JEV. */
+/** Pesan yang dihentikan gerbang Laya berakhir lewat `validate_context`: titik
+    temu itu yang mengarahkannya ke `selesai`, walau penentunya Laya. */
 function nodeKeluar(node: string): string {
-  return node === "jev_gate" ? "validate_context" : node
+  return node === "laya_gate" ? "validate_context" : node
 }
 
 function tampilanGiliran(graph: Graph, turn: Turn, trace: Trace | undefined, t: Dict, f: Format) {
