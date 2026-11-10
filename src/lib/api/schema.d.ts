@@ -350,6 +350,11 @@ export interface paths {
          *     email itu dikunci sementara (429 + `Retry-After`); login berhasil
          *     mengosongkan hitungannya. Tidak dihitung per IP: IP kampus dipakai
          *     bersama, dan tebakan satu orang tidak boleh mengunci admin lain.
+         *
+         *     Terpisah dari penguncian itu, jumlah permintaan login per IP dibatasi
+         *     `RATE_LIMIT_LOGIN_PER_IP` (bawaan 30/menit; `0` = mati) dan dijawab 429
+         *     + `Retry-After` selama beberapa detik, bukan dikunci: setiap percobaan
+         *     memaksa server menghitung bcrypt, juga untuk email yang tidak terdaftar.
          */
         post: operations["admin_login"];
         delete?: never;
