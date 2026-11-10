@@ -3,7 +3,6 @@
 import { useQueryClient } from "@tanstack/react-query"
 import {
   Building2Icon,
-  CircleDollarSignIcon,
   ChartColumnIcon,
   ChevronsUpDownIcon,
   CodeXmlIcon,
@@ -106,7 +105,9 @@ const NAV: { key: keyof Dict["nav"]["groups"]; items: NavItem[] }[] = [
     key: "operasional",
     items: [
       { href: "/statistik", key: "stats", icon: ChartColumnIcon, min: "admin" },
-      { href: "/biaya", key: "costs", icon: CircleDollarSignIcon, min: "admin" },
+      // Menu Biaya disembunyikan (2026-11-10); halaman /biaya tetap ada lewat URL.
+      // Untuk memunculkan lagi: { href: "/biaya", key: "costs", icon: CircleDollarSignIcon, min: "admin" }
+      // (impor CircleDollarSignIcon dari lucide-react).
       // Alat debug developer (langkah pipeline, system prompt, log server):
       // superadmin saja, sama dengan `x-min-role` endpoint-nya.
       { href: "/log", key: "logs", icon: ScrollTextIcon, min: "superadmin" },
