@@ -135,7 +135,7 @@ export function TurnsTab({
         />
       ) : (
         <div className={cn("space-y-3 transition-opacity", query.isPlaceholderData && "opacity-60")}>
-          <div className="overflow-x-auto rounded-xl border bg-card">
+          <div className="overflow-x-auto surface">
             <Table>
               <TableHeader>
                 <TableRow>

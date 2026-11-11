@@ -170,7 +170,7 @@ export function AppLogsTab({
         <EmptyState icon={ScrollTextIcon} title={t.logs.app.empty} description={t.logs.app.emptyBody} />
       ) : (
         <div className={cn("space-y-3 transition-opacity", query.isPlaceholderData && "opacity-60")}>
-          <ul className="divide-y rounded-xl border bg-card">
+          <ul className="divide-y surface">
             {data.items.map((log) => (
               <LogRow
                 key={log.id}

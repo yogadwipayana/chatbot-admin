@@ -170,7 +170,7 @@ export function UnansweredView() {
               ? t.unanswered.summaryUngrouped(f.number(totalPertanyaan))
               : t.unanswered.summary(f.number(totalPertanyaan), f.number(total))}
           </p>
-          <ul className="divide-y rounded-xl border bg-card">
+          <ul className="divide-y surface">
             {groups.map((group) => {
               const sibuk =
                 setResolved.isPending && setResolved.variables?.ids === group.ids
@@ -294,7 +294,7 @@ export function UnansweredView() {
 
 function GroupListSkeleton() {
   return (
-    <div className="divide-y rounded-xl border">
+    <div className="divide-y surface">
       {Array.from({ length: 4 }, (_, i) => (
         <div key={i} className="flex items-center gap-4 p-4">
           <Skeleton className="h-8 w-16" />

@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils"
  * Logo dashboard: balon obrolan bergaris tebal dengan bayangan padat
  * (gaya neo-brutalis) dan dua baris teks.
  *
- * Hitam putih: warnanya ikut `primary` tema, jadi terbalik di mode gelap.
+ * Hitam putih: warnanya ikut `foreground` tema (bukan `primary`, yang kini warna merek), jadi terbalik di mode gelap.
  * Gambarnya sama dengan `src/app/icon.svg` (ikon tab peramban) dan
  * `favicon.ico`; bila salah satu diubah, samakan yang lain. Arsip logo
  * lain dan cara menggantinya: `client/docs/logo/README.md`.
@@ -20,15 +20,15 @@ export function AppLogo({ className, ...props }: React.ComponentProps<"svg">) {
       className={cn("size-8 shrink-0", className)}
       {...props}
     >
-      <path className="fill-primary" transform="translate(3.5 3.5)" d={BALON} />
+      <path className="fill-foreground" transform="translate(3.5 3.5)" d={BALON} />
       <path
-        className="fill-primary-foreground stroke-primary"
+        className="fill-background stroke-foreground"
         strokeWidth="2.4"
         strokeLinejoin="round"
         d={BALON}
       />
       <path
-        className="stroke-primary"
+        className="stroke-foreground"
         fill="none"
         strokeWidth="2.4"
         strokeLinecap="round"

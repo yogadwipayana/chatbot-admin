@@ -176,7 +176,7 @@ export function DocumentsView() {
         )
       ) : (
         <div className={cn("transition-opacity", query.isPlaceholderData && "opacity-60")}>
-          <div className="rounded-xl border bg-card">
+          <div className="surface">
             <Table>
               <TableHeader>
                 <TableRow>

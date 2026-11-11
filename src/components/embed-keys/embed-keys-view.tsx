@@ -136,7 +136,7 @@ export function EmbedKeysView() {
         />
       ) : (
         <div className="space-y-3">
-          <div className="rounded-xl border bg-card">
+          <div className="surface">
             <Table>
               <TableHeader>
                 <TableRow>

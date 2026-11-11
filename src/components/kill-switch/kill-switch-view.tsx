@@ -92,9 +92,9 @@ export function KillSwitchView({ embedded = false }: { embedded?: boolean }) {
       {state.error ? (
         <QueryError error={state.error} onRetry={() => state.refetch()} />
       ) : !data ? (
-        <Skeleton className="h-64 w-full max-w-2xl rounded-xl" />
+        <Skeleton className="h-64 w-full max-w-3xl rounded-xl" />
       ) : (
-        <div className="grid max-w-2xl gap-6">
+        <div className="grid max-w-3xl gap-6">
           {embedded ? (
             <div>
               <h2 className="text-lg font-semibold">{t.killSwitch.title}</h2>

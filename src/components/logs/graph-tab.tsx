@@ -327,7 +327,7 @@ function TataLetak({ diagram, panel }: { diagram: ReactNode; panel: ReactNode })
     <div className="grid gap-4 lg:grid-cols-[minmax(0,27rem)_minmax(0,1fr)]">
       {/* Sticky: panel prompt LLM bisa sepanjang beberapa layar, dan diagram
           tetap terlihat untuk berpindah langkah tanpa menggulung balik. */}
-      <div className="space-y-3 self-start rounded-xl border bg-card p-4 lg:sticky lg:top-20">
+      <div className="space-y-3 self-start surface p-4 lg:sticky lg:top-20">
         <div className="flex justify-center">{diagram}</div>
         <ul className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
           <Legenda className="border-series-1 bg-series-1/15">{t.logs.graph.legend.ran}</Legenda>
@@ -337,7 +337,7 @@ function TataLetak({ diagram, panel }: { diagram: ReactNode; panel: ReactNode })
           <Legenda className="border-dashed border-border">{t.logs.graph.legend.skipped}</Legenda>
         </ul>
       </div>
-      <div className="min-w-0 rounded-xl border bg-card p-4">{panel}</div>
+      <div className="min-w-0 surface p-4">{panel}</div>
     </div>
   )
 }
@@ -360,7 +360,7 @@ function InfoGiliran({ turn, onOpenTurn }: { turn: Turn; onOpenTurn: (turnId: st
   const jalur = t.logs.endpoint[turn.endpoint as keyof Dict["logs"]["endpoint"]] ?? turn.endpoint
 
   return (
-    <div className="space-y-3 rounded-xl border bg-card p-4">
+    <div className="space-y-3 surface p-4">
       <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-sm">
         <span className="tabular-nums">{waktu.waktu(turn.timestamp, now)}</span>
         <span>{kindLabel(t, turn.outcome)}</span>

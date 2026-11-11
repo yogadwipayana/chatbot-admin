@@ -71,7 +71,7 @@ type NavItem = {
  * Label menunya ada di kamus; di sini hanya kuncinya, supaya urutan dan hak
  * akses menu tidak ikut tersentuh setiap kali teksnya disunting.
  */
-const NAV: { key: keyof Dict["nav"]["groups"]; items: NavItem[] }[] = [
+export const NAV: { key: keyof Dict["nav"]["groups"]; items: NavItem[] }[] = [
   {
     // AD-4 ditempatkan paling atas: PRD §9 menyebutnya penentu sistem membaik atau stagnan.
     key: "perbaikan",
@@ -144,7 +144,12 @@ function NavBadge({ kind }: { kind: NonNullable<NavItem["badge"]> }) {
   if (kind === "unanswered") {
     const n = unanswered.data?.total ?? 0
     return n > 0 ? (
-      <SidebarMenuBadge aria-label={t.nav.badges.unanswered(n)}>{n}</SidebarMenuBadge>
+      <SidebarMenuBadge
+        aria-label={t.nav.badges.unanswered(n)}
+        className="rounded-full bg-primary/10 px-1.5 text-[0.6875rem] font-semibold text-primary dark:bg-primary/25 dark:text-sidebar-accent-foreground"
+      >
+        {n}
+      </SidebarMenuBadge>
     ) : null
   }
   if (kind === "stale") {
@@ -192,19 +197,20 @@ export function AppSidebar() {
 
   return (
     <Sidebar>
-      <SidebarHeader>
-        <div className="flex items-center gap-2 px-2 py-1.5">
-          <AppLogo />
+      {/* Tingginya sama dengan bilah atas (h-14) supaya garis bawahnya segaris. */}
+      <SidebarHeader className="h-14 justify-center border-b px-4 py-0">
+        <div className="flex items-center gap-2.5">
+          <AppLogo className="size-7" />
           <div className="grid leading-tight">
-            <span className="text-sm font-semibold">{t.app.short}</span>
+            <span className="text-sm font-semibold tracking-tight text-foreground">{t.app.short}</span>
             <span className="text-xs text-muted-foreground">{t.app.tagline}</span>
           </div>
         </div>
       </SidebarHeader>
 
-      <SidebarContent>
+      <SidebarContent className="gap-0 py-2">
         {groups.map((group) => (
-          <SidebarGroup key={group.key}>
+          <SidebarGroup key={group.key} className="px-3 py-1.5">
             <SidebarGroupLabel>{t.nav.groups[group.key]}</SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
@@ -228,7 +234,7 @@ export function AppSidebar() {
         ))}
       </SidebarContent>
 
-      <SidebarFooter>
+      <SidebarFooter className="border-t p-2">
         <SidebarMenu>
           <SidebarMenuItem>
             {/* modal={false}: dialog ganti kata sandi dibuka dari menu ini, dan menu
@@ -236,17 +242,17 @@ export function AppSidebar() {
             <DropdownMenu modal={false}>
               <DropdownMenuTrigger asChild>
                 <SidebarMenuButton size="lg">
-                  <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-muted text-xs font-semibold">
+                  <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary dark:bg-primary/25 dark:text-sidebar-accent-foreground">
                     {me ? initials(me) : "?"}
                   </div>
                   <div className="grid min-w-0 flex-1 text-left leading-tight">
-                    <span className="truncate text-sm font-medium">{me?.name || me?.email}</span>
+                    <span className="truncate text-sm font-medium text-foreground">{me?.name || me?.email}</span>
                     <span className="truncate text-xs text-muted-foreground">
                       {me ? t.roles.labels[me.role] : ""}
                       {me?.unit ? ` · ${me.unit}` : ""}
                     </span>
                   </div>
-                  <ChevronsUpDownIcon className="ml-auto size-4" />
+                  <ChevronsUpDownIcon className="ml-auto size-4 text-muted-foreground" />
                 </SidebarMenuButton>
               </DropdownMenuTrigger>
               <DropdownMenuContent

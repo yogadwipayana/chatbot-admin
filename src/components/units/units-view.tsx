@@ -95,7 +95,7 @@ export function UnitsView() {
       ) : units.data.length === 0 ? (
         <EmptyState icon={Building2Icon} title={t.units.empty} />
       ) : (
-        <div className="rounded-xl border bg-card">
+        <div className="surface">
           <Table>
             <TableHeader>
               <TableRow>

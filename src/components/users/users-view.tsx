@@ -144,7 +144,7 @@ export function UsersView() {
       ) : users.data.length === 0 ? (
         <EmptyState icon={UsersRoundIcon} title={t.users.empty} />
       ) : (
-        <div className="rounded-xl border bg-card">
+        <div className="surface">
           <Table>
             <TableHeader>
               <TableRow>

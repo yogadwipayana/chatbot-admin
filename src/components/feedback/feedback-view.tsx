@@ -145,7 +145,7 @@ export function FeedbackView() {
               : null}
           </p>
 
-          <ul className="divide-y rounded-xl border bg-card">
+          <ul className="divide-y surface">
             {data?.items.map((item) => (
               <Baris
                 key={item.id}
@@ -274,7 +274,7 @@ function Baris({
 
 function ListSkeleton() {
   return (
-    <div className="divide-y rounded-xl border">
+    <div className="divide-y surface">
       {Array.from({ length: 4 }, (_, i) => (
         <div key={i} className="flex items-start gap-4 p-4">
           <Skeleton className="size-8 rounded-full" />

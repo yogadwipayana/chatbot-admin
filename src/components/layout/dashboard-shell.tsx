@@ -1,11 +1,13 @@
 "use client"
 
 import { useQueryClient } from "@tanstack/react-query"
+import { ChevronRightIcon, MoonIcon, SunIcon } from "lucide-react"
 import { usePathname, useRouter } from "next/navigation"
+import { useTheme } from "next-themes"
 import { useEffect } from "react"
 
 import { Spinner } from "@/components/common"
-import { AppSidebar } from "@/components/layout/app-sidebar"
+import { AppSidebar, NAV } from "@/components/layout/app-sidebar"
 import { KillSwitchBanner } from "@/components/layout/kill-switch-banner"
 import { Button } from "@/components/ui/button"
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
@@ -71,9 +73,11 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
     <SidebarProvider>
       <AppSidebar />
       <SidebarInset>
-        <header className="sticky top-0 z-20 flex h-12 shrink-0 items-center gap-2 border-b bg-background/95 px-4 backdrop-blur supports-backdrop-filter:bg-background/80">
-          {/* Tanpa judul: nama aplikasi sudah ada di kepala sidebar. */}
-          <SidebarTrigger className="-ml-1" />
+        <header className="sticky top-0 z-20 flex h-14 shrink-0 items-center gap-2 border-b bg-background/95 px-4 backdrop-blur supports-backdrop-filter:bg-background/80 md:px-6">
+          <SidebarTrigger className="-ml-1.5 text-muted-foreground" />
+          <span aria-hidden className="mr-1 h-4 w-px bg-border" />
+          <Breadcrumb pathname={pathname} />
+          <ThemeToggle />
         </header>
         <KillSwitchBanner />
         <div className="flex-1 px-4 py-6 md:px-6 lg:px-8 lg:py-8">
@@ -84,6 +88,46 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
   )
 }
 
+/**
+ * Posisi halaman: kelompok menu lalu nama menunya. Nama aplikasi tidak diulang
+ * di sini karena sudah ada di kepala sidebar.
+ */
+function Breadcrumb({ pathname }: { pathname: string }) {
+  const t = useT()
+  for (const group of NAV) {
+    const item = group.items.find((i) => pathname === i.href || pathname.startsWith(`${i.href}/`))
+    if (!item) continue
+    return (
+      <nav aria-label="Breadcrumb" className="flex min-w-0 items-center gap-1.5 text-sm">
+        <span className="hidden text-muted-foreground sm:inline">{t.nav.groups[group.key]}</span>
+        <ChevronRightIcon aria-hidden className="hidden size-3.5 text-muted-foreground/60 sm:inline" />
+        <span className="truncate font-medium">{t.nav.items[item.key]}</span>
+      </nav>
+    )
+  }
+  return null
+}
+
+function ThemeToggle() {
+  const t = useT()
+  const { resolvedTheme, setTheme } = useTheme()
+  return (
+    <Button
+      variant="ghost"
+      size="icon"
+      className="ml-auto text-muted-foreground"
+      aria-label={t.nav.account.appearance}
+      title={t.nav.account.appearance}
+      onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
+    >
+      {/* Keduanya dirender dan dipilih lewat CSS: tema baru diketahui setelah
+          hidrasi, jadi memilih ikon di JS akan memicu selisih hidrasi. */}
+      <SunIcon className="dark:hidden" />
+      <MoonIcon className="hidden dark:block" />
+    </Button>
+  )
+}
+
 function FullPage({ children }: { children: React.ReactNode }) {
-  return <div className="flex min-h-svh items-center justify-center p-4">{children}</div>
+  return <div className="flex min-h-svh items-center justify-center bg-canvas p-4">{children}</div>
 }

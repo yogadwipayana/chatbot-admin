@@ -20,7 +20,7 @@ export function LoginShowcase() {
       />
 
       <div className="relative">
-        <div aria-hidden className="rounded-xl border bg-card text-card-foreground shadow-sm">
+        <div aria-hidden className="surface text-card-foreground shadow-sm">
           <div className="flex items-center gap-2 border-b px-3 py-2.5">
             <AppLogo className="size-6" />
             <span className="text-xs font-medium">{t.app.header}</span>
