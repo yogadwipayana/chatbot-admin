@@ -1081,9 +1081,9 @@ export interface paths {
         };
         /**
          * Daftar semua unit layanan
-         * @description Termasuk unit nonaktif, dalam urutan menu, beserta jumlah dokumen dan
-         *     akun yang memakainya. Untuk isian unit gunakan `GET /api/units`, yang
-         *     hanya memuat unit aktif.
+         * @description Termasuk unit nonaktif, dalam urutan menu, beserta jumlah dokumen, akun,
+         *     dan kontak PIC yang memakainya. Untuk isian unit gunakan `GET /api/units`,
+         *     yang hanya memuat unit aktif.
          */
         get: operations["list_admin_units"];
         put?: never;
@@ -1114,12 +1114,72 @@ export interface paths {
         head?: never;
         /**
          * Ubah nama, deskripsi, urutan, atau status aktif unit
-         * @description Nama baru ikut tersimpan di setiap dokumen dan akun unit itu
+         * @description Nama baru ikut tersimpan di setiap dokumen, akun, dan kontak PIC unit itu
          *     (`ON UPDATE CASCADE`). Unit tidak dapat dihapus; menonaktifkannya
          *     menyembunyikan unit dari menu chatbot dan dari pilihan isian baru,
          *     sementara dokumen dan akunnya tetap ada.
          */
         patch: operations["update_unit"];
+        trace?: never;
+    };
+    "/api/admin/units/{name}/contacts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Ejaan resmi, persis seperti di `GET /api/admin/units`. */
+                name: string;
+            };
+            cookie?: never;
+        };
+        /**
+         * Daftar kontak PIC unit
+         * @description Dalam urutan tampil di banner eskalasi dan teks penolakan widget (FE-3).
+         *     Daftar kosong berarti widget memakai Front Office untuk unit ini.
+         */
+        get: operations["list_unit_contacts"];
+        put?: never;
+        /**
+         * Tambah kontak PIC unit
+         * @description Langsung tampil di widget untuk unit ini, tanpa deploy. Minimal satu dari
+         *     `phone`, `whatsapp`, `email` terisi; teks yang tampil (`display`) disusun
+         *     server supaya widget membuka nomor WhatsApp di WhatsApp. `sort_order`
+         *     kosong = paling akhir di unit itu.
+         */
+        post: operations["create_unit_contact"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/units/{name}/contacts/{contact_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Ejaan resmi, persis seperti di `GET /api/admin/units`. */
+                name: string;
+                contact_id: string;
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Hapus kontak PIC unit
+         * @description Unit yang kehilangan kontak terakhirnya kembali memakai Front Office.
+         */
+        delete: operations["delete_unit_contact"];
+        options?: never;
+        head?: never;
+        /**
+         * Ubah kontak PIC unit
+         * @description Hanya field yang dikirim yang diubah; `null` atau `""` mengosongkan
+         *     kanal. Mengosongkan kanal terakhir ditolak 422.
+         */
+        patch: operations["update_unit_contact"];
         trace?: never;
     };
     "/api/admin/embed-keys": {
@@ -2239,6 +2299,8 @@ export interface components {
             is_active: boolean;
             document_count: number;
             account_count: number;
+            /** @description Kontak PIC unit ini. 0 = penolakan dan banner memakai Front Office. */
+            contact_count: number;
         };
         AdminUnitCreate: {
             /** @description Spasi berlebih dirapikan; tidak boleh memuat `/`. */
@@ -2253,6 +2315,76 @@ export interface components {
             description?: string | null;
             sort_order?: number;
             is_active?: boolean;
+        };
+        /** @description Satu kontak PIC unit, seperti yang tampil di widget mahasiswa. */
+        AdminUnitContact: {
+            /** Format: uuid */
+            id: string;
+            /** @description Nama yang tampil, mis. "PIC BAAK". Unik per unit. */
+            label: string;
+            phone?: string | null;
+            whatsapp?: string | null;
+            email?: string | null;
+            /** @description Kosong = tidak ditampilkan. */
+            service_hours?: string | null;
+            sort_order: number;
+            /**
+             * @description Teks kontak persis seperti di widget (`ContactOut.contact`), mis.
+             *     "Telepon (0361) 256995 / WhatsApp +62 813-3982-2383".
+             */
+            display: string;
+            /**
+             * @description Kosong = selalu tampil untuk unit ini. Terisi = hanya tampil bila
+             *     pertanyaan mahasiswa menyebut salah satunya (utuh per kata, tanpa
+             *     membedakan huruf besar), mis. `["PLK"]` untuk Admin PLK di unit
+             *     Akademik. Tidak pernah tampil ke mahasiswa.
+             */
+            keywords?: string[];
+            /** Format: date-time */
+            updated_at?: string | null;
+            /** @description Email superadmin yang terakhir mengubah. */
+            updated_by?: string | null;
+        };
+        /**
+         * @description Minimal satu dari `phone`, `whatsapp`, `email` terisi; `""` sama dengan
+         *     null. Field tak dikenal ditolak.
+         */
+        AdminUnitContactCreate: {
+            /** @description Satu baris, tanpa tautan. */
+            label: string;
+            /**
+             * @description Nomor Indonesia berawalan 0 atau +62, mis. `(0361) 256995`. Harus
+             *     terbaca utuh oleh pola nomor widget (client `kontak.ts`).
+             */
+            phone?: string | null;
+            /** @description Aturan sama dengan `phone`; tampil berlabel "WhatsApp". */
+            whatsapp?: string | null;
+            /** Format: email */
+            email?: string | null;
+            /** @description Satu baris, tanpa tautan. */
+            service_hours?: string | null;
+            /** @description Kosong = paling akhir di unit itu. */
+            sort_order?: number | null;
+            /**
+             * @description Lihat `AdminUnitContact.keywords`. Spasi dirapikan; yang kosong dan
+             *     kembar (tanpa membedakan huruf besar) dibuang.
+             */
+            keywords?: string[];
+        };
+        /**
+         * @description Hanya field yang dikirim yang diubah. `label` dan `sort_order` tidak
+         *     boleh null. Field tak dikenal ditolak.
+         */
+        AdminUnitContactUpdate: {
+            label?: string;
+            phone?: string | null;
+            whatsapp?: string | null;
+            /** Format: email */
+            email?: string | null;
+            service_hours?: string | null;
+            sort_order?: number;
+            /** @description null atau `[]` = hapus semua kata kunci (kontak kembali selalu tampil). */
+            keywords?: string[] | null;
         };
         EmbedKeyInfo: {
             /** @description Menjadi `frame-ancestors` halaman `/embed`. Kosong = situs mana pun. */
@@ -4088,6 +4220,138 @@ export interface operations {
             403: components["responses"]["Forbidden"];
             404: components["responses"]["NotFound"];
             /** @description Nama baru sama dengan unit lain */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            422: components["responses"]["ValidationError"];
+        };
+    };
+    list_unit_contacts: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Ejaan resmi, persis seperti di `GET /api/admin/units`. */
+                name: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Kontak unit */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminUnitContact"][];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+        };
+    };
+    create_unit_contact: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Ejaan resmi, persis seperti di `GET /api/admin/units`. */
+                name: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AdminUnitContactCreate"];
+            };
+        };
+        responses: {
+            /** @description Kontak dibuat */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminUnitContact"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            /** @description Label sama dengan kontak lain di unit ini (huruf besar-kecil tidak dibedakan) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            422: components["responses"]["ValidationError"];
+        };
+    };
+    delete_unit_contact: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Ejaan resmi, persis seperti di `GET /api/admin/units`. */
+                name: string;
+                contact_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Dihapus */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+        };
+    };
+    update_unit_contact: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Ejaan resmi, persis seperti di `GET /api/admin/units`. */
+                name: string;
+                contact_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AdminUnitContactUpdate"];
+            };
+        };
+        responses: {
+            /** @description Tersimpan */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminUnitContact"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            /** @description Label baru sama dengan kontak lain di unit ini */
             409: {
                 headers: {
                     [name: string]: unknown;

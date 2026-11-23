@@ -6,6 +6,7 @@ import {
   EyeIcon,
   EyeOffIcon,
   PencilIcon,
+  PhoneIcon,
   PlusIcon,
 } from "lucide-react"
 import { useState, type FormEvent } from "react"
@@ -13,6 +14,7 @@ import { toast } from "sonner"
 
 import { EmptyState, PageHeader, QueryError } from "@/components/common"
 import { StatusLabel } from "@/components/status"
+import { UnitContactsDialog } from "@/components/units/unit-contacts-dialog"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
 import {
@@ -53,6 +55,7 @@ export function UnitsView() {
   const units = useAdminUnits()
   const update = useUpdateUnit()
   const [form, setForm] = useState<FormState | null>(null)
+  const [kontak, setKontak] = useState<string | null>(null)
 
   function alihAktif(unit: Unit) {
     const aktifkan = !unit.is_active
@@ -103,6 +106,7 @@ export function UnitsView() {
                 <TableHead className="min-w-56">{t.units.columns.unit}</TableHead>
                 <TableHead className="text-right">{t.units.columns.documents}</TableHead>
                 <TableHead className="text-right">{t.units.columns.accounts}</TableHead>
+                <TableHead className="text-right">{t.units.columns.contacts}</TableHead>
                 <TableHead>{t.units.columns.status}</TableHead>
                 <TableHead className="w-12 pr-4">
                   <span className="sr-only">{t.documents.columns.actions}</span>
@@ -124,6 +128,19 @@ export function UnitsView() {
                   </TableCell>
                   <TableCell className="text-right tabular-nums">{unit.document_count}</TableCell>
                   <TableCell className="text-right tabular-nums">{unit.account_count}</TableCell>
+                  <TableCell className="text-right whitespace-normal">
+                    <button
+                      type="button"
+                      className="tabular-nums underline-offset-4 hover:underline"
+                      onClick={() => setKontak(unit.name)}
+                    >
+                      {unit.contact_count}
+                    </button>
+                    {unit.contact_count === 0 ? (
+                      // Penolakan dan banner eskalasi unit ini memakai Front Office.
+                      <p className="text-xs text-muted-foreground">{t.units.contactsFallback}</p>
+                    ) : null}
+                  </TableCell>
                   <TableCell className="whitespace-normal">
                     {unit.is_active && unit.document_count === 0 ? (
                       // Tampil di menu mahasiswa tanpa satu dokumen pun: pertanyaan
@@ -156,6 +173,9 @@ export function UnitsView() {
                         <DropdownMenuItem onSelect={() => setForm({ mode: "ubah", unit })}>
                           <PencilIcon /> {t.units.edit}
                         </DropdownMenuItem>
+                        <DropdownMenuItem onSelect={() => setKontak(unit.name)}>
+                          <PhoneIcon /> {t.units.manageContacts}
+                        </DropdownMenuItem>
                         <DropdownMenuItem onSelect={() => alihAktif(unit)}>
                           {unit.is_active ? (
                             <>
@@ -184,6 +204,8 @@ export function UnitsView() {
           onClose={() => setForm(null)}
         />
       ) : null}
+
+      {kontak ? <UnitContactsDialog unit={kontak} onClose={() => setKontak(null)} /> : null}
     </>
   )
 }
@@ -276,7 +298,11 @@ function UnitFormDialog({ state, onClose }: { state: FormState; onClose: () => v
             {ganti && editing ? (
               <Alert>
                 <AlertDescription>
-                  {t.units.form.renameWarning(editing.document_count, editing.account_count)}
+                  {t.units.form.renameWarning(
+                    editing.document_count,
+                    editing.account_count,
+                    editing.contact_count
+                  )}
                 </AlertDescription>
               </Alert>
             ) : null}

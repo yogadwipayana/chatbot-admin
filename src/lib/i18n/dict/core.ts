@@ -103,6 +103,10 @@ export const api = {
     description: ["Deskripsi", "Description"],
     sort_order: ["Urutan", "Order"],
     allowed_origins: ["Situs yang diizinkan", "Allowed sites"],
+    label: ["Nama kontak", "Contact name"],
+    phone: ["Telepon", "Phone"],
+    whatsapp: ["WhatsApp", "WhatsApp"],
+    service_hours: ["Jam layanan", "Service hours"],
     vector_threshold: ["Ambang", "Threshold"],
   },
   failed: [

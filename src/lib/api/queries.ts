@@ -170,14 +170,79 @@ export function useAdminUnits() {
 /**
  * Setiap perubahan unit menyentuh lebih dari halaman Unit: daftar isian unit
  * (`useUnits`), dan -- saat nama diganti -- unit yang tersimpan di dokumen,
- * entri tanya jawab, dan akun lewat `ON UPDATE CASCADE`.
+ * entri tanya jawab, akun, dan kontak PIC lewat `ON UPDATE CASCADE`.
  */
 function invalidateUnits(queryClient: ReturnType<typeof useQueryClient>) {
   return Promise.all(
-    ["admin-units", "units", "documents", "document", "faq", "users", "me"].map((key) =>
+    ["admin-units", "units", "unit-contacts", "documents", "document", "faq", "users", "me"].map(
+      (key) => queryClient.invalidateQueries({ queryKey: [key] })
+    )
+  )
+}
+
+/**
+ * Kontak PIC satu unit: yang tampil di banner eskalasi dan teks penolakan
+ * widget mahasiswa yang memilih unit ini (`api/app/units.py`).
+ */
+export function useUnitContacts(name: string) {
+  return useQuery({
+    queryKey: ["unit-contacts", name],
+    queryFn: ({ signal }) =>
+      unwrap(api.GET("/api/admin/units/{name}/contacts", { params: { path: { name } }, signal })),
+  })
+}
+
+/** Daftar kontak unit itu, dan jumlah kontak di tabel Unit. */
+function invalidateContacts(queryClient: ReturnType<typeof useQueryClient>) {
+  return Promise.all(
+    ["unit-contacts", "admin-units"].map((key) =>
       queryClient.invalidateQueries({ queryKey: [key] })
     )
   )
+}
+
+export function useCreateUnitContact() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ name, body }: { name: string; body: Schemas["AdminUnitContactCreate"] }) =>
+      unwrap(api.POST("/api/admin/units/{name}/contacts", { params: { path: { name } }, body })),
+    onSuccess: () => invalidateContacts(queryClient),
+  })
+}
+
+export function useUpdateUnitContact() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({
+      name,
+      id,
+      body,
+    }: {
+      name: string
+      id: string
+      body: Schemas["AdminUnitContactUpdate"]
+    }) =>
+      unwrap(
+        api.PATCH("/api/admin/units/{name}/contacts/{contact_id}", {
+          params: { path: { name, contact_id: id } },
+          body,
+        })
+      ),
+    onSuccess: () => invalidateContacts(queryClient),
+  })
+}
+
+export function useDeleteUnitContact() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ name, id }: { name: string; id: string }) =>
+      unwrap(
+        api.DELETE("/api/admin/units/{name}/contacts/{contact_id}", {
+          params: { path: { name, contact_id: id } },
+        })
+      ),
+    onSuccess: () => invalidateContacts(queryClient),
+  })
 }
 
 export function useCreateUnit() {
