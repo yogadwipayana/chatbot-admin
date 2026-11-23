@@ -11,6 +11,7 @@ import { Fragment, useEffect } from "react"
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
+import { setDocumentTitle } from "@/lib/document-title"
 import { useFormat, useT } from "@/lib/i18n"
 import { cn } from "@/lib/utils"
 
@@ -24,7 +25,7 @@ import { cn } from "@/lib/utils"
 function useDocumentTitle(judul: string | undefined) {
   const t = useT()
   useEffect(() => {
-    if (judul) document.title = `${judul} | ${t.app.name}`
+    if (judul) setDocumentTitle(`${judul} | ${t.app.name}`)
   }, [judul, t])
 }
 

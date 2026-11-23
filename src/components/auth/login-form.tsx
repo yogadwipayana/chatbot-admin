@@ -17,6 +17,7 @@ import { useLogin } from "@/lib/api/queries"
 import { useLang, useT } from "@/lib/i18n"
 import { LANGS, LANG_LABELS } from "@/lib/i18n/lang"
 import { isTokenUsable, setToken } from "@/lib/auth/token"
+import { setDocumentTitle } from "@/lib/document-title"
 import { cn } from "@/lib/utils"
 
 /**
@@ -69,7 +70,7 @@ export function LoginForm({
   const [capsLock, setCapsLock] = useState(false)
 
   useEffect(() => {
-    document.title = `${t.auth.pageTitle} | ${t.app.name}`
+    setDocumentTitle(`${t.auth.pageTitle} | ${t.app.name}`)
   }, [t])
 
   // Sudah punya sesi yang masih berlaku: tidak perlu masuk lagi.
