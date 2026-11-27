@@ -13,7 +13,6 @@ export const nav = {
     faq: ["Tanya jawab", "Q&A entries"],
     testQuery: ["Uji coba jawaban", "Test answers"],
     stats: ["Statistik", "Statistics"],
-    costs: ["Biaya", "Costs"],
     logs: ["Log", "Logs"],
     users: ["Admin", "Admins"],
     units: ["Unit", "Units"],

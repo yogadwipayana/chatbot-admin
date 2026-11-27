@@ -2,7 +2,7 @@
  * Bahasa antarmuka dashboard.
  *
  * Bahasa Indonesia tetap bawaan: yang memakai dashboard ini sehari-hari staf
- * kampus. Bahasa Inggris ada karena istilah teknis pencarian dan biaya --
+ * kampus. Bahasa Inggris ada karena istilah teknis pencarian --
  * "RRF damping", "chunk overlap", "embedding model" -- kehilangan artinya saat
  * diterjemahkan, dan menebak istilah aslinya dari terjemahan justru memperlambat
  * orang yang paham hal itu.

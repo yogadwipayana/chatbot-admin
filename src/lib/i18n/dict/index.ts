@@ -7,7 +7,7 @@ import { embedKeys } from "./embed"
 import { faq } from "./faq"
 import { feedback, labels, unanswered } from "./log"
 import { logs } from "./logs"
-import { costs, range, stats } from "./metrics"
+import { range, stats } from "./metrics"
 import { killSwitchBanner, nav, shell } from "./nav"
 import { config, dateField, killSwitch, unitField } from "./settings"
 import { scoreMeter, testQuery } from "./testQuery"
@@ -42,7 +42,6 @@ export const DICT = {
   faq,
   range,
   stats,
-  costs,
   logs,
   testQuery,
   scoreMeter,

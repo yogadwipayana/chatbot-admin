@@ -79,8 +79,8 @@ export const logs = {
   ],
   exitTitle: ["Tempat alur berhenti", "Where the flow stops"],
   exitDescription: [
-    "Langkah terakhir yang berjalan pada setiap giliran. \"Menyusun jawaban\" berarti LLM dipanggil; sisanya berhenti lebih awal tanpa biaya LLM.",
-    "The last step that ran in each turn. \"Writing the answer\" means the LLM was called; the rest stopped early at no LLM cost.",
+    "Langkah terakhir yang berjalan pada setiap giliran. \"Menyusun jawaban\" berarti LLM dipanggil; sisanya berhenti lebih awal tanpa memanggil LLM.",
+    "The last step that ran in each turn. \"Writing the answer\" means the LLM was called; the rest stopped early without calling it.",
   ],
   hourlyTitle: ["Waktu respons per jam", "Response time by hour"],
   hourlyDescription: [
@@ -309,7 +309,6 @@ export const logs = {
     label: ["label", "label"],
     confidence: ["keyakinan", "confidence"],
     blocked: ["diblokir", "blocked"],
-    cost_usd: ["biaya", "cost"],
     error: ["galat", "error"],
     query_rewritten: ["query diubah", "query changed"],
     document_count: ["dokumen", "documents"],

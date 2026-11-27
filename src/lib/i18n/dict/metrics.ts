@@ -1,4 +1,4 @@
-/** Statistik dan Biaya: keduanya memakai pemilih rentang yang sama. */
+/** Statistik dan pemilih rentang tanggalnya. */
 
 export const range = {
   d7: ["7 hari", "7 days"],
@@ -18,8 +18,8 @@ export const range = {
 export const stats = {
   title: ["Statistik", "Statistics"],
   description: [
-    "Seberapa membantu chatbot bagi mahasiswa, dan berapa biayanya.",
-    "How much the chatbot helps students, and what it costs.",
+    "Seberapa membantu chatbot bagi mahasiswa.",
+    "How much the chatbot helps students.",
   ],
   empty: ["Belum ada pertanyaan pada periode ini", "No questions in this period"],
   feedbackRatio: ["Umpan balik positif", "Positive feedback"],
@@ -50,15 +50,6 @@ export const stats = {
     (ditolak: string, total: string) => `${ditolak} of ${total} questions · `,
   ],
   seeList: ["Lihat daftar", "See the list"],
-  cost: ["Biaya API berjalan", "API spend so far"],
-  costMissing: [
-    (jumlah: string) => `${jumlah} jawaban belum terhitung: tarif model belum didaftarkan`,
-    (jumlah: string) => `${jumlah} answers not counted: the model's rate is not registered yet`,
-  ],
-  costNote: [
-    "Estimasi dari token terpakai, bukan tagihan resmi.",
-    "Estimated from tokens used, not an official invoice.",
-  ],
   latency: ["Waktu proses (p95)", "Processing time (p95)"],
   latencyNote: [
     "95% jawaban selesai dalam waktu ini.",
@@ -99,114 +90,4 @@ export const stats = {
   intakeColumn: ["Angkatan", "Intake"],
   questionsColumn: ["Pertanyaan", "Questions"],
   unansweredColumn: ["Tak terjawab", "Unanswered"],
-} as const
-
-export const costs = {
-  title: ["Biaya", "Costs"],
-  description: [
-    "Estimasi biaya model AI dari token terpakai. Bukan tagihan resmi penyedia.",
-    "Estimated AI model spend from tokens used. Not the provider's official invoice.",
-  ],
-  empty: ["Belum ada pemanggilan model pada periode ini", "No model calls in this period"],
-  sources: {
-    llm: ["LLM chat", "Chat LLM"],
-    embedding: ["Embedding pertanyaan", "Question embedding"],
-  },
-  total: ["Total biaya", "Total cost"],
-  totalRange: [(hari: string) => `Rentang ${hari} hari.`, (hari: string) => `Over ${hari} days.`],
-  noPrevious: [
-    (hari: string) => `Tidak ada biaya pada ${hari} hari sebelumnya.`,
-    (hari: string) => `No cost in the previous ${hari} days.`,
-  ],
-  flat: ["Setara", "Flat"],
-  versusPrevious: [
-    (hari: string, biaya: string) => `dari ${hari} hari sebelumnya (${biaya})`,
-    (hari: string, biaya: string) => `vs the previous ${hari} days (${biaya})`,
-  ],
-  perDay: ["Rata-rata per hari", "Average per day"],
-  projection: [
-    (biaya: string, hari: number) => `Laju ini setara ${biaya} per ${hari} hari.`,
-    (biaya: string, hari: number) => `At this rate, ${biaya} per ${hari} days.`,
-  ],
-  perAnswer: ["Biaya per jawaban", "Cost per answer"],
-  perAnswerNone: ["Belum ada jawaban LLM pada periode ini.", "No LLM answers in this period."],
-  perAnswerNote: [
-    (jawaban: string) => `Biaya chat dibagi ${jawaban} jawaban LLM.`,
-    (jawaban: string) => `Chat cost divided by ${jawaban} LLM answers.`,
-  ],
-  /** Hanya bila embedding berbiaya: penolakan sebelum LLM tetap berbiaya embedding. */
-  perAnswerEmbedNote: [
-    " Termasuk embedding pertanyaan yang ditolak sebelum LLM dipanggil.",
-    " Includes embedding questions that were declined before the LLM ran.",
-  ],
-  coverage: ["Cakupan estimasi", "Estimate coverage"],
-  coveragePartial: [
-    (tanpa: string, panggilan: string) =>
-      `${tanpa} dari ${panggilan} panggilan tanpa biaya: tarif modelnya belum didaftarkan, jadi total di atas terlalu rendah`,
-    (tanpa: string, panggilan: string) =>
-      `${tanpa} of ${panggilan} calls have no cost: their model's rate is not registered, so the total above is too low`,
-  ],
-  dailyTitle: ["Biaya per hari", "Cost per day"],
-  dailyRange: [
-    (sejak: string, sampai: string, hari: string) => `${sejak} – ${sampai}, ${hari} hari.`,
-    (sejak: string, sampai: string, hari: string) => `${sejak} – ${sampai}, ${hari} days.`,
-  ],
-  dailyPeak: [
-    (tanggal: string, biaya: string) => ` Tertinggi ${tanggal}, ${biaya}.`,
-    (tanggal: string, biaya: string) => ` Highest on ${tanggal}, ${biaya}.`,
-  ],
-  dailyTotal: ["Total", "Total"],
-  daysWithCost: [
-    (hari: number) => `${hari} hari berbiaya`,
-    (hari: number) => `${hari} days with cost`,
-  ],
-  daysHidden: [
-    (hari: number) =>
-      `${hari} hari tanpa pemakaian model tidak ditampilkan; grafiknya tetap menyertakan hari-hari itu.`,
-    (hari: number) =>
-      `${hari} days with no model usage are hidden; the chart still includes them.`,
-  ],
-  noDays: ["Tidak ada hari berbiaya pada rentang ini.", "No days with cost in this range."],
-  sourceTitle: ["Sumber biaya", "Where the cost comes from"],
-  sourceDescription: [
-    "Dua jalur pemakaian model yang menyusun total.",
-    "The two model usage paths that make up the total.",
-  ],
-  sourceProportion: ["Proporsi sumber biaya", "Cost source proportions"],
-  noCalls: ["Belum ada panggilan tercatat", "No calls recorded yet"],
-  callsTokens: [
-    (panggilan: string, rincian: string) => `${panggilan} panggilan · ${rincian}`,
-    (panggilan: string, rincian: string) => `${panggilan} calls · ${rincian}`,
-  ],
-  inOut: [
-    (masuk: string, keluar: string) => `${masuk} in · ${keluar} out`,
-    (masuk: string, keluar: string) => `${masuk} in · ${keluar} out`,
-  ],
-  tokens: [(jumlah: string) => `${jumlah} token`, (jumlah: string) => `${jumlah} tokens`],
-  withoutCost: [
-    (jumlah: string) => ` · ${jumlah} tanpa biaya`,
-    (jumlah: string) => ` · ${jumlah} without cost`,
-  ],
-  modelTitle: ["Rincian per model", "Breakdown by model"],
-  modelDescription: [
-    "Dikelompokkan menurut jalur pemakaian: token LLM dan token embedding tidak sebanding.",
-    "Grouped by usage path: LLM tokens and embedding tokens are not comparable.",
-  ],
-  kinds: {
-    llm_chat: {
-      label: ["LLM chat", "Chat LLM"],
-      note: ["Token masukan dan keluaran jawaban.", "Input and output tokens of each answer."],
-    },
-    embedding_chat: {
-      label: ["Embedding pertanyaan", "Question embedding"],
-      note: ["Untuk mencari dokumen yang cocok.", "Used to find matching documents."],
-    },
-  },
-  columns: {
-    model: ["Model", "Model"],
-    calls: ["Panggilan", "Calls"],
-    tokens: ["Token", "Tokens"],
-    cost: ["Biaya", "Cost"],
-    share: ["Porsi", "Share"],
-  },
 } as const

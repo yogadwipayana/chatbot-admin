@@ -33,39 +33,6 @@ function asDate(value: string | Date): Date {
   return /^\d{4}-\d{2}-\d{2}$/.test(value) ? parseDateOnly(value) : new Date(value)
 }
 
-/**
- * Dolar. Selalu `en-US` di kedua bahasa: angkanya berasal dari tagihan penyedia
- * yang memakai notasi itu, dan "$0,0049" (koma desimal) terbaca sebagai ribuan
- * oleh setengah pembacanya.
- */
-export function formatUsd(value: number): string {
-  const kecil = value > 0 && value < 1
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-    minimumFractionDigits: kecil ? 4 : 2,
-    maximumFractionDigits: kecil ? 4 : 2,
-  }).format(value)
-}
-
-/**
- * Dolar yang boleh sangat kecil, untuk kolom biaya embedding.
- *
- * Meng-embed satu pertanyaan berharga $0,0000003. `formatUsd` membulatkannya ke
- * empat desimal, sehingga seluruh kolom embedding terbaca "$0.0000" -- ribuan
- * pertanyaan yang seluruhnya tampak gratis bukan laporan biaya (lihat
- * `api/docs/schema.md`, alasan yang sama dengan menyimpannya tanpa pembulatan).
- */
-export function formatUsdPrecise(value: number): string {
-  if (value === 0) return "$0.00"
-  if (Math.abs(value) >= 0.01) return formatUsd(value)
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-    maximumSignificantDigits: 2,
-  }).format(value)
-}
-
 export function truncate(text: string, max: number): string {
   return text.length <= max ? text : `${text.slice(0, max - 1).trimEnd()}…`
 }

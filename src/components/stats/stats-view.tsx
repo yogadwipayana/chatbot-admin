@@ -16,7 +16,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useNow } from "@/hooks/use-now"
 import type { Schemas } from "@/lib/api/client"
 import { useStats, type StatsRange } from "@/lib/api/queries"
-import { addDays, formatUsd, toDateInput } from "@/lib/format"
+import { addDays, toDateInput } from "@/lib/format"
 import { useFormat, useT } from "@/lib/i18n"
 import type { Dict } from "@/lib/i18n/dict"
 import { cn } from "@/lib/utils"
@@ -157,7 +157,7 @@ function KpiRow({ stats }: { stats: Stats }) {
   const fb = stats.positive_feedback_ratio
   const tt = stats.unanswered_ratio
   return (
-    <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+    <div className="grid gap-4 md:grid-cols-3">
       <StatTile label={t.stats.feedbackRatio} value={fb == null ? "—" : f.percent(fb)}>
         {fb == null ? (
           <p>{t.stats.feedbackNone}</p>
@@ -191,16 +191,6 @@ function KpiRow({ stats }: { stats: Stats }) {
               </Link>
             </p>
           </>
-        )}
-      </StatTile>
-
-      <StatTile label={t.stats.cost} value={formatUsd(stats.running_cost_usd)}>
-        {stats.messages_without_cost_estimate > 0 ? (
-          <StatusLabel level="warning" className="text-xs text-foreground">
-            {t.stats.costMissing(f.number(stats.messages_without_cost_estimate))}
-          </StatusLabel>
-        ) : (
-          <p>{t.stats.costNote}</p>
         )}
       </StatTile>
 
@@ -420,8 +410,8 @@ function ProfileCard({
 function StatsSkeleton() {
   return (
     <div className="space-y-6">
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        {Array.from({ length: 4 }, (_, i) => (
+      <div className="grid gap-4 md:grid-cols-3">
+        {Array.from({ length: 3 }, (_, i) => (
           <Skeleton key={i} className="h-32 rounded-xl" />
         ))}
       </div>

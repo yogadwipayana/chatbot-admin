@@ -1,7 +1,7 @@
 import type { Lang } from "@/lib/i18n/lang"
 
 /**
- * Satu entri kamus: `["Biaya", "Costs"]`.
+ * Satu entri kamus: `["Statistik", "Statistics"]`.
  *
  * Kedua bahasa sengaja ditulis bersebelahan, bukan di dua berkas terpisah.
  * Dua berkas yang harus dijaga sepadan selalu berakhir sama: satu sisi disunting,
@@ -20,7 +20,7 @@ type Fn = (...args: any[]) => string
 /** Entri, daftar entri (mis. daftar hak akses), atau kelompok bernama. */
 export type Node = Entry | readonly Node[] | { readonly [kunci: string]: Node }
 
-/** Bentuk kamus setelah satu bahasa dipilih: `t.costs.title` berupa string. */
+/** Bentuk kamus setelah satu bahasa dipilih: `t.stats.title` berupa string. */
 export type Resolved<T> = T extends Entry
   ? T[0]
   : T extends readonly (infer E)[]
@@ -37,7 +37,7 @@ export type Resolved<T> = T extends Entry
 const cache = new WeakMap<object, Map<Lang, unknown>>()
 
 /**
- * Daun dikenali dari isinya, bukan dari bentuknya: `["Biaya", "Costs"]` dan
+ * Daun dikenali dari isinya, bukan dari bentuknya: `["Statistik", "Statistics"]` dan
  * daftar dua hak akses sama-sama larik berisi dua elemen. Yang membedakan,
  * daun berisi teks atau fungsi -- daftar berisi entri lain.
  */

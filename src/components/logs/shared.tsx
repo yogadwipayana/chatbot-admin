@@ -6,7 +6,7 @@ import { useMemo, useState } from "react"
 import { StatusLabel, type StatusLevel } from "@/components/status"
 import { Button } from "@/components/ui/button"
 import type { Schemas } from "@/lib/api/client"
-import { formatUsdPrecise, type Format } from "@/lib/format"
+import type { Format } from "@/lib/format"
 import { useFormat, useLang, useT } from "@/lib/i18n"
 import type { Dict } from "@/lib/i18n/dict"
 import { LOCALES } from "@/lib/i18n/lang"
@@ -141,11 +141,19 @@ export function CopyValue({ value }: { value: string }) {
   )
 }
 
+/**
+ * Kunci yang hanya ada di baris log lama. `cost_usd` dihapus 2026-11-27 karena
+ * semua model di-host sendiri; angka lamanya tidak lagi ditampilkan.
+ */
+const KUNCI_USANG = new Set(["cost_usd"])
+
 /** Detail ringkas satu langkah (`node_runs.detail`), atau galatnya. */
 export function NodeDetail({ node }: { node: Schemas["NodeRunOut"] }) {
   const t = useT()
   const f = useFormat()
-  const entri = Object.entries(node.detail ?? {}).filter(([, v]) => v !== null && v !== undefined)
+  const entri = Object.entries(node.detail ?? {}).filter(
+    ([k, v]) => v !== null && v !== undefined && !KUNCI_USANG.has(k)
+  )
 
   if (node.status === "error") {
     return (
@@ -162,7 +170,7 @@ export function NodeDetail({ node }: { node: Schemas["NodeRunOut"] }) {
       {entri.map(([k, v]) => (
         <span key={k}>
           {t.logs.detailKeys[k as keyof Dict["logs"]["detailKeys"]] ?? k}:{" "}
-          <span className="text-foreground">{nilaiDetail(t, f, k, v)}</span>
+          <span className="text-foreground">{nilaiDetail(t, f, v)}</span>
         </span>
       ))}
     </p>
@@ -172,12 +180,10 @@ export function NodeDetail({ node }: { node: Schemas["NodeRunOut"] }) {
 function nilaiDetail(
   t: Dict,
   f: ReturnType<typeof useFormat>,
-  kunci: string,
   nilai: unknown
 ): string {
   if (typeof nilai === "boolean") return nilai ? t.logs.yes : t.logs.no
   if (typeof nilai === "number") {
-    if (kunci === "cost_usd") return formatUsdPrecise(nilai)
     if (Number.isInteger(nilai)) return f.number(nilai)
     return f.score(nilai)
   }

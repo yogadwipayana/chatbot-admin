@@ -9,7 +9,6 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import type { Schemas } from "@/lib/api/client"
-import { formatUsdPrecise } from "@/lib/format"
 import { useFormat, useT } from "@/lib/i18n"
 import type { Dict } from "@/lib/i18n/dict"
 import { cn } from "@/lib/utils"
@@ -156,7 +155,6 @@ function CallItem({ call }: { call: CallTrace }) {
           {typeof masuk === "number" && typeof keluar === "number" ? (
             <span>{t.logs.graph.tokens(f.number(masuk), f.number(keluar))}</span>
           ) : null}
-          {call.cost_usd != null ? <span>{formatUsdPrecise(call.cost_usd)}</span> : null}
           {call.status === "berjalan" ? (
             <StatusLabel level="warning">{t.logs.graph.cutOff}</StatusLabel>
           ) : call.duration_ms != null ? (

@@ -704,9 +704,9 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * Statistik penggunaan dan biaya
-         * @description AD-5. Termasuk `running_cost_usd` -- PRD §12 menandai biaya API
-         *     membengkak sebagai risiko dengan dampak layanan mati mendadak.
+         * Statistik penggunaan
+         * @description AD-5. Estimasi biaya dihapus 2026-11-27: seluruh model (chat, embedding,
+         *     Laya) di-host sendiri, jadi tidak ada biaya per token.
          *
          *     `total_conversations` disajikan sebagai konteks, bukan sebagai ukuran
          *     keberhasilan. PRD §3 menetapkannya sebagai anti-metrik.
@@ -715,26 +715,6 @@ export interface paths {
          *     `TIMEZONE` server, bukan UTC. Rentang paling panjang 366 hari.
          */
         get: operations["admin_stats"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/admin/costs": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Rincian biaya dan token
-         * @description Menghitung penggunaan token dan estimasi biaya dari kolom `messages.meta`.
-         */
-        get: operations["admin_costs"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1883,19 +1863,6 @@ export interface components {
             daily_volume: components["schemas"]["DailyVolume"][];
             top_topics: components["schemas"]["TopicCount"][];
             /**
-             * @description Estimasi dari token terpakai, bukan dari API penagihan. LLM chat + embedding,
-             *     sama dengan total `GET /api/admin/costs`. Gerbang Laya tidak dihitung: ia
-             *     berjalan di Laya yang di-host sendiri.
-             */
-            running_cost_usd: number;
-            /**
-             * @description Jawaban yang memanggil LLM tetapi modelnya belum punya tarif di
-             *     `app/observability/costs.py`. Lebih dari nol berarti
-             *     `running_cost_usd` KURANG dari biaya sebenarnya -- tampilkan
-             *     sebagai peringatan, jangan sebagai biaya nol.
-             */
-            messages_without_cost_estimate: number;
-            /**
              * @description Persentil 95 waktu proses jawaban lengkap. Target PRD §11 (first
              *     token < 3000 ms) diukur di LangSmith; angka ini batas atasnya.
              */
@@ -1929,45 +1896,6 @@ export interface components {
             intake_year: number;
             question_count: number;
             refusal_count: number;
-        };
-        CostByModel: {
-            /** @enum {string} */
-            type: "llm_chat" | "embedding_chat";
-            model: string;
-            call_count: number;
-            input_tokens: number;
-            output_tokens: number;
-            tokens: number;
-            cost_usd: number;
-        };
-        DailyCost: {
-            /** Format: date */
-            date: string;
-            call_count: number;
-            llm_tokens: number;
-            embed_tokens: number;
-            llm_cost_usd: number;
-            embedding_cost_usd: number;
-            cost_usd: number;
-        };
-        Costs: {
-            /** Format: date */
-            since: string;
-            /** Format: date */
-            until: string;
-            llm_call_count: number;
-            input_tokens: number;
-            output_tokens: number;
-            total_tokens: number;
-            cost_usd: number;
-            llm_cost_usd: number;
-            chat_embed_tokens: number;
-            chat_embed_cost_usd: number;
-            chat_embed_count: number;
-            llm_calls_without_cost: number;
-            chat_embeds_without_cost: number;
-            model_breakdown: components["schemas"]["CostByModel"][];
-            daily_costs: components["schemas"]["DailyCost"][];
         };
         LogSummary: {
             since: string;
@@ -2114,7 +2042,6 @@ export interface components {
             usage: {
                 [key: string]: unknown;
             } | null;
-            cost_usd: number | null;
             input?: unknown;
             output?: unknown;
         };
@@ -3546,40 +3473,6 @@ export interface operations {
             401: components["responses"]["Unauthorized"];
             403: components["responses"]["Forbidden"];
             /** @description Rentang tanggal tidak sah (terbalik atau terlalu panjang) */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Error"];
-                };
-            };
-        };
-    };
-    admin_costs: {
-        parameters: {
-            query?: {
-                since?: string;
-                until?: string;
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Rincian biaya */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Costs"];
-                };
-            };
-            401: components["responses"]["Unauthorized"];
-            403: components["responses"]["Forbidden"];
-            /** @description Rentang tanggal tidak sah */
             422: {
                 headers: {
                     [name: string]: unknown;

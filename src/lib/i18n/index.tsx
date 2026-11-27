@@ -105,7 +105,7 @@ function useI18n(): Nilai {
   return nilai
 }
 
-/** Kamus bahasa yang sedang aktif: `t.costs.title`. */
+/** Kamus bahasa yang sedang aktif: `t.stats.title`. */
 export function useT(): Dict {
   return useI18n().t
 }

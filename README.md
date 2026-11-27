@@ -59,7 +59,7 @@ terdampak -- bukan sebagai layar kosong saat dipakai.
 | `/dokumen/[id]` | AD-3 | Ubah metadata, aktif/nonaktif, hapus, pratinjau potongan | unitnya | semua unit | ✓ |
 | `/tanya-jawab` | AD-3 | Pasangan pertanyaan-jawaban tanpa PDF; dipakai chatbot seperti dokumen | unitnya (terkunci) | semua unit | ✓ |
 | `/uji-coba` | AD-6 | Kotak uji: jawaban, keputusan ambang, potongan beserta skor mentah | ✓ | ✓ | ✓ |
-| `/statistik` | AD-5 | Target PRD §3, volume harian, jenis balasan, topik berisiko, biaya | – | ✓ | ✓ |
+| `/statistik` | AD-5 | Target PRD §3, volume harian, jenis balasan, topik berisiko, waktu proses | – | ✓ | ✓ |
 | `/umpan-balik` | FE-5 | Penilaian 👍/👎 mahasiswa beserta pertanyaan dan jawaban yang dinilai | – | ✓ | ✓ |
 | `/layanan` | FR-9 | Kill switch dengan alasan wajib dan konfirmasi | – | – | ✓ |
 | `/konfigurasi` | FR-1..FR-3 | Setelan pencarian, ambang menjawab, dan pemecahan dokumen; berlaku tanpa restart | – | – | ✓ |

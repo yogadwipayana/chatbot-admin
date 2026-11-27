@@ -131,7 +131,7 @@ export const roles = {
       ["Semua hak Staf/Dosen", "Everything Staff/Lecturer can do"],
       ["Kelola dokumen dan tanya jawab semua unit", "Manage documents and Q&A for every unit"],
       ["Tandai pertanyaan selesai", "Mark questions as resolved"],
-      ["Statistik, biaya, dan umpan balik", "Statistics, costs, and feedback"],
+      ["Statistik dan umpan balik", "Statistics and feedback"],
     ],
     superadmin: [
       ["Semua hak Admin", "Everything Admin can do"],

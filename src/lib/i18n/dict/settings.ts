@@ -215,8 +215,8 @@ export const config = {
     ],
     switchLabel: ["Tampilkan dashboard dalam bahasa Inggris", "Show the dashboard in English"],
     switchHint: [
-      "Istilah teknis pencarian dan biaya memakai kata aslinya: RRF, chunk overlap, embedding model.",
-      "Retrieval and cost terms keep their original wording: RRF, chunk overlap, embedding model.",
+      "Istilah teknis pencarian memakai kata aslinya: RRF, chunk overlap, embedding model.",
+      "Retrieval terms keep their original wording: RRF, chunk overlap, embedding model.",
     ],
   },
 } as const
@@ -253,8 +253,8 @@ export const killSwitch = {
   noteSaved: ["Catatan insiden diperbarui", "Incident note updated"],
   turnOffTitle: ["Matikan layanan chat", "Switch the chat service off"],
   turnOffDescription: [
-    "Gunakan bila chatbot memberi jawaban keliru pada informasi penting, disalahgunakan, atau biaya API melonjak.",
-    "Use it when the chatbot gets something important wrong, is being abused, or API costs spike.",
+    "Gunakan bila chatbot memberi jawaban keliru pada informasi penting, disalahgunakan, atau servernya kewalahan.",
+    "Use it when the chatbot gets something important wrong, is being abused, or its server is overloaded.",
   ],
   reasonLabel: [
     "Alasan (wajib, untuk catatan insiden)",
