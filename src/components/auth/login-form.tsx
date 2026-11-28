@@ -8,7 +8,6 @@ import { LoginShowcase } from "@/components/auth/login-showcase"
 import { AppLogo } from "@/components/layout/app-logo"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
 import { Field, FieldDescription, FieldGroup, FieldLabel } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
 import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupInput } from "@/components/ui/input-group"
@@ -29,7 +28,7 @@ function LanguageSwitch() {
   const t = useT()
   const { lang, setLang } = useLang()
   return (
-    <div role="group" aria-label={t.nav.account.language} className="inline-flex rounded-lg border bg-background p-0.5">
+    <div role="group" aria-label={t.nav.account.language} className="inline-flex rounded-lg border bg-card p-0.5 shadow-xs">
       {LANGS.map((kode) => (
         <button
           key={kode}
@@ -51,9 +50,9 @@ function LanguageSwitch() {
 }
 
 /**
- * Berdasarkan block shadcn `login-04`: form di kiri kartu, panel gambar di
- * kanan. Tombol masuk lewat Google dan tautan daftar dibuang -- akun admin
- * hanya dibuat oleh pengelola teknis -- dan gambarnya diganti `LoginShowcase`.
+ * Layar penuh dua kolom: form di kiri, panel merek gelap (`LoginShowcase`) di
+ * kanan pada layar lebar. Tanpa tombol masuk lewat Google atau tautan daftar:
+ * akun admin hanya dibuat oleh pengelola teknis.
  */
 export function LoginForm({
   redirectTo,
@@ -96,15 +95,25 @@ export function LoginForm({
   }
 
   return (
-    <div className={cn("flex flex-col gap-6", className)} {...props}>
-      <Card className="overflow-hidden p-0">
-        <CardContent className="grid p-0 md:grid-cols-2">
-          <form onSubmit={onSubmit} className="p-6 md:p-8">
+    <div className={cn("grid min-h-svh lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)]", className)} {...props}>
+      <div className="flex flex-col gap-10 p-6 md:p-10">
+        <div className="flex items-center justify-between gap-4">
+          <div className="flex items-center gap-2.5">
+            <AppLogo className="size-8" />
+            <div className="grid leading-tight">
+              <span className="text-sm font-bold">{t.app.short}</span>
+              <span className="text-xs text-muted-foreground">{t.app.tagline}</span>
+            </div>
+          </div>
+          <LanguageSwitch />
+        </div>
+
+        <div className="flex flex-1 items-center justify-center">
+          <form onSubmit={onSubmit} className="w-full max-w-sm">
             <FieldGroup>
-              <div className="flex flex-col items-center gap-2 text-center">
-                <AppLogo className="mb-2 size-10" />
-                <h1 className="text-2xl font-bold">{t.auth.heading}</h1>
-                <p className="text-balance text-muted-foreground">{t.auth.intro}</p>
+              <div className="space-y-2">
+                <h1 className="text-3xl leading-tight font-bold text-balance">{t.auth.heading}</h1>
+                <p className="text-pretty text-muted-foreground">{t.auth.intro}</p>
               </div>
               {login.error ? (
                 <Alert variant="destructive">
@@ -164,7 +173,7 @@ export function LoginForm({
                 </InputGroup>
               </Field>
               <Field>
-                <Button type="submit" disabled={login.isPending}>
+                <Button type="submit" size="lg" disabled={login.isPending}>
                   {login.isPending ? (
                     <>
                       <LoaderCircleIcon className="animate-spin" data-icon="inline-start" aria-hidden />
@@ -175,15 +184,12 @@ export function LoginForm({
                   )}
                 </Button>
               </Field>
-              <FieldDescription className="text-center">{t.auth.help}</FieldDescription>
+              <FieldDescription>{t.auth.help}</FieldDescription>
             </FieldGroup>
           </form>
-          <LoginShowcase />
-        </CardContent>
-      </Card>
-      <div className="flex justify-center">
-        <LanguageSwitch />
+        </div>
       </div>
+      <LoginShowcase />
     </div>
   )
 }

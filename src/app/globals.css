@@ -8,6 +8,7 @@
   --color-background: var(--background);
   --color-canvas: var(--canvas);
   --shadow-surface: var(--shadow-surface);
+  --shadow-raised: var(--shadow-raised);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-sans);
   --font-mono: var(--font-geist-mono);
@@ -58,45 +59,56 @@
   --radius-4xl: calc(var(--radius) * 2.6);
 }
 
+/*
+ * Tema netral hitam-putih-abu (tema awal shadcn, dipulihkan 2026-11-28 atas
+ * permintaan user setelah percobaan indigo + sidebar gelap).
+ *
+ * - Sidebar ikut tema halaman: abu muda di mode terang, hampir hitam di mode
+ *   gelap. Ia menjadi bingkai di sekeliling panel konten (varian `inset`).
+ * - Tiga lapis: bingkai (`--sidebar`) < panel (`--canvas`) < kartu (`--card`).
+ *   `--background` tetap untuk isian dan permukaan di dalam kartu.
+ * - Satu-satunya warna: grafik (`--series-*`, sama dengan tema awal) dan status.
+ * Teks redup >= 4,5:1 terhadap bingkai, panel, dan kartu di kedua mode.
+ */
 :root {
-  /* Netral bernuansa biru-abu (bukan abu murni) dan satu warna merek biru.
-     `--canvas` adalah latar halaman di balik kartu; `--background` tetap putih
-     untuk isian, popover, dan permukaan yang menempel di kartu. */
   --background: oklch(1 0 0);
-  --canvas: oklch(0.98 0.004 255);
-  --foreground: oklch(0.21 0.028 262);
+  --canvas: oklch(0.985 0 0);
+  --foreground: oklch(0.145 0 0);
   --card: oklch(1 0 0);
-  --card-foreground: oklch(0.21 0.028 262);
+  --card-foreground: oklch(0.145 0 0);
   --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.21 0.028 262);
-  --primary: oklch(0.49 0.19 262);
-  --primary-foreground: oklch(0.99 0 0);
-  --secondary: oklch(0.962 0.008 255);
-  --secondary-foreground: oklch(0.26 0.03 262);
-  --muted: oklch(0.962 0.008 255);
-  --muted-foreground: oklch(0.49 0.028 260);
-  --accent: oklch(0.962 0.008 255);
-  --accent-foreground: oklch(0.26 0.03 262);
-  --destructive: oklch(0.56 0.22 27);
-  --border: oklch(0.925 0.01 255);
-  --input: oklch(0.875 0.016 255);
-  --ring: oklch(0.6 0.17 262);
+  --popover-foreground: oklch(0.145 0 0);
+  --primary: oklch(0.205 0 0);
+  --primary-foreground: oklch(0.985 0 0);
+  --secondary: oklch(0.97 0 0);
+  --secondary-foreground: oklch(0.205 0 0);
+  --muted: oklch(0.965 0 0);
+  --muted-foreground: oklch(0.52 0 0);
+  --accent: oklch(0.965 0 0);
+  --accent-foreground: oklch(0.205 0 0);
+  --destructive: oklch(0.577 0.245 27.325);
+  --border: oklch(0.922 0 0);
+  --input: oklch(0.9 0 0);
+  --ring: oklch(0.708 0 0);
   --chart-1: oklch(0.87 0 0);
   --chart-2: oklch(0.556 0 0);
   --chart-3: oklch(0.439 0 0);
   --chart-4: oklch(0.371 0 0);
   --chart-5: oklch(0.269 0 0);
-  --radius: 0.5rem;
-  --sidebar: oklch(1 0 0);
-  --sidebar-foreground: oklch(0.3 0.03 262);
-  --sidebar-primary: oklch(0.49 0.19 262);
-  --sidebar-primary-foreground: oklch(0.99 0 0);
-  --sidebar-accent: oklch(0.955 0.022 262);
-  --sidebar-accent-foreground: oklch(0.4 0.17 263);
-  --sidebar-border: oklch(0.925 0.01 255);
-  --sidebar-ring: oklch(0.6 0.17 262);
-  /* Bayangan kartu: sangat tipis, hanya untuk mengangkat kartu dari kanvas. */
-  --shadow-surface: 0 1px 2px oklch(0.21 0.028 262 / 0.05);
+  --radius: 0.625rem;
+  --sidebar: oklch(0.96 0 0);
+  --sidebar-foreground: oklch(0.145 0 0);
+  --sidebar-primary: oklch(0.205 0 0);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  /* Menu aktif = kartu putih kecil di atas bingkai abu. */
+  --sidebar-accent: oklch(1 0 0);
+  --sidebar-accent-foreground: oklch(0.145 0 0);
+  --sidebar-border: oklch(0.91 0 0);
+  --sidebar-ring: oklch(0.708 0 0);
+  /* Kartu: garis tipis + bayangan lembut dua lapis. */
+  --shadow-surface: 0 1px 2px oklch(0 0 0 / 0.04), 0 2px 8px -2px oklch(0 0 0 / 0.05);
+  /* Tombol utama: sorot tipis di tepi atas supaya tidak terlihat rata. */
+  --shadow-raised: inset 0 1px 0 oklch(1 0 0 / 0.12), 0 1px 2px oklch(0 0 0 / 0.2);
 
   /* Visualisasi data. Slot kategorikal 1-3 dari palet referensi, divalidasi
      (CVD, normal-vision, kontras) terhadap permukaan kartu terang dan gelap.
@@ -109,8 +121,8 @@
      dipakai sebelumnya (#184f95 di gelap) terlihat seperti batang terisi penuh
      saat skornya kosong. */
   --series-1-track: color-mix(in oklab, var(--series-1) 20%, transparent);
-  --chart-grid: #e1e0d9;
-  --chart-axis: #c3c2b7;
+  --chart-grid: oklch(0.925 0 0);
+  --chart-axis: oklch(0.85 0 0);
 
   /* Status: hanya untuk arti baik/buruk, selalu disertai ikon + label. */
   --status-good: #0ca30c;
@@ -120,45 +132,46 @@
 }
 
 .dark {
-  --background: oklch(0.2 0.018 262);
-  --canvas: oklch(0.165 0.016 262);
-  --foreground: oklch(0.96 0.005 255);
-  --card: oklch(0.215 0.02 262);
-  --card-foreground: oklch(0.96 0.005 255);
-  --popover: oklch(0.235 0.022 262);
-  --popover-foreground: oklch(0.96 0.005 255);
-  --primary: oklch(0.57 0.19 262);
-  --primary-foreground: oklch(0.99 0 0);
-  --secondary: oklch(0.28 0.024 262);
-  --secondary-foreground: oklch(0.96 0.005 255);
-  --muted: oklch(0.27 0.022 262);
-  --muted-foreground: oklch(0.72 0.022 258);
-  --accent: oklch(0.28 0.024 262);
-  --accent-foreground: oklch(0.96 0.005 255);
+  --background: oklch(0.175 0 0);
+  --canvas: oklch(0.175 0 0);
+  --foreground: oklch(0.985 0 0);
+  --card: oklch(0.21 0 0);
+  --card-foreground: oklch(0.985 0 0);
+  --popover: oklch(0.21 0 0);
+  --popover-foreground: oklch(0.985 0 0);
+  --primary: oklch(0.922 0 0);
+  --primary-foreground: oklch(0.205 0 0);
+  --secondary: oklch(0.269 0 0);
+  --secondary-foreground: oklch(0.985 0 0);
+  --muted: oklch(0.269 0 0);
+  --muted-foreground: oklch(0.708 0 0);
+  --accent: oklch(0.269 0 0);
+  --accent-foreground: oklch(0.985 0 0);
   --destructive: oklch(0.704 0.191 22.216);
   --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 16%);
-  --ring: oklch(0.62 0.17 262);
+  --input: oklch(1 0 0 / 15%);
+  --ring: oklch(0.556 0 0);
   --chart-1: oklch(0.87 0 0);
   --chart-2: oklch(0.556 0 0);
   --chart-3: oklch(0.439 0 0);
   --chart-4: oklch(0.371 0 0);
   --chart-5: oklch(0.269 0 0);
-  --sidebar: oklch(0.19 0.018 262);
-  --sidebar-foreground: oklch(0.86 0.012 255);
-  --sidebar-primary: oklch(0.57 0.19 262);
-  --sidebar-primary-foreground: oklch(0.99 0 0);
-  --sidebar-accent: oklch(0.3 0.06 262);
-  --sidebar-accent-foreground: oklch(0.88 0.07 262);
+  --sidebar: oklch(0.145 0 0);
+  --sidebar-foreground: oklch(0.985 0 0);
+  --sidebar-primary: oklch(0.985 0 0);
+  --sidebar-primary-foreground: oklch(0.205 0 0);
+  --sidebar-accent: oklch(0.25 0 0);
+  --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.62 0.17 262);
+  --sidebar-ring: oklch(0.556 0 0);
   --shadow-surface: 0 1px 2px oklch(0 0 0 / 0.3);
+  --shadow-raised: inset 0 1px 0 oklch(1 0 0 / 0.25), 0 1px 2px oklch(0 0 0 / 0.4);
 
   --series-1: #3987e5;
   --series-2: #d95926;
   --series-3: #199e70;
-  --chart-grid: #2c2c2a;
-  --chart-axis: #383835;
+  --chart-grid: oklch(1 0 0 / 8%);
+  --chart-axis: oklch(1 0 0 / 15%);
 }
 
 @layer base {
@@ -166,10 +179,18 @@
     @apply border-border outline-ring/50;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-canvas text-foreground;
+    /* Spasi antarkata bawaan Plus Jakarta Sans sempit: "Pertanyaan per hari"
+       terbaca menyatu di ukuran 14px. */
+    word-spacing: 0.04em;
   }
   html {
     @apply font-sans;
+  }
+  h1,
+  h2,
+  h3 {
+    letter-spacing: -0.01em;
   }
 }
 
@@ -177,4 +198,9 @@
    sama dengan `Card`. */
 @utility surface {
   @apply rounded-xl border bg-card shadow-surface;
+}
+
+/* Petak ikon kecil: kepala halaman, kartu angka, keadaan kosong. */
+@utility icon-tile {
+  @apply flex shrink-0 items-center justify-center rounded-xl bg-card text-foreground ring-1 ring-border shadow-xs;
 }

@@ -61,6 +61,8 @@ const headerKeamanan = [
 const nextConfig: NextConfig = {
   reactCompiler: true,
   poweredByHeader: false,
+  // Kiri bawah tertutup kartu akun di sidebar.
+  devIndicators: { position: "bottom-right" },
   turbopack: {
     // Tanpa ini Turbopack menebak akar proyek dari package-lock.json terdekat,
     // yang di beberapa mesin pengembang ada di direktori home.

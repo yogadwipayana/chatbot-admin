@@ -7,7 +7,8 @@ import { useTheme } from "next-themes"
 import { useEffect } from "react"
 
 import { Spinner } from "@/components/common"
-import { AppSidebar, NAV } from "@/components/layout/app-sidebar"
+import { AppSidebar } from "@/components/layout/app-sidebar"
+import { findNav } from "@/components/layout/nav"
 import { KillSwitchBanner } from "@/components/layout/kill-switch-banner"
 import { Button } from "@/components/ui/button"
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
@@ -73,7 +74,8 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
     <SidebarProvider>
       <AppSidebar />
       <SidebarInset>
-        <header className="sticky top-0 z-20 flex h-14 shrink-0 items-center gap-2 border-b bg-background/95 px-4 backdrop-blur supports-backdrop-filter:bg-background/80 md:px-6">
+        {/* Menempel di puncak panel; panel ini yang bergulir di layar md+. */}
+        <header className="sticky top-0 z-20 flex h-14 shrink-0 items-center gap-2 border-b border-border/70 bg-canvas/85 px-4 backdrop-blur-md supports-backdrop-filter:bg-canvas/70 md:px-6 lg:px-8">
           <SidebarTrigger className="-ml-1.5 text-muted-foreground" />
           <span aria-hidden className="mr-1 h-4 w-px bg-border" />
           <Breadcrumb pathname={pathname} />
@@ -94,18 +96,15 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
  */
 function Breadcrumb({ pathname }: { pathname: string }) {
   const t = useT()
-  for (const group of NAV) {
-    const item = group.items.find((i) => pathname === i.href || pathname.startsWith(`${i.href}/`))
-    if (!item) continue
-    return (
-      <nav aria-label="Breadcrumb" className="flex min-w-0 items-center gap-1.5 text-sm">
-        <span className="hidden text-muted-foreground sm:inline">{t.nav.groups[group.key]}</span>
-        <ChevronRightIcon aria-hidden className="hidden size-3.5 text-muted-foreground/60 sm:inline" />
-        <span className="truncate font-medium">{t.nav.items[item.key]}</span>
-      </nav>
-    )
-  }
-  return null
+  const nav = findNav(pathname)
+  if (!nav) return null
+  return (
+    <nav aria-label="Breadcrumb" className="flex min-w-0 items-center gap-1.5 text-sm">
+      <span className="hidden text-muted-foreground sm:inline">{t.nav.groups[nav.group.key]}</span>
+      <ChevronRightIcon aria-hidden className="hidden size-3.5 text-muted-foreground/60 sm:inline" />
+      <span className="truncate font-semibold">{t.nav.items[nav.item.key]}</span>
+    </nav>
+  )
 }
 
 function ThemeToggle() {

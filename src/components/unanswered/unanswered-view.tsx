@@ -183,12 +183,12 @@ export function UnansweredView() {
               return (
                 <li
                   key={group.ids[0]}
-                  className="flex flex-col gap-4 p-4 sm:flex-row sm:items-center"
+                  className="flex flex-col gap-4 px-5 py-4 transition-colors hover:bg-muted/30 sm:flex-row sm:items-center"
                 >
                   {adaKelompok ? (
                     <div className="flex w-full shrink-0 items-center gap-3 sm:w-24 sm:flex-col sm:items-start sm:gap-1.5">
                       <p className="leading-none">
-                        <span className="text-2xl font-semibold">{group.count}</span>
+                        <span className="text-2xl font-bold tabular-nums">{group.count}</span>
                         <span className="ml-1 text-xs text-muted-foreground">
                           {t.unanswered.times}
                         </span>
@@ -261,7 +261,7 @@ export function UnansweredView() {
                         {t.unanswered.reopen}
                       </Button>
                     ) : (
-                      <Button size="sm" disabled={sibuk} onClick={() => tandai(group, true)}>
+                      <Button variant="soft" size="sm" disabled={sibuk} onClick={() => tandai(group, true)}>
                         <CheckIcon data-icon="inline-start" />
                         {t.unanswered.markDone}
                       </Button>

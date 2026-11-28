@@ -1,9 +1,9 @@
 "use client"
 
-import { ActivityIcon } from "lucide-react"
+import { ActivityIcon, CircleAlertIcon, MessagesSquareIcon, ShieldCheckIcon, TimerIcon } from "lucide-react"
 import { Bar, BarChart, CartesianGrid, Line, LineChart, XAxis, YAxis } from "recharts"
 
-import { EmptyState, QueryError } from "@/components/common"
+import { EmptyState, QueryError, StatTile } from "@/components/common"
 import { durasi, nodeLabel, useLogTime } from "@/components/logs/shared"
 import { StatusLabel } from "@/components/status"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -66,13 +66,14 @@ function KpiRow({ data }: { data: Summary }) {
 
   return (
     <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-      <StatTile label={t.logs.kpi.turns} value={f.number(data.turn_count)}>
+      <StatTile label={t.logs.kpi.turns} value={f.number(data.turn_count)} icon={MessagesSquareIcon}>
         <p>{t.logs.kpi.turnsNote(f.number(dijawab))}</p>
       </StatTile>
 
       <StatTile
         label={t.logs.kpi.p95}
         value={data.p95_total_ms == null ? "—" : durasi(f, data.p95_total_ms)}
+        icon={TimerIcon}
       >
         {data.p95_total_ms != null && data.p95_total_ms > P95_LAMBAT_MS ? (
           <StatusLabel level="warning" className="text-xs text-foreground">
@@ -83,7 +84,7 @@ function KpiRow({ data }: { data: Summary }) {
         )}
       </StatTile>
 
-      <StatTile label={t.logs.kpi.errors} value={f.percent(data.error_ratio)}>
+      <StatTile label={t.logs.kpi.errors} value={f.percent(data.error_ratio)} icon={CircleAlertIcon}>
         <StatusLabel
           level={
             data.error_turn_count > 0 || data.error_log_count > 0
@@ -101,30 +102,10 @@ function KpiRow({ data }: { data: Summary }) {
         </StatusLabel>
       </StatTile>
 
-      <StatTile label={t.logs.kpi.blocked} value={f.percent(data.laya_blocked_ratio)}>
+      <StatTile label={t.logs.kpi.blocked} value={f.percent(data.laya_blocked_ratio)} icon={ShieldCheckIcon}>
         <p>{t.logs.kpi.blockedNote(f.number(data.laya_blocked_count))}</p>
       </StatTile>
     </div>
-  )
-}
-
-function StatTile({
-  label,
-  value,
-  children,
-}: {
-  label: string
-  value: string
-  children?: React.ReactNode
-}) {
-  return (
-    <Card>
-      <CardContent className="space-y-2">
-        <p className="text-sm text-muted-foreground">{label}</p>
-        <p className="text-3xl font-semibold tracking-tight tabular-nums">{value}</p>
-        {children ? <div className="space-y-1 text-xs text-muted-foreground">{children}</div> : null}
-      </CardContent>
-    </Card>
   )
 }
 

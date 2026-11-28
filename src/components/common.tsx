@@ -7,10 +7,13 @@ import {
   RotateCwIcon,
   type LucideIcon,
 } from "lucide-react"
+import { usePathname } from "next/navigation"
 import { Fragment, useEffect } from "react"
 
+import { findNav } from "@/components/layout/nav"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
+import { Card, CardContent } from "@/components/ui/card"
 import { setDocumentTitle } from "@/lib/document-title"
 import { useFormat, useT } from "@/lib/i18n"
 import { cn } from "@/lib/utils"
@@ -42,13 +45,22 @@ export function PageHeader({
   documentTitle?: string
 }) {
   useDocumentTitle(documentTitle ?? (typeof title === "string" ? title : undefined))
+  // Ikon menu yang sama dengan di sidebar, supaya halaman langsung dikenali.
+  const Icon = findNav(usePathname())?.item.icon
   return (
-    <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-      <div className="min-w-0 space-y-1">
-        <h1 className="text-2xl font-semibold tracking-tight text-balance">{title}</h1>
-        {description ? (
-          <p className="max-w-2xl text-sm text-pretty text-muted-foreground">{description}</p>
+    <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+      <div className="flex min-w-0 items-start gap-4">
+        {Icon ? (
+          <div aria-hidden className="icon-tile mt-0.5 hidden size-11 shadow-surface sm:flex">
+            <Icon className="size-5" />
+          </div>
         ) : null}
+        <div className="min-w-0 space-y-1.5">
+          <h1 className="text-[1.625rem] leading-tight font-bold text-balance">{title}</h1>
+          {description ? (
+            <p className="max-w-2xl text-sm/relaxed text-pretty text-muted-foreground">{description}</p>
+          ) : null}
+        </div>
       </div>
       {actions ? <div className="flex shrink-0 flex-wrap gap-2">{actions}</div> : null}
     </div>
@@ -97,12 +109,12 @@ export function EmptyState({
   return (
     <div
       className={cn(
-        "flex flex-col items-center gap-3 rounded-xl border border-dashed px-6 py-12 text-center",
+        "flex flex-col items-center gap-3 rounded-xl border border-dashed border-input/80 bg-card/50 px-6 py-14 text-center",
         className
       )}
     >
-      <div className="flex size-10 items-center justify-center rounded-full bg-muted">
-        <Icon className="size-5 text-muted-foreground" aria-hidden />
+      <div className="icon-tile size-12 rounded-2xl shadow-surface">
+        <Icon className="size-5" aria-hidden />
       </div>
       <div className="space-y-1">
         <p className="font-medium">{title}</p>
@@ -112,6 +124,39 @@ export function EmptyState({
       </div>
       {action}
     </div>
+  )
+}
+
+/**
+ * Kartu angka utama (Statistik, Log). Ikon di pojok hanya penanda; arti
+ * baik/buruk tetap dibawa `StatusLabel` di bawah angkanya.
+ */
+export function StatTile({
+  label,
+  value,
+  icon: Icon,
+  children,
+}: {
+  label: string
+  value: string
+  icon?: LucideIcon
+  children?: React.ReactNode
+}) {
+  return (
+    <Card className="relative">
+      <CardContent className="space-y-2">
+        <div className="flex items-start justify-between gap-3">
+          <p className="text-sm font-medium text-muted-foreground">{label}</p>
+          {Icon ? (
+            <div aria-hidden className="icon-tile -mt-0.5 size-8 rounded-lg">
+              <Icon className="size-4" />
+            </div>
+          ) : null}
+        </div>
+        <p className="text-[2rem] leading-none font-bold tracking-tight tabular-nums">{value}</p>
+        {children ? <div className="space-y-1 pt-1 text-xs text-muted-foreground">{children}</div> : null}
+      </CardContent>
+    </Card>
   )
 }
 

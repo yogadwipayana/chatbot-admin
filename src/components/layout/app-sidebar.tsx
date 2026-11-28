@@ -2,25 +2,13 @@
 
 import { useQueryClient } from "@tanstack/react-query"
 import {
-  Building2Icon,
-  ChartColumnIcon,
   ChevronsUpDownIcon,
-  CodeXmlIcon,
-  FileTextIcon,
-  FlaskConicalIcon,
   KeyRoundIcon,
   LanguagesIcon,
   LogOutIcon,
-  MessageCircleQuestionMarkIcon,
-  MessageSquareHeartIcon,
-  MessagesSquareIcon,
   MonitorIcon,
   MoonIcon,
-  ScrollTextIcon,
-  SlidersHorizontalIcon,
   SunIcon,
-  UsersRoundIcon,
-  type LucideIcon,
 } from "lucide-react"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
@@ -29,6 +17,7 @@ import { useState } from "react"
 
 import { ChangePasswordDialog } from "@/components/auth/change-password-dialog"
 import { AppLogo } from "@/components/layout/app-logo"
+import { NAV, isNavActive, type NavItem } from "@/components/layout/nav"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -55,81 +44,8 @@ import {
 import { useDocuments, useKillSwitch, useMe, useUnanswered } from "@/lib/api/queries"
 import { clearToken } from "@/lib/auth/token"
 import { useLang, useT } from "@/lib/i18n"
-import type { Dict } from "@/lib/i18n/dict"
 import { LANGS, LANG_LABELS, type Lang } from "@/lib/i18n/lang"
-import { atLeast, type Role } from "@/lib/roles"
-
-type NavItem = {
-  href: string
-  key: keyof Dict["nav"]["items"]
-  icon: LucideIcon
-  min: Role
-  badge?: "unanswered" | "stale" | "killswitch"
-}
-
-/**
- * Label menunya ada di kamus; di sini hanya kuncinya, supaya urutan dan hak
- * akses menu tidak ikut tersentuh setiap kali teksnya disunting.
- */
-export const NAV: { key: keyof Dict["nav"]["groups"]; items: NavItem[] }[] = [
-  {
-    // AD-4 ditempatkan paling atas: PRD §9 menyebutnya penentu sistem membaik atau stagnan.
-    key: "perbaikan",
-    items: [
-      {
-        href: "/pertanyaan",
-        key: "unanswered",
-        icon: MessageCircleQuestionMarkIcon,
-        min: "staf",
-        badge: "unanswered",
-      },
-      // Isi percakapan, jadi levelnya sama dengan statistik: admin ke atas.
-      // Di sini, bukan di Pengaturan: isinya bahan perbaikan, sama seperti AD-4.
-      {
-        href: "/umpan-balik",
-        key: "feedback",
-        icon: MessageSquareHeartIcon,
-        min: "admin",
-      },
-    ],
-  },
-  {
-    key: "konten",
-    items: [
-      { href: "/dokumen", key: "documents", icon: FileTextIcon, min: "staf", badge: "stale" },
-      { href: "/tanya-jawab", key: "faq", icon: MessagesSquareIcon, min: "staf" },
-      { href: "/uji-coba", key: "testQuery", icon: FlaskConicalIcon, min: "staf" },
-    ],
-  },
-  {
-    key: "operasional",
-    items: [
-      { href: "/statistik", key: "stats", icon: ChartColumnIcon, min: "admin" },
-      // Alat debug developer (langkah pipeline, system prompt, log server):
-      // superadmin saja, sama dengan `x-min-role` endpoint-nya.
-      { href: "/log", key: "logs", icon: ScrollTextIcon, min: "superadmin" },
-    ],
-  },
-  {
-    key: "pengaturan",
-    items: [
-      { href: "/admin", key: "users", icon: UsersRoundIcon, min: "superadmin" },
-      // Menentukan menu chatbot dan batas akses staf, jadi superadmin saja.
-      { href: "/unit", key: "units", icon: Building2Icon, min: "superadmin" },
-      // Siapa yang boleh memakai kuota model dari situs lain: superadmin saja.
-      { href: "/sematan", key: "embed", icon: CodeXmlIcon, min: "superadmin" },
-      // Setelan ambang dan chunking berlaku untuk setiap pertanyaan mahasiswa,
-      // jadi setara kill switch: superadmin saja.
-      {
-        href: "/konfigurasi",
-        key: "config",
-        icon: SlidersHorizontalIcon,
-        min: "superadmin",
-        badge: "killswitch",
-      },
-    ],
-  },
-]
+import { atLeast } from "@/lib/roles"
 
 function NavBadge({ kind }: { kind: NonNullable<NavItem["badge"]> }) {
   const t = useT()
@@ -143,7 +59,7 @@ function NavBadge({ kind }: { kind: NonNullable<NavItem["badge"]> }) {
     return n > 0 ? (
       <SidebarMenuBadge
         aria-label={t.nav.badges.unanswered(n)}
-        className="rounded-full bg-primary/10 px-1.5 text-[0.6875rem] font-semibold text-primary dark:bg-primary/25 dark:text-sidebar-accent-foreground"
+        className="rounded-full bg-sidebar-primary px-1.5 text-[0.6875rem] font-semibold text-sidebar-primary-foreground peer-data-active/menu-button:text-sidebar-primary-foreground"
       >
         {n}
       </SidebarMenuBadge>
@@ -193,26 +109,30 @@ export function AppSidebar() {
   )
 
   return (
-    <Sidebar>
-      {/* Tingginya sama dengan bilah atas (h-14) supaya garis bawahnya segaris. */}
-      <SidebarHeader className="h-14 justify-center border-b px-4 py-0">
+    // Varian `inset`: sidebar menjadi bingkai abu (ikut tema terang/gelap) dan
+    // isi halaman tampil di panel membulat di dalamnya.
+    <Sidebar variant="inset">
+      {/* Tingginya sama dengan bilah atas panel (h-14) supaya segaris. */}
+      <SidebarHeader className="h-14 justify-center px-3 py-0">
         <div className="flex items-center gap-2.5">
-          <AppLogo className="size-7" />
+          <AppLogo className="size-8" />
           <div className="grid leading-tight">
-            <span className="text-sm font-semibold tracking-tight text-foreground">{t.app.short}</span>
+            <span className="text-sm font-bold text-foreground">{t.app.short}</span>
             <span className="text-xs text-muted-foreground">{t.app.tagline}</span>
           </div>
         </div>
       </SidebarHeader>
 
-      <SidebarContent className="gap-0 py-2">
+      <SidebarContent className="gap-0 py-3">
         {groups.map((group) => (
-          <SidebarGroup key={group.key} className="px-3 py-1.5">
-            <SidebarGroupLabel>{t.nav.groups[group.key]}</SidebarGroupLabel>
+          <SidebarGroup key={group.key} className="px-1 py-1.5">
+            <SidebarGroupLabel className="text-muted-foreground">
+              {t.nav.groups[group.key]}
+            </SidebarGroupLabel>
             <SidebarGroupContent>
-              <SidebarMenu>
+              <SidebarMenu className="gap-0.5">
                 {group.items.map((item) => {
-                  const active = pathname === item.href || pathname.startsWith(`${item.href}/`)
+                  const active = isNavActive(pathname, item.href)
                   return (
                     <SidebarMenuItem key={item.href}>
                       <SidebarMenuButton asChild isActive={active}>
@@ -231,15 +151,18 @@ export function AppSidebar() {
         ))}
       </SidebarContent>
 
-      <SidebarFooter className="border-t p-2">
+      <SidebarFooter className="px-1 pt-0 pb-1">
         <SidebarMenu>
           <SidebarMenuItem>
             {/* modal={false}: dialog ganti kata sandi dibuka dari menu ini, dan menu
                 modal meninggalkan `pointer-events: none` di body saat dialog muncul. */}
             <DropdownMenu modal={false}>
               <DropdownMenuTrigger asChild>
-                <SidebarMenuButton size="lg">
-                  <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary dark:bg-primary/25 dark:text-sidebar-accent-foreground">
+                <SidebarMenuButton
+                  size="lg"
+                  className="bg-sidebar-accent/70 shadow-[0_0_0_1px_var(--sidebar-border)] hover:bg-sidebar-accent"
+                >
+                  <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-sidebar-primary text-xs font-semibold text-sidebar-primary-foreground">
                     {me ? initials(me) : "?"}
                   </div>
                   <div className="grid min-w-0 flex-1 text-left leading-tight">

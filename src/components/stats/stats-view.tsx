@@ -1,10 +1,16 @@
 "use client"
 
-import { ChartColumnIcon, TableIcon } from "lucide-react"
+import {
+  ChartColumnIcon,
+  MessageCircleQuestionMarkIcon,
+  TableIcon,
+  ThumbsUpIcon,
+  TimerIcon,
+} from "lucide-react"
 import Link from "next/link"
 import { useState } from "react"
 
-import { EmptyState, PageHeader, QueryError } from "@/components/common"
+import { EmptyState, PageHeader, QueryError, StatTile } from "@/components/common"
 import { DateRangeField } from "@/components/date-field"
 import { DailyVolumeChart, DailyVolumeTable } from "@/components/stats/daily-volume-chart"
 import { StatusLabel } from "@/components/status"
@@ -131,26 +137,6 @@ export function StatsView() {
   )
 }
 
-function StatTile({
-  label,
-  value,
-  children,
-}: {
-  label: string
-  value: string
-  children?: React.ReactNode
-}) {
-  return (
-    <Card>
-      <CardContent className="space-y-2">
-        <p className="text-sm text-muted-foreground">{label}</p>
-        <p className="text-3xl font-semibold tracking-tight">{value}</p>
-        {children ? <div className="space-y-1 text-xs text-muted-foreground">{children}</div> : null}
-      </CardContent>
-    </Card>
-  )
-}
-
 function KpiRow({ stats }: { stats: Stats }) {
   const t = useT()
   const f = useFormat()
@@ -158,7 +144,7 @@ function KpiRow({ stats }: { stats: Stats }) {
   const tt = stats.unanswered_ratio
   return (
     <div className="grid gap-4 md:grid-cols-3">
-      <StatTile label={t.stats.feedbackRatio} value={fb == null ? "—" : f.percent(fb)}>
+      <StatTile label={t.stats.feedbackRatio} value={fb == null ? "—" : f.percent(fb)} icon={ThumbsUpIcon}>
         {fb == null ? (
           <p>{t.stats.feedbackNone}</p>
         ) : (
@@ -173,7 +159,11 @@ function KpiRow({ stats }: { stats: Stats }) {
         )}
       </StatTile>
 
-      <StatTile label={t.stats.unanswered} value={tt == null ? "—" : f.percent(tt)}>
+      <StatTile
+        label={t.stats.unanswered}
+        value={tt == null ? "—" : f.percent(tt)}
+        icon={MessageCircleQuestionMarkIcon}
+      >
         {tt == null ? null : (
           <>
             <StatusLabel level={tt < TARGET_TAK_TERJAWAB ? "good" : "serious"} className="text-xs text-foreground">
@@ -197,6 +187,7 @@ function KpiRow({ stats }: { stats: Stats }) {
       <StatTile
         label={t.stats.latency}
         value={stats.latency_p95_ms == null ? "—" : f.duration(stats.latency_p95_ms)}
+        icon={TimerIcon}
       >
         <p>{t.stats.latencyNote}</p>
       </StatTile>

@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils"
  * Logo dashboard: balon obrolan bergaris tebal dengan bayangan padat
  * (gaya neo-brutalis) dan dua baris teks.
  *
- * Hitam putih: warnanya ikut `foreground` tema (bukan `primary`, yang kini warna merek), jadi terbalik di mode gelap.
+ * Hitam putih: warnanya ikut `foreground`/`background` tema, jadi terbalik di mode gelap.
  * Gambarnya sama dengan `src/app/icon.svg` (ikon tab peramban) dan
  * `favicon.ico`; bila salah satu diubah, samakan yang lain. Arsip logo
  * lain dan cara menggantinya: `client/docs/logo/README.md`.
